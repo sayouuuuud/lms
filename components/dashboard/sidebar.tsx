@@ -24,7 +24,7 @@ const navItems = [
   { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/' },
   { label: 'الطلاب', icon: Users, href: '/students' },
   { label: 'الكورسات', icon: BookOpen, href: '/courses' },
-  { label: 'المدفوعات', icon: CreditCard, href: '#' },
+  { label: 'المدفوعات', icon: CreditCard, href: '/payments' },
   { label: 'رسائل', icon: MessageSquare, href: '#' },
   { label: 'خصومات و الكوبونات', icon: Tag, href: '#' },
   { label: 'التقارير', icon: BarChart3, href: '#' },
