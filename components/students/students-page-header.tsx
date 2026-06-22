@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 
 export function StudentsPageHeader() {
   return (
-    <div className="flex flex-col gap-4 lg:flex-row-reverse lg:items-start lg:justify-between">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="text-right">
         <h2 className="text-2xl font-bold text-foreground">الطلاب</h2>
         <p className="mt-1 text-sm text-muted-foreground">

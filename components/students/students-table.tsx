@@ -39,7 +39,7 @@ export function StudentsTable() {
   return (
     <Card className="gap-0 p-5">
       {/* Toolbar */}
-      <div className="flex flex-col gap-4 lg:flex-row-reverse lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="relative w-full lg:max-w-sm">
           <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
