@@ -14,6 +14,11 @@ import {
   X,
   Smartphone,
   CreditCard,
+  Mail,
+  Phone,
+  BookOpen,
+  Hash,
+  CalendarDays,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
@@ -52,6 +57,38 @@ function MethodBadge({ method }: { method: PaymentRecord['method'] }) {
       {isInsta ? <CreditCard className="size-3.5" /> : <Smartphone className="size-3.5" />}
       {method}
     </span>
+  )
+}
+
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+  dir,
+  mono,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: string
+  dir?: 'ltr' | 'rtl'
+  mono?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5 text-sm">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="size-4 shrink-0" />
+        {label}
+      </span>
+      <span
+        dir={dir}
+        className={cn(
+          'truncate text-left font-medium text-foreground',
+          mono && 'font-mono',
+        )}
+      >
+        {value}
+      </span>
+    </div>
   )
 }
 
@@ -311,10 +348,17 @@ export function PaymentsTable() {
             className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-card p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between">
-              <div className="text-right">
-                <h3 className="text-lg font-bold text-foreground">تفاصيل الطلب</h3>
-                <p className="text-sm text-muted-foreground">{preview.studentName}</p>
+            <div className="flex items-start justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-11">
+                  <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+                    {getInitials(preview.studentName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-right">
+                  <h3 className="text-base font-bold text-foreground">{preview.studentName}</h3>
+                  <p className="font-mono text-xs text-muted-foreground">{preview.id}</p>
+                </div>
               </div>
               <Button
                 variant="ghost"
@@ -327,42 +371,48 @@ export function PaymentsTable() {
               </Button>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-xl border border-border">
-              <Image
-                src={preview.receiptUrl || '/placeholder.svg'}
-                alt={`إيصال تحويل ${preview.studentName}`}
-                width={500}
-                height={700}
-                className="h-auto w-full object-contain"
-              />
+            {/* بيانات التواصل */}
+            <div className="mt-4 space-y-1">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">بيانات الطالب</p>
+              <DetailRow icon={Mail} label="البريد الإلكتروني" value={preview.studentEmail} dir="ltr" />
+              <DetailRow icon={Phone} label="رقم الهاتف" value={preview.studentPhone} dir="ltr" />
+              <DetailRow icon={BookOpen} label="الكورس" value={preview.course} />
             </div>
 
-            <div className="mt-4 space-y-2 rounded-xl bg-secondary/50 p-4 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">البريد الإلكتروني</span>
-                <span className="font-medium text-foreground">{preview.studentEmail}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">الكورس</span>
-                <span className="font-medium text-foreground">{preview.course}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">التاريخ</span>
-                <span className="font-medium text-foreground">{preview.submittedAt}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">المبلغ</span>
-                <span className="font-semibold text-foreground">
+            {/* تفاصيل الدفع */}
+            <div className="mt-4 space-y-1 rounded-xl bg-secondary/50 p-4">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">تفاصيل الدفع</p>
+              <div className="flex items-center justify-between py-1.5 text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Wallet className="size-4" />
+                  المبلغ
+                </span>
+                <span className="text-base font-bold text-foreground">
                   {preview.amount.toLocaleString('en-US')} ج.م
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">طريقة التحويل</span>
+              <div className="flex items-center justify-between py-1.5 text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <CreditCard className="size-4" />
+                  طريقة التحويل
+                </span>
                 <MethodBadge method={preview.method} />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">رقم العملية</span>
-                <span className="font-mono text-foreground">{preview.reference}</span>
+              <DetailRow icon={Hash} label="رقم العملية" value={preview.reference} dir="ltr" mono />
+              <DetailRow icon={CalendarDays} label="تاريخ الطلب" value={preview.submittedAt} />
+            </div>
+
+            {/* صورة التحويل */}
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">صورة التحويل</p>
+              <div className="overflow-hidden rounded-xl border border-border">
+                <Image
+                  src={preview.receiptUrl || '/placeholder.svg'}
+                  alt={`إيصال تحويل ${preview.studentName}`}
+                  width={500}
+                  height={700}
+                  className="h-auto w-full object-contain"
+                />
               </div>
             </div>
 

@@ -5,6 +5,7 @@ export type PaymentRecord = {
   id: string
   studentName: string
   studentEmail: string
+  studentPhone: string
   course: string
   amount: number
   method: PaymentMethod
@@ -19,6 +20,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1001',
     studentName: 'كريم محمود',
     studentEmail: 'karim.mahmoud@example.com',
+    studentPhone: '010 1234 5678',
     course: 'أساسيات تطوير الويب',
     amount: 450,
     method: 'انستاباي',
@@ -31,6 +33,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1002',
     studentName: 'سارة عبد الله',
     studentEmail: 'sara.abdullah@example.com',
+    studentPhone: '011 2345 6789',
     course: 'تصميم واجهات المستخدم UI/UX',
     amount: 650,
     method: 'فودافون كاش',
@@ -43,6 +46,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1003',
     studentName: 'يوسف إبراهيم',
     studentEmail: 'youssef.ibrahim@example.com',
+    studentPhone: '012 3456 7890',
     course: 'البرمجة بلغة بايثون',
     amount: 500,
     method: 'انستاباي',
@@ -55,6 +59,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1004',
     studentName: 'منة الله حسن',
     studentEmail: 'menna.hassan@example.com',
+    studentPhone: '010 9876 5432',
     course: 'التسويق الرقمي',
     amount: 400,
     method: 'فودافون كاش',
@@ -67,6 +72,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1005',
     studentName: 'عمر خالد',
     studentEmail: 'omar.khaled@example.com',
+    studentPhone: '011 5566 7788',
     course: 'تحليل البيانات',
     amount: 700,
     method: 'انستاباي',
@@ -79,6 +85,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1006',
     studentName: 'ليلى أحمد',
     studentEmail: 'layla.ahmed@example.com',
+    studentPhone: '012 2233 4455',
     course: 'أساسيات تطوير الويب',
     amount: 450,
     method: 'فودافون كاش',
@@ -91,6 +98,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1007',
     studentName: 'حسام الدين',
     studentEmail: 'hossam.eldin@example.com',
+    studentPhone: '010 4455 6677',
     course: 'تطوير تطبيقات الموبايل',
     amount: 800,
     method: 'انستاباي',
@@ -103,6 +111,7 @@ export const paymentRecords: PaymentRecord[] = [
     id: 'PAY-1008',
     studentName: 'نور محمد',
     studentEmail: 'nour.mohamed@example.com',
+    studentPhone: '011 7788 9900',
     course: 'تصميم واجهات المستخدم UI/UX',
     amount: 650,
     method: 'فودافون كاش',
