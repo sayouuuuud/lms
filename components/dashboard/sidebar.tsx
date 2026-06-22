@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 const navItems = [
   { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/' },
   { label: 'الطلاب', icon: Users, href: '/students' },
-  { label: 'الكورسات', icon: BookOpen, href: '#' },
+  { label: 'الكورسات', icon: BookOpen, href: '/courses' },
   { label: 'رفع الدروس', icon: UploadCloud, href: '#' },
   { label: 'المدفوعات', icon: CreditCard, href: '#' },
   { label: 'رسائل', icon: MessageSquare, href: '#' },
