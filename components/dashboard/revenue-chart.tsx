@@ -25,10 +25,8 @@ export function RevenueChart() {
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            reversed
           />
           <YAxis
-            orientation="right"
             tickLine={false}
             axisLine={false}
             width={44}
@@ -48,6 +46,7 @@ export function RevenueChart() {
             strokeWidth={2.5}
             dot={{ r: 4, fill: 'var(--color-revenue)' }}
             activeDot={{ r: 6 }}
+            isAnimationActive={false}
           />
         </LineChart>
       </ChartContainer>

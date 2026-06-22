@@ -31,10 +31,8 @@ export function StudentsChart() {
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            reversed
           />
           <YAxis
-            orientation="right"
             tickLine={false}
             axisLine={false}
             width={44}
@@ -53,6 +51,7 @@ export function StudentsChart() {
             stroke="var(--color-students)"
             strokeWidth={2.5}
             fill="url(#fillStudents)"
+            isAnimationActive={false}
           />
         </AreaChart>
       </ChartContainer>

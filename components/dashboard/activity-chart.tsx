@@ -25,16 +25,19 @@ export function ActivityChart() {
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            reversed
           />
           <YAxis
-            orientation="right"
             tickLine={false}
             axisLine={false}
             width={36}
           />
           <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-          <Bar dataKey="value" fill="var(--color-value)" radius={[6, 6, 0, 0]} />
+          <Bar
+            dataKey="value"
+            fill="var(--color-value)"
+            radius={[6, 6, 0, 0]}
+            isAnimationActive={false}
+          />
         </BarChart>
       </ChartContainer>
     </PanelCard>
