@@ -180,10 +180,9 @@ export function PaymentsTable() {
                 <th className="px-5 py-3 font-medium">الكورس</th>
                 <th className="px-5 py-3 font-medium">المبلغ</th>
                 <th className="px-5 py-3 font-medium">طريقة التحويل</th>
-                <th className="px-5 py-3 font-medium">الإيصال</th>
                 <th className="px-5 py-3 font-medium">التاريخ</th>
                 <th className="px-5 py-3 font-medium">الحالة</th>
-                <th className="px-5 py-3 font-medium">إجراءات</th>
+                <th className="px-5 py-3 font-medium">الطلب</th>
               </tr>
             </thead>
             <tbody>
@@ -212,16 +211,6 @@ export function PaymentsTable() {
                   <td className="px-5 py-4">
                     <MethodBadge method={r.method} />
                   </td>
-                  <td className="px-5 py-4">
-                    <button
-                      type="button"
-                      onClick={() => setPreview(r)}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-                    >
-                      <Eye className="size-4" />
-                      عرض الصورة
-                    </button>
-                  </td>
                   <td className="px-5 py-4 text-muted-foreground">{r.submittedAt}</td>
                   <td className="px-5 py-4">
                     <Badge
@@ -232,29 +221,15 @@ export function PaymentsTable() {
                     </Badge>
                   </td>
                   <td className="px-5 py-4">
-                    {r.status === 'قيد المراجعة' ? (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="h-8 bg-emerald-600 text-white hover:bg-emerald-700"
-                          onClick={() => updateStatus(r.id, 'مقبول')}
-                        >
-                          <Check className="size-4" />
-                          قبول
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:hover:bg-rose-500/10"
-                          onClick={() => updateStatus(r.id, 'مرفوض')}
-                        >
-                          <X className="size-4" />
-                          رفض
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">تمت المراجعة</span>
-                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={() => setPreview(r)}
+                    >
+                      <Eye className="size-4" />
+                      عرض الطلب
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -301,39 +276,16 @@ export function PaymentsTable() {
                   <p className="mb-1 text-xs text-muted-foreground">طريقة التحويل</p>
                   <MethodBadge method={r.method} />
                 </div>
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={() => setPreview(r)}
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-                  >
-                    <Eye className="size-4" />
-                    عرض الإيصال
-                  </button>
-                </div>
               </div>
 
-              {r.status === 'قيد المراجعة' && (
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    size="sm"
-                    className="h-8 flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
-                    onClick={() => updateStatus(r.id, 'مقبول')}
-                  >
-                    <Check className="size-4" />
-                    قبول
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:hover:bg-rose-500/10"
-                    onClick={() => updateStatus(r.id, 'مرفوض')}
-                  >
-                    <X className="size-4" />
-                    رفض
-                  </Button>
-                </div>
-              )}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setPreview(r)}
+              >
+                <Eye className="size-4" />
+                عرض الطلب
+              </Button>
             </div>
           ))}
         </div>
@@ -361,7 +313,7 @@ export function PaymentsTable() {
           >
             <div className="flex items-start justify-between">
               <div className="text-right">
-                <h3 className="text-lg font-bold text-foreground">إيصال التحويل</h3>
+                <h3 className="text-lg font-bold text-foreground">تفاصيل الطلب</h3>
                 <p className="text-sm text-muted-foreground">{preview.studentName}</p>
               </div>
               <Button
@@ -387,8 +339,16 @@ export function PaymentsTable() {
 
             <div className="mt-4 space-y-2 rounded-xl bg-secondary/50 p-4 text-sm">
               <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">البريد الإلكتروني</span>
+                <span className="font-medium text-foreground">{preview.studentEmail}</span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">الكورس</span>
                 <span className="font-medium text-foreground">{preview.course}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">التاريخ</span>
+                <span className="font-medium text-foreground">{preview.submittedAt}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">المبلغ</span>
