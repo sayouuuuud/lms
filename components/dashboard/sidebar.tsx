@@ -42,14 +42,14 @@ export function Sidebar({
     <>
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 right-0 z-50 flex w-72 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0',
+          'fixed inset-y-0 right-0 z-50 flex w-72 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
       >
@@ -68,7 +68,7 @@ export function Sidebar({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-sidebar-foreground hover:bg-white/10 hover:text-white lg:hidden"
+            className="text-sidebar-foreground hover:bg-white/10 hover:text-white md:hidden"
           >
             <X className="size-5" />
             <span className="sr-only">إغلاق القائمة</span>

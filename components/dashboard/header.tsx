@@ -58,12 +58,12 @@ export function Header({
           </kbd>
         </div>
 
-        {/* Menu toggle */}
+        {/* Menu toggle - only visible on mobile */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="mr-auto text-foreground"
+          className="mr-auto text-foreground md:hidden"
         >
           <Menu className="size-6" />
           <span className="sr-only">فتح القائمة</span>
