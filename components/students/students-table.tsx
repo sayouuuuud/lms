@@ -1,0 +1,234 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import { Search, MoreVertical, Mail, Phone } from 'lucide-react'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { getInitials } from '@/lib/get-initials'
+import { cn } from '@/lib/utils'
+import {
+  studentRecords,
+  statusFilters,
+  type StudentStatus,
+} from '@/lib/students-data'
+
+const statusStyles: Record<StudentStatus, string> = {
+  نشط: 'bg-success/10 text-success',
+  'غير نشط': 'bg-secondary text-muted-foreground',
+  موقوف: 'bg-destructive/10 text-destructive',
+}
+
+export function StudentsTable() {
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<StudentStatus | 'الكل'>('الكل')
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return studentRecords.filter((student) => {
+      const matchesStatus = filter === 'الكل' || student.status === filter
+      const matchesQuery =
+        q === '' ||
+        student.name.toLowerCase().includes(q) ||
+        student.email.toLowerCase().includes(q) ||
+        student.id.toLowerCase().includes(q)
+      return matchesStatus && matchesQuery
+    })
+  }, [query, filter])
+
+  return (
+    <Card className="gap-0 p-5">
+      {/* Toolbar */}
+      <div className="flex flex-col gap-4 lg:flex-row-reverse lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-sm">
+          <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ابحث بالاسم أو البريد أو الرقم..."
+            className="h-11 w-full rounded-xl border border-border bg-secondary/60 pr-10 pl-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card"
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {statusFilters.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setFilter(item.value)}
+              className={cn(
+                'rounded-lg border px-4 py-2 text-xs font-semibold transition-colors',
+                filter === item.value
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-secondary/60 text-muted-foreground hover:bg-secondary',
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop table */}
+      <div className="mt-5 hidden overflow-x-auto md:block">
+        <table className="w-full text-right text-sm">
+          <thead>
+            <tr className="border-b border-border text-xs text-muted-foreground">
+              <th className="px-3 py-3 font-medium">الطالب</th>
+              <th className="px-3 py-3 font-medium">رقم الطالب</th>
+              <th className="px-3 py-3 font-medium">الكورسات</th>
+              <th className="px-3 py-3 font-medium">نسبة التقدم</th>
+              <th className="px-3 py-3 font-medium">إجمالي الإنفاق</th>
+              <th className="px-3 py-3 font-medium">الحالة</th>
+              <th className="px-3 py-3 font-medium">تاريخ الانضمام</th>
+              <th className="px-3 py-3 font-medium sr-only">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {filtered.map((student) => (
+              <tr key={student.id} className="transition-colors hover:bg-secondary/40">
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-9">
+                      <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                        {getInitials(student.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground">{student.name}</p>
+                      <p className="truncate text-xs text-muted-foreground" dir="ltr">
+                        {student.email}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-3 font-mono text-xs text-muted-foreground">
+                  {student.id}
+                </td>
+                <td className="px-3 py-3 text-foreground">{student.courses}</td>
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-20 overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${student.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {student.progress}%
+                    </span>
+                  </div>
+                </td>
+                <td className="px-3 py-3 font-semibold text-foreground">
+                  {student.spent}
+                </td>
+                <td className="px-3 py-3">
+                  <span
+                    className={cn(
+                      'rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
+                      statusStyles[student.status],
+                    )}
+                  >
+                    {student.status}
+                  </span>
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                  {student.joinedAt}
+                </td>
+                <td className="px-3 py-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-muted-foreground hover:text-foreground"
+                  >
+                    <MoreVertical className="size-4" />
+                    <span className="sr-only">خيارات الطالب</span>
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile cards */}
+      <ul className="mt-5 space-y-3 md:hidden">
+        {filtered.map((student) => (
+          <li
+            key={student.id}
+            className="rounded-xl border border-border bg-secondary/30 p-4"
+          >
+            <div className="flex items-center gap-3">
+              <Avatar className="size-10">
+                <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                  {getInitials(student.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-foreground">{student.name}</p>
+                <p className="truncate text-xs text-muted-foreground" dir="ltr">
+                  {student.email}
+                </p>
+              </div>
+              <span
+                className={cn(
+                  'rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
+                  statusStyles[student.status],
+                )}
+              >
+                {student.status}
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <span>الكورسات: <strong className="text-foreground">{student.courses}</strong></span>
+              <span>الإنفاق: <strong className="text-foreground">{student.spent}</strong></span>
+              <span>التقدم: <strong className="text-foreground">{student.progress}%</strong></span>
+              <span>انضم: <strong className="text-foreground">{student.joinedAt}</strong></span>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 border-border bg-card">
+                <Mail className="size-3.5" />
+                مراسلة
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 border-border bg-card">
+                <Phone className="size-3.5" />
+                اتصال
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {filtered.length === 0 && (
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          لا يوجد طلاب مطابقون لبحثك
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
+        <span>
+          عرض <strong className="text-foreground">{filtered.length}</strong> من أصل{' '}
+          <strong className="text-foreground">{studentRecords.length}</strong> طالب
+        </span>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border bg-card text-foreground"
+          >
+            السابق
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border bg-card text-foreground"
+          >
+            التالي
+          </Button>
+        </div>
+      </div>
+    </Card>
+  )
+}
