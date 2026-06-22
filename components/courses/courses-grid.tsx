@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import {
   Search,
   MoreVertical,
@@ -79,9 +80,10 @@ export function CoursesGrid() {
       {/* Grid */}
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {filtered.map((course) => (
-          <article
+          <Link
             key={course.id}
-            className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md"
+            href={`/courses/${course.id}`}
+            className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <div className="relative aspect-video w-full overflow-hidden bg-secondary">
               <Image
@@ -143,17 +145,26 @@ export function CoursesGrid() {
                     {course.price}
                   </span>
                   <Button
+                    asChild
                     variant="ghost"
                     size="icon"
                     className="size-8 text-muted-foreground hover:text-foreground"
                   >
-                    <MoreVertical className="size-4" />
-                    <span className="sr-only">خيارات الكورس</span>
+                    <span
+                      role="button"
+                      tabIndex={-1}
+                      onClick={(e) => {
+                        e.preventDefault()
+                      }}
+                    >
+                      <MoreVertical className="size-4" />
+                      <span className="sr-only">خيارات الكورس</span>
+                    </span>
                   </Button>
                 </div>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
 

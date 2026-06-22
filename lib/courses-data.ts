@@ -1,6 +1,19 @@
 export type CourseStatus = 'منشور' | 'مسودة' | 'مؤرشف'
 export type CourseLevel = 'مبتدئ' | 'متوسط' | 'متقدم'
 
+export type LessonType = 'درس' | 'واجب'
+
+export type LessonRecord = {
+  id: string
+  order: number
+  title: string
+  type: LessonType
+  duration: string
+  // for assignments: عدد الأسئلة, for lessons: حالة النشر
+  meta: string
+  published: boolean
+}
+
 export type CourseRecord = {
   id: string
   title: string
@@ -140,3 +153,53 @@ export const courseStatusFilters: Array<{
   { label: 'مسودة', value: 'مسودة' },
   { label: 'مؤرشف', value: 'مؤرشف' },
 ]
+
+export function getCourseById(id: string): CourseRecord | undefined {
+  return courseRecords.find((course) => course.id === id)
+}
+
+const lessonTitles = [
+  'مقدمة ونظرة عامة',
+  'إعداد بيئة العمل',
+  'المفاهيم الأساسية',
+  'التطبيق العملي الأول',
+  'أمثلة وتمارين',
+  'مشروع تطبيقي',
+  'حل المشكلات الشائعة',
+  'الخلاصة والمراجعة',
+]
+
+// Generates a sample list of lessons (دروس + واجبات) for a given course.
+export function getCourseLessons(course: CourseRecord): LessonRecord[] {
+  const count = Math.min(course.lessons, 8)
+  const lessons: LessonRecord[] = []
+
+  for (let i = 0; i < count; i++) {
+    const isAssignment = i > 0 && (i + 1) % 3 === 0
+    const order = i + 1
+    if (isAssignment) {
+      lessons.push({
+        id: `${course.id}-A${order}`,
+        order,
+        title: `واجب ${order}: ${lessonTitles[i % lessonTitles.length]}`,
+        type: 'واجب',
+        duration: `${(order % 4) + 1} أسئلة`,
+        meta: 'تسليم خلال 7 أيام',
+        published: course.status === 'منشور',
+      })
+    } else {
+      const minutes = 8 + ((order * 7) % 35)
+      lessons.push({
+        id: `${course.id}-L${order}`,
+        order,
+        title: `${lessonTitles[i % lessonTitles.length]}`,
+        type: 'درس',
+        duration: `${minutes}:00 دقيقة`,
+        meta: course.status === 'منشور' ? 'منشور' : 'مسودة',
+        published: course.status === 'منشور',
+      })
+    }
+  }
+
+  return lessons
+}
