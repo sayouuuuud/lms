@@ -12,7 +12,6 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Crown,
   ChevronLeft,
   X,
 } from 'lucide-react'
@@ -95,22 +94,6 @@ export function Sidebar({
             </a>
           ))}
         </nav>
-
-        {/* Upgrade card */}
-        <div className="px-4 pb-3">
-          <div className="rounded-2xl bg-gradient-to-br from-sidebar-primary to-[oklch(0.5_0.21_295)] p-5 text-center">
-            <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-white/20">
-              <Crown className="size-6 text-white" />
-            </div>
-            <h3 className="text-sm font-bold text-white">ترقية خطتك</h3>
-            <p className="mt-1 text-xs leading-relaxed text-white/80">
-              احصل على مزايا وخيارات أكثر مع الباقة الاحترافية
-            </p>
-            <Button className="mt-4 w-full bg-white text-sidebar-primary hover:bg-white/90">
-              ترقية الآن
-            </Button>
-          </div>
-        </div>
 
         {/* Logout */}
         <div className="border-t border-sidebar-border px-4 py-4">
