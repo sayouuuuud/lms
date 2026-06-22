@@ -122,6 +122,81 @@ export const students = [
   },
 ]
 
+export const categories = [
+  {
+    name: 'البرمجة والتطوير',
+    description: 'تطوير الويب، تطبيقات الموبايل، وقواعد البيانات',
+    icon: 'Code2',
+    color: 'blue',
+    courses: 48,
+    students: '12,450',
+    revenue: '142,300 ج.م',
+  },
+  {
+    name: 'التصميم والإبداع',
+    description: 'تصميم الجرافيك وواجهات المستخدم UI/UX',
+    icon: 'Palette',
+    color: 'pink',
+    courses: 32,
+    students: '8,920',
+    revenue: '98,600 ج.م',
+  },
+  {
+    name: 'التسويق الرقمي',
+    description: 'التسويق عبر السوشيال ميديا وتحسين محركات البحث',
+    icon: 'Megaphone',
+    color: 'orange',
+    courses: 27,
+    students: '7,310',
+    revenue: '76,400 ج.م',
+  },
+  {
+    name: 'اللغات',
+    description: 'الإنجليزية، الفرنسية، والألمانية لجميع المستويات',
+    icon: 'Languages',
+    color: 'green',
+    courses: 21,
+    students: '9,640',
+    revenue: '64,200 ج.م',
+  },
+  {
+    name: 'الأعمال وريادة الأعمال',
+    description: 'إدارة المشاريع، المحاسبة، والقيادة',
+    icon: 'Briefcase',
+    color: 'indigo',
+    courses: 19,
+    students: '5,180',
+    revenue: '58,900 ج.م',
+  },
+  {
+    name: 'تطوير الذات',
+    description: 'مهارات التواصل، الإنتاجية، وإدارة الوقت',
+    icon: 'Sparkles',
+    color: 'teal',
+    courses: 16,
+    students: '6,070',
+    revenue: '41,500 ج.م',
+  },
+  {
+    name: 'التصوير والمونتاج',
+    description: 'التصوير الفوتوغرافي ومونتاج الفيديو',
+    icon: 'Camera',
+    color: 'rose',
+    courses: 14,
+    students: '3,250',
+    revenue: '33,800 ج.م',
+  },
+  {
+    name: 'العلوم والرياضيات',
+    description: 'الرياضيات، الفيزياء، والإحصاء التطبيقي',
+    icon: 'FlaskConical',
+    color: 'amber',
+    courses: 12,
+    students: '4,410',
+    revenue: '29,700 ج.م',
+  },
+]
+
 export const recentCourses = [
   {
     title: 'دليل احتراف الجافاسكريبت',

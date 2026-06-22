@@ -1,10 +1,13 @@
 'use client'
 
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   GraduationCap,
   LayoutDashboard,
   Users,
   BookOpen,
+  LayoutGrid,
   UploadCloud,
   CreditCard,
   MessageSquare,
@@ -20,15 +23,16 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 const navItems = [
-  { label: 'الصفحة الرئيسية', icon: LayoutDashboard, active: true },
-  { label: 'الطلاب', icon: Users },
-  { label: 'الكورسات', icon: BookOpen },
-  { label: 'رفع الدروس', icon: UploadCloud },
-  { label: 'المدفوعات', icon: CreditCard },
-  { label: 'رسائل', icon: MessageSquare },
-  { label: 'خصومات و الكوبونات', icon: Tag },
-  { label: 'التقارير', icon: BarChart3 },
-  { label: 'الإعدادات', icon: Settings },
+  { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/' },
+  { label: 'الطلاب', icon: Users, href: '#' },
+  { label: 'الكورسات', icon: BookOpen, href: '#' },
+  { label: 'التصنيفات', icon: LayoutGrid, href: '/categories' },
+  { label: 'رفع الدروس', icon: UploadCloud, href: '#' },
+  { label: 'المدفوعات', icon: CreditCard, href: '#' },
+  { label: 'رسائل', icon: MessageSquare, href: '#' },
+  { label: 'خصومات و الكوبونات', icon: Tag, href: '#' },
+  { label: 'التقارير', icon: BarChart3, href: '#' },
+  { label: 'الإعدادات', icon: Settings, href: '#' },
 ]
 
 export function Sidebar({
@@ -38,6 +42,8 @@ export function Sidebar({
   open: boolean
   onClose: () => void
 }) {
+  const pathname = usePathname()
+
   return (
     <>
       {open && (
@@ -77,23 +83,27 @@ export function Sidebar({
 
         {/* Nav */}
         <nav className="flex-1 space-y-1 px-4 py-2">
-          {navItems.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              aria-current={item.active ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors',
-                item.active
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/30'
-                  : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-white',
-              )}
-            >
-              <item.icon className="size-5 shrink-0" />
-              <span className="flex-1">{item.label}</span>
-              {item.active && <ChevronLeft className="size-4 opacity-70" />}
-            </a>
-          ))}
+          {navItems.map((item) => {
+            const active = item.href !== '#' && pathname === item.href
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={onClose}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors',
+                  active
+                    ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/30'
+                    : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-white',
+                )}
+              >
+                <item.icon className="size-5 shrink-0" />
+                <span className="flex-1">{item.label}</span>
+                {active && <ChevronLeft className="size-4 opacity-70" />}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Profile */}
