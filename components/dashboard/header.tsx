@@ -99,7 +99,7 @@ function MessagesDropdown() {
           </div>
 
           {/* list */}
-          <ul className="max-h-72 overflow-y-auto divide-y divide-border">
+          <ul className="max-h-72 overflow-y-auto scrollbar-hide divide-y divide-border">
             {messages.map((msg) => (
               <li key={msg.id}>
                 <button
@@ -202,7 +202,7 @@ function NotificationsDropdown() {
           </div>
 
           {/* list */}
-          <ul className="max-h-72 overflow-y-auto divide-y divide-border">
+          <ul className="max-h-72 overflow-y-auto scrollbar-hide divide-y divide-border">
             {notifications.map((n) => (
               <li key={n.id}>
                 <button
