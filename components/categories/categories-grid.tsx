@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { categoryRecords } from '@/lib/categories-data'
+import { useCategories } from './categories-context'
 
 const statusStyles: Record<string, string> = {
   'مفعّل': 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400',
@@ -15,15 +15,16 @@ const statusStyles: Record<string, string> = {
 }
 
 export function CategoriesGrid() {
+  const { categories, openEdit, requestDelete } = useCategories()
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
     const q = query.trim()
-    if (!q) return categoryRecords
-    return categoryRecords.filter(
+    if (!q) return categories
+    return categories.filter(
       (c) => c.name.includes(q) || c.description.includes(q),
     )
-  }, [query])
+  }, [query, categories])
 
   return (
     <Card className="gap-0 p-5">
@@ -63,6 +64,7 @@ export function CategoriesGrid() {
                   variant="ghost"
                   size="icon"
                   className="size-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => openEdit(category)}
                 >
                   <MoreVertical className="size-4" />
                   <span className="sr-only">خيارات التصنيف</span>
@@ -98,7 +100,12 @@ export function CategoriesGrid() {
               </div>
 
               <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" className="h-8 flex-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 flex-1"
+                  onClick={() => openEdit(category)}
+                >
                   <Pencil className="size-4" />
                   تعديل
                 </Button>
@@ -106,6 +113,7 @@ export function CategoriesGrid() {
                   variant="outline"
                   size="sm"
                   className="h-8 border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:hover:bg-rose-500/10"
+                  onClick={() => requestDelete(category)}
                 >
                   <Trash2 className="size-4" />
                   <span className="sr-only">حذف التصنيف</span>

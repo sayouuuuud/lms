@@ -1,17 +1,16 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Search, MoreVertical, Mail, Phone } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { Search, Trash2, Mail, Phone } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/get-initials'
 import { cn } from '@/lib/utils'
-import {
-  studentRecords,
-  statusFilters,
-  type StudentStatus,
-} from '@/lib/students-data'
+import { statusFilters, type StudentStatus } from '@/lib/students-data'
+import { useStudents } from './students-context'
 
 const statusStyles: Record<StudentStatus, string> = {
   نشط: 'bg-success/10 text-success',
@@ -20,12 +19,14 @@ const statusStyles: Record<StudentStatus, string> = {
 }
 
 export function StudentsTable() {
+  const { students, requestDelete } = useStudents()
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<StudentStatus | 'الكل'>('الكل')
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return studentRecords.filter((student) => {
+    return students.filter((student) => {
       const matchesStatus = filter === 'الكل' || student.status === filter
       const matchesQuery =
         q === '' ||
@@ -34,7 +35,7 @@ export function StudentsTable() {
         student.id.toLowerCase().includes(q)
       return matchesStatus && matchesQuery
     })
-  }, [query, filter])
+  }, [query, filter, students])
 
   return (
     <Card className="gap-0 p-5">
@@ -140,10 +141,11 @@ export function StudentsTable() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8 text-muted-foreground hover:text-foreground"
+                    className="size-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => requestDelete(student)}
                   >
-                    <MoreVertical className="size-4" />
-                    <span className="sr-only">خيارات الطالب</span>
+                    <Trash2 className="size-4" />
+                    <span className="sr-only">حذف الطالب</span>
                   </Button>
                 </td>
               </tr>
@@ -187,11 +189,23 @@ export function StudentsTable() {
               <span>انضم: <strong className="text-foreground">{student.joinedAt}</strong></span>
             </div>
             <div className="mt-3 flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 border-border bg-card">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-border bg-card"
+                onClick={() => router.push('/messages')}
+              >
                 <Mail className="size-3.5" />
                 مراسلة
               </Button>
-              <Button variant="outline" size="sm" className="flex-1 border-border bg-card">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-border bg-card"
+                onClick={() => {
+                  window.location.href = `tel:${student.phone.replace(/\s/g, '')}`
+                }}
+              >
                 <Phone className="size-3.5" />
                 اتصال
               </Button>
@@ -210,13 +224,14 @@ export function StudentsTable() {
       <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
         <span>
           عرض <strong className="text-foreground">{filtered.length}</strong> من أصل{' '}
-          <strong className="text-foreground">{studentRecords.length}</strong> طالب
+          <strong className="text-foreground">{students.length}</strong> طالب
         </span>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
             className="border-border bg-card text-foreground"
+            onClick={() => toast.info('أنت في الصفحة الأولى')}
           >
             السابق
           </Button>
@@ -224,6 +239,7 @@ export function StudentsTable() {
             variant="outline"
             size="sm"
             className="border-border bg-card text-foreground"
+            onClick={() => toast.info('لا توجد صفحات إضافية')}
           >
             التالي
           </Button>

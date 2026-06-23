@@ -5,7 +5,8 @@ import { Search, Copy, Check, Pencil, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { couponRecords, type CouponStatus } from '@/lib/coupons-data'
+import { type CouponStatus } from '@/lib/coupons-data'
+import { useCoupons } from './coupons-context'
 
 const statusStyles: Record<CouponStatus, string> = {
   نشط: 'bg-success/10 text-success',
@@ -29,13 +30,14 @@ function formatDate(date: string) {
 }
 
 export function CouponsTable() {
+  const { coupons, openEdit, requestDelete } = useCoupons()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<CouponStatus | 'الكل'>('الكل')
   const [copied, setCopied] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return couponRecords.filter((coupon) => {
+    return coupons.filter((coupon) => {
       const matchesStatus = filter === 'الكل' || coupon.status === filter
       const matchesQuery =
         q === '' ||
@@ -43,7 +45,7 @@ export function CouponsTable() {
         coupon.description.toLowerCase().includes(q)
       return matchesStatus && matchesQuery
     })
-  }, [query, filter])
+  }, [query, filter, coupons])
 
   const handleCopy = (code: string) => {
     navigator.clipboard?.writeText(code)
@@ -157,6 +159,7 @@ export function CouponsTable() {
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:text-foreground"
+                        onClick={() => openEdit(coupon)}
                       >
                         <Pencil className="size-4" />
                         <span className="sr-only">تعديل الكوبون</span>
@@ -165,6 +168,7 @@ export function CouponsTable() {
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => requestDelete(coupon)}
                       >
                         <Trash2 className="size-4" />
                         <span className="sr-only">حذف الكوبون</span>
@@ -225,7 +229,12 @@ export function CouponsTable() {
                 </span>
               </div>
               <div className="mt-3 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 border-border bg-card">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-border bg-card"
+                  onClick={() => openEdit(coupon)}
+                >
                   <Pencil className="size-3.5" />
                   تعديل
                 </Button>
@@ -233,6 +242,7 @@ export function CouponsTable() {
                   variant="outline"
                   size="sm"
                   className="flex-1 border-border bg-card text-destructive hover:text-destructive"
+                  onClick={() => requestDelete(coupon)}
                 >
                   <Trash2 className="size-3.5" />
                   حذف
@@ -253,7 +263,7 @@ export function CouponsTable() {
       <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
         <span>
           عرض <strong className="text-foreground">{filtered.length}</strong> من أصل{' '}
-          <strong className="text-foreground">{couponRecords.length}</strong> كوبون
+          <strong className="text-foreground">{coupons.length}</strong> كوبون
         </span>
       </div>
     </Card>
