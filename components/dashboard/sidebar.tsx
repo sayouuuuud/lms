@@ -105,8 +105,9 @@ export function Sidebar({
 
         {/* Profile */}
         <div className="px-4 pb-2">
-          <a
-            href="#"
+          <Link
+            href="/settings"
+            onClick={onClose}
             className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-3 transition-colors hover:bg-white/10"
           >
             <Avatar className="size-10 ring-2 ring-sidebar-primary/40">
@@ -119,7 +120,7 @@ export function Sidebar({
               <p className="text-xs text-sidebar-foreground/60">عرض الملف الشخصي</p>
             </div>
             <ChevronLeft className="size-4 text-sidebar-foreground/50" />
-          </a>
+          </Link>
         </div>
 
         {/* Logout */}
