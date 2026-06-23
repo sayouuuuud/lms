@@ -1,0 +1,21 @@
+import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
+import { CalendarProvider } from '@/components/calendar/calendar-context'
+import { CalendarPageHeader } from '@/components/calendar/calendar-page-header'
+import { CalendarStats } from '@/components/calendar/calendar-stats'
+import { CalendarView } from '@/components/calendar/calendar-view'
+import { EventFormModal } from '@/components/calendar/event-form-modal'
+
+export default function CalendarPage() {
+  return (
+    <DashboardLayout>
+      <CalendarProvider>
+        <div className="space-y-6">
+          <CalendarPageHeader />
+          <CalendarStats />
+          <CalendarView />
+        </div>
+        <EventFormModal />
+      </CalendarProvider>
+    </DashboardLayout>
+  )
+}
