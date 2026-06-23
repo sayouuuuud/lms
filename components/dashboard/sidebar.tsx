@@ -123,8 +123,8 @@ export function Sidebar({
         </div>
 
         {/* Nav */}
-        <nav className="flex flex-1 flex-col justify-between px-2 py-2">
-          <div className="flex flex-col gap-0.5">
+        <nav className="flex flex-1 flex-col px-2 py-2">
+          <div className="flex flex-1 flex-col justify-around">
           {navItems.map((item) => {
             const active =
               item.href === '/'
