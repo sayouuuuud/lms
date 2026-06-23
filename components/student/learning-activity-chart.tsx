@@ -17,7 +17,7 @@ const config = {
 export function LearningActivityChart() {
   return (
     <PanelCard title="نشاط التعلّم الأسبوعي" filter="هذا الأسبوع">
-      <ChartContainer config={config} className="h-full min-h-[240px] w-full">
+      <ChartContainer config={config} className="aspect-auto h-[260px] w-full">
         <AreaChart data={learningActivity} margin={{ left: 4, right: 8, top: 8 }}>
           <defs>
             <linearGradient id="fillHours" x1="0" y1="0" x2="0" y2="1">

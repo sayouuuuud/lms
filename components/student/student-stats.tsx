@@ -1,4 +1,4 @@
-import { BookOpen, CheckCircle2, Award, Clock } from 'lucide-react'
+import { BookOpen, CheckCircle2, FileCheck2, Clock } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
@@ -20,10 +20,10 @@ const stats = [
     bg: 'bg-emerald-50 dark:bg-emerald-500/10',
   },
   {
-    label: 'الشهادات',
-    value: '2',
-    sub: 'شهادة مكتسبة',
-    icon: Award,
+    label: 'الواجبات المسلّمة',
+    value: '12',
+    sub: 'من 15 واجب',
+    icon: FileCheck2,
     color: 'text-amber-600',
     bg: 'bg-amber-50 dark:bg-amber-500/10',
   },
