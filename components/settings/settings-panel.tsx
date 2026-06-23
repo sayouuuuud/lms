@@ -7,6 +7,7 @@ import {
   Shield,
   SlidersHorizontal,
   Camera,
+  Check,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,68 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ToggleSwitch } from '@/components/settings/toggle-switch'
+
+// ── Color presets ──────────────────────────────────────────────
+const colorPresets = [
+  {
+    id: 'violet',
+    label: 'بنفسجي',
+    light: { primary: 'oklch(0.55 0.21 287)', sidebar: 'oklch(0.6 0.21 287)', ring: 'oklch(0.55 0.21 287)' },
+    dark:  { primary: 'oklch(0.62 0.21 287)', sidebar: 'oklch(0.62 0.21 287)', ring: 'oklch(0.62 0.21 287)' },
+    swatch: '#7c3aed',
+  },
+  {
+    id: 'blue',
+    label: 'أزرق',
+    light: { primary: 'oklch(0.55 0.2 240)', sidebar: 'oklch(0.6 0.2 240)', ring: 'oklch(0.55 0.2 240)' },
+    dark:  { primary: 'oklch(0.62 0.2 240)', sidebar: 'oklch(0.62 0.2 240)', ring: 'oklch(0.62 0.2 240)' },
+    swatch: '#2563eb',
+  },
+  {
+    id: 'cyan',
+    label: 'سماوي',
+    light: { primary: 'oklch(0.58 0.18 210)', sidebar: 'oklch(0.62 0.18 210)', ring: 'oklch(0.58 0.18 210)' },
+    dark:  { primary: 'oklch(0.65 0.18 210)', sidebar: 'oklch(0.65 0.18 210)', ring: 'oklch(0.65 0.18 210)' },
+    swatch: '#0891b2',
+  },
+  {
+    id: 'green',
+    label: 'أخضر',
+    light: { primary: 'oklch(0.55 0.18 160)', sidebar: 'oklch(0.6 0.18 160)', ring: 'oklch(0.55 0.18 160)' },
+    dark:  { primary: 'oklch(0.62 0.18 160)', sidebar: 'oklch(0.62 0.18 160)', ring: 'oklch(0.62 0.18 160)' },
+    swatch: '#16a34a',
+  },
+  {
+    id: 'orange',
+    label: 'برتقالي',
+    light: { primary: 'oklch(0.65 0.2 55)', sidebar: 'oklch(0.68 0.2 55)', ring: 'oklch(0.65 0.2 55)' },
+    dark:  { primary: 'oklch(0.7 0.2 55)',  sidebar: 'oklch(0.7 0.2 55)',  ring: 'oklch(0.7 0.2 55)' },
+    swatch: '#ea580c',
+  },
+  {
+    id: 'rose',
+    label: 'وردي',
+    light: { primary: 'oklch(0.58 0.22 10)', sidebar: 'oklch(0.62 0.22 10)', ring: 'oklch(0.58 0.22 10)' },
+    dark:  { primary: 'oklch(0.65 0.22 10)', sidebar: 'oklch(0.65 0.22 10)', ring: 'oklch(0.65 0.22 10)' },
+    swatch: '#e11d48',
+  },
+] as const
+
+type PresetId = (typeof colorPresets)[number]['id']
+
+function applyColorPreset(id: PresetId) {
+  const preset = colorPresets.find((p) => p.id === id)
+  if (!preset) return
+  const isDark = document.documentElement.classList.contains('dark')
+  const vals = isDark ? preset.dark : preset.light
+  const root = document.documentElement
+  root.style.setProperty('--primary', vals.primary)
+  root.style.setProperty('--ring', vals.ring)
+  root.style.setProperty('--sidebar-primary', vals.sidebar)
+  root.style.setProperty('--sidebar-accent', vals.sidebar)
+  root.style.setProperty('--sidebar-ring', vals.ring)
+  localStorage.setItem('color-preset', id)
+}
 
 const tabs = [
   { id: 'profile', label: 'الملف الشخصي', icon: User },
@@ -45,6 +108,14 @@ export function SettingsPanel() {
   // preferences
   const [darkMode, setDarkMode] = useState(false)
   const [autoPublish, setAutoPublish] = useState(false)
+  const [activeColor, setActiveColor] = useState<PresetId>(
+    () => (typeof window !== 'undefined' ? (localStorage.getItem('color-preset') as PresetId) : null) ?? 'violet',
+  )
+
+  function handleColorChange(id: PresetId) {
+    setActiveColor(id)
+    applyColorPreset(id)
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
@@ -258,6 +329,42 @@ export function SettingsPanel() {
                 label="النشر التلقائي"
                 description="نشر الكورسات الجديدة تلقائياً بعد المراجعة"
               />
+            </div>
+
+            {/* Color picker */}
+            <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+              <p className="mb-3 text-right text-sm font-medium text-foreground">
+                لون الموقع
+              </p>
+              <p className="mb-4 text-right text-xs text-muted-foreground">
+                اختر اللون الرئيسي للواجهة وسيتطبق فوراً على السايدبار والأزرار
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {colorPresets.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handleColorChange(preset.id)}
+                    title={preset.label}
+                    aria-label={preset.label}
+                    className={cn(
+                      'group relative flex size-10 items-center justify-center rounded-full transition-transform hover:scale-110',
+                      activeColor === preset.id && 'ring-2 ring-offset-2 ring-offset-card ring-foreground/30',
+                    )}
+                    style={{ backgroundColor: preset.swatch }}
+                  >
+                    {activeColor === preset.id && (
+                      <Check className="size-4 text-white drop-shadow" strokeWidth={3} />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-right text-xs text-muted-foreground">
+                اللون الحالي:{' '}
+                <span className="font-semibold text-foreground">
+                  {colorPresets.find((p) => p.id === activeColor)?.label}
+                </span>
+              </p>
             </div>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
