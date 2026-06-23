@@ -29,7 +29,7 @@ const navItems = [
   { label: 'المدفوعات', icon: CreditCard, href: '/payments' },
   { label: 'رسائل', icon: MessageSquare, href: '/messages' },
   { label: 'خصومات و الكوبونات', icon: Tag, href: '/coupons' },
-  { label: 'التقارير', icon: BarChart3, href: '#' },
+  { label: 'التقارير', icon: BarChart3, href: '/reports' },
   { label: 'الإعدادات', icon: Settings, href: '#' },
 ]
 
