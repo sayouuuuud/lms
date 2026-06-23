@@ -17,7 +17,7 @@ const config = {
 export function RevenueChart() {
   return (
     <PanelCard title="الإيرادات الشهرية" filter="آخر 6 أشهر">
-      <ChartContainer config={config} className="h-[240px] w-full">
+      <ChartContainer config={config} className="h-full min-h-[240px] w-full">
         <LineChart data={revenueData} margin={{ left: 4, right: 8, top: 8 }}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis

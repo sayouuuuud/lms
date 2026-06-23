@@ -14,7 +14,7 @@ export function PanelCard({
   children: ReactNode
 }) {
   return (
-    <Card className="gap-0 p-5">
+    <Card className="flex h-full flex-col gap-0 p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-bold text-foreground">{title}</h3>
         {filter && (
@@ -35,7 +35,9 @@ export function PanelCard({
           </button>
         )}
       </div>
-      {children}
+      <div className="flex min-h-0 flex-1 flex-col justify-center">
+        {children}
+      </div>
     </Card>
   )
 }

@@ -17,7 +17,7 @@ const config = {
 export function StudentsChart() {
   return (
     <PanelCard title="نمو الطلاب" filter="آخر 6 أشهر">
-      <ChartContainer config={config} className="h-[240px] w-full">
+      <ChartContainer config={config} className="h-full min-h-[240px] w-full">
         <AreaChart data={studentsData} margin={{ left: 4, right: 8, top: 8 }}>
           <defs>
             <linearGradient id="fillStudents" x1="0" y1="0" x2="0" y2="1">
