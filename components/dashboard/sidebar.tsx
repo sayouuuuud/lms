@@ -30,7 +30,7 @@ const navItems = [
   { label: 'رسائل', icon: MessageSquare, href: '/messages' },
   { label: 'خصومات و الكوبونات', icon: Tag, href: '/coupons' },
   { label: 'التقارير', icon: BarChart3, href: '/reports' },
-  { label: 'الإعدادات', icon: Settings, href: '#' },
+  { label: 'الإعدادات', icon: Settings, href: '/settings' },
 ]
 
 export function Sidebar({
