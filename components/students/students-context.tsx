@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { exportToCsv } from '@/lib/export-csv'
 import {
   studentRecords,
+  type StudentGender,
   type StudentRecord,
   type StudentStatus,
 } from '@/lib/students-data'
@@ -19,6 +20,7 @@ export type StudentFormValues = {
   name: string
   email: string
   phone: string
+  gender: StudentGender
   status: StudentStatus
 }
 
@@ -61,6 +63,7 @@ export function StudentsProvider({ children }: { children: ReactNode }) {
             الاسم: s.name,
             'البريد الإلكتروني': s.email,
             الهاتف: s.phone,
+            الجنس: s.gender,
             الكورسات: s.courses,
             'نسبة التقدم': `${s.progress}%`,
             الإنفاق: s.spent,
@@ -79,6 +82,7 @@ export function StudentsProvider({ children }: { children: ReactNode }) {
           name: values.name,
           email: values.email,
           phone: values.phone,
+          gender: values.gender,
           status: values.status,
           courses: 0,
           progress: 0,

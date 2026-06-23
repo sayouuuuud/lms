@@ -7,8 +7,10 @@ import {
   LayoutDashboard,
   Users,
   BookOpen,
+  ClipboardList,
   CreditCard,
   MessageSquare,
+  Bell,
   Tag,
   FolderTree,
   BarChart3,
@@ -24,9 +26,11 @@ const navItems = [
   { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/' },
   { label: 'الطلاب', icon: Users, href: '/students' },
   { label: 'الكورسات', icon: BookOpen, href: '/courses' },
+  { label: 'الاختبارات', icon: ClipboardList, href: '/exams' },
   { label: 'التصنيفات', icon: FolderTree, href: '/categories' },
   { label: 'المدفوعات', icon: CreditCard, href: '/payments' },
   { label: 'رسائل', icon: MessageSquare, href: '/messages' },
+  { label: 'الإشعارات', icon: Bell, href: '/notifications' },
   { label: 'خصومات و الكوبونات', icon: Tag, href: '/coupons' },
   { label: 'التقارير', icon: BarChart3, href: '/reports' },
   { label: 'الإعدادات', icon: Settings, href: '/settings' },
@@ -80,7 +84,11 @@ export function Sidebar({
         {/* Nav */}
         <nav className="flex-1 space-y-1 px-4 py-2">
           {navItems.map((item) => {
-            const active = item.href !== '#' && pathname === item.href
+            const active =
+              item.href === '/'
+                ? pathname === '/'
+                : pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`)
             return (
               <Link
                 key={item.label}

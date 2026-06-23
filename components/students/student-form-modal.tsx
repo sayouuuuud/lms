@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useStudents } from './students-context'
-import type { StudentStatus } from '@/lib/students-data'
+import type { StudentGender, StudentStatus } from '@/lib/students-data'
 
 const statuses: StudentStatus[] = ['نشط', 'غير نشط', 'موقوف']
+const genders: StudentGender[] = ['ذكر', 'أنثى']
 
 export function StudentFormModal() {
   const {
@@ -24,6 +25,7 @@ export function StudentFormModal() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [gender, setGender] = useState<StudentGender>('ذكر')
   const [status, setStatus] = useState<StudentStatus>('نشط')
 
   useEffect(() => {
@@ -31,6 +33,7 @@ export function StudentFormModal() {
       setName('')
       setEmail('')
       setPhone('')
+      setGender('ذكر')
       setStatus('نشط')
     }
   }, [formOpen])
@@ -42,6 +45,7 @@ export function StudentFormModal() {
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim(),
+      gender,
       status,
     })
   }
@@ -79,6 +83,28 @@ export function StudentFormModal() {
               placeholder="0100 000 0000"
               dir="ltr"
             />
+          </Field>
+          <Field label="الجنس">
+            <div className="flex gap-2">
+              {genders.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGender(g)}
+                  className={cn(
+                    'flex-1 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors',
+                    gender === g
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-secondary/60 text-muted-foreground hover:bg-secondary',
+                  )}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              لو الطالب مرفقش صورة، هيتحطله أفاتار تلقائي حسب الجنس.
+            </p>
           </Field>
           <Field label="الحالة">
             <div className="flex gap-2">

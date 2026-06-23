@@ -6,10 +6,14 @@ import { toast } from 'sonner'
 import { Search, Trash2, Mail, Phone } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/get-initials'
 import { cn } from '@/lib/utils'
-import { statusFilters, type StudentStatus } from '@/lib/students-data'
+import {
+  getStudentAvatar,
+  statusFilters,
+  type StudentStatus,
+} from '@/lib/students-data'
 import { useStudents } from './students-context'
 
 const statusStyles: Record<StudentStatus, string> = {
@@ -88,10 +92,18 @@ export function StudentsTable() {
           </thead>
           <tbody className="divide-y divide-border">
             {filtered.map((student) => (
-              <tr key={student.id} className="transition-colors hover:bg-secondary/40">
+              <tr
+                key={student.id}
+                onClick={() => router.push(`/students/${student.id}`)}
+                className="cursor-pointer transition-colors hover:bg-secondary/40"
+              >
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-3">
                     <Avatar className="size-9">
+                      <AvatarImage
+                        src={getStudentAvatar(student)}
+                        alt={student.name}
+                      />
                       <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                         {getInitials(student.name)}
                       </AvatarFallback>
@@ -142,7 +154,10 @@ export function StudentsTable() {
                     variant="ghost"
                     size="icon"
                     className="size-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => requestDelete(student)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      requestDelete(student)
+                    }}
                   >
                     <Trash2 className="size-4" />
                     <span className="sr-only">حذف الطالب</span>
@@ -161,8 +176,12 @@ export function StudentsTable() {
             key={student.id}
             className="rounded-xl border border-border bg-secondary/30 p-4"
           >
-            <div className="flex items-center gap-3">
+            <div
+              className="flex cursor-pointer items-center gap-3"
+              onClick={() => router.push(`/students/${student.id}`)}
+            >
               <Avatar className="size-10">
+                <AvatarImage src={getStudentAvatar(student)} alt={student.name} />
                 <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                   {getInitials(student.name)}
                 </AvatarFallback>

@@ -6,7 +6,7 @@ export function TopCourses() {
   return (
     <PanelCard title="أكثر الكورسات مبيعاً" filter="هذا الشهر">
       <ul className="space-y-1">
-        {topCourses.map((course) => (
+        {topCourses.slice(0, 4).map((course) => (
           <li
             key={course.title}
             className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-secondary/60"

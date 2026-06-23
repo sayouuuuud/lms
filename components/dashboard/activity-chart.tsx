@@ -17,7 +17,7 @@ const config = {
 export function ActivityChart() {
   return (
     <PanelCard title="نشاط المنصة" filter="هذا الأسبوع">
-      <ChartContainer config={config} className="h-[240px] w-full">
+      <ChartContainer config={config} className="h-full min-h-[240px] w-full">
         <BarChart data={activityData} margin={{ left: 4, right: 8, top: 8 }}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis

@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Cairo, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const cairo = Cairo({
@@ -38,9 +39,17 @@ export default function RootLayout({
       lang="ar"
       dir="rtl"
       className={`${cairo.variable} ${geistMono.variable} bg-background`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t===null&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className={`${cairo.className} font-sans antialiased`}>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
         <Toaster position="top-center" richColors dir="rtl" theme="system" />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
