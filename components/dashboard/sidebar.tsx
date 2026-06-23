@@ -68,12 +68,7 @@ export function Sidebar({
         )}
       >
         {/* Logo */}
-        <div
-          className={cn(
-            'flex shrink-0 items-center gap-3 px-4 py-4',
-            collapsed ? 'justify-center' : 'justify-between px-6',
-          )}
-        >
+        <div className="flex shrink-0 items-center justify-between gap-3 px-6 py-4">
           {!collapsed && (
             <div className="flex items-center gap-3">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
@@ -83,12 +78,6 @@ export function Sidebar({
                 <h1 className="text-base font-bold text-white">منصة تعليمية</h1>
                 <p className="text-xs text-sidebar-foreground/60">لوحة الإدارة</p>
               </div>
-            </div>
-          )}
-
-          {collapsed && (
-            <div className="flex size-11 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
-              <GraduationCap className="size-6" />
             </div>
           )}
 
@@ -108,10 +97,7 @@ export function Sidebar({
             variant="ghost"
             size="icon"
             onClick={onToggleCollapse}
-            className={cn(
-              'hidden text-sidebar-foreground hover:bg-white/10 hover:text-white md:flex',
-              collapsed && 'mt-0',
-            )}
+            className="hidden text-sidebar-foreground hover:bg-white/10 hover:text-white md:flex"
             aria-label={collapsed ? 'توسيع القائمة' : 'طي القائمة'}
           >
             {collapsed ? (
@@ -132,28 +118,36 @@ export function Sidebar({
                 : pathname === item.href ||
                   pathname.startsWith(`${item.href}/`)
             return (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={onClose}
-                aria-current={active ? 'page' : undefined}
-                title={collapsed ? item.label : undefined}
-                className={cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                  collapsed ? 'justify-center px-0' : '',
-                  active
-                    ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/30'
-                    : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-white',
+              <div key={item.label} className="group relative">
+                <Link
+                  href={item.href}
+                  onClick={onClose}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                    collapsed ? 'justify-center' : '',
+                    active
+                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/30'
+                      : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-white',
+                  )}
+                >
+                  <item.icon className="size-5 shrink-0" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1">{item.label}</span>
+                      {active && <ChevronLeft className="size-4 opacity-70" />}
+                    </>
+                  )}
+                </Link>
+
+                {/* Tooltip on collapsed */}
+                {collapsed && (
+                  <div className="pointer-events-none absolute right-full top-1/2 z-50 me-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                    {item.label}
+                    <span className="absolute right-[-4px] top-1/2 -translate-y-1/2 border-4 border-transparent border-l-foreground" />
+                  </div>
                 )}
-              >
-                <item.icon className="size-5 shrink-0" />
-                {!collapsed && (
-                  <>
-                    <span className="flex-1">{item.label}</span>
-                    {active && <ChevronLeft className="size-4 opacity-70" />}
-                  </>
-                )}
-              </Link>
+              </div>
             )
           })}
           </div>
@@ -161,17 +155,24 @@ export function Sidebar({
 
         {/* Logout */}
         <div className="shrink-0 border-t border-sidebar-border px-2 py-2">
-          <a
-            href="#"
-            title={collapsed ? 'تسجيل الخروج' : undefined}
-            className={cn(
-              'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-white/5 hover:text-white',
-              collapsed && 'justify-center px-0',
+          <div className="group relative">
+            <a
+              href="#"
+              className={cn(
+                'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-white/5 hover:text-white',
+                collapsed && 'justify-center',
+              )}
+            >
+              <LogOut className="size-5 shrink-0" />
+              {!collapsed && <span>تسجيل الخروج</span>}
+            </a>
+            {collapsed && (
+              <div className="pointer-events-none absolute right-full top-1/2 z-50 me-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                تسجيل الخروج
+                <span className="absolute right-[-4px] top-1/2 -translate-y-1/2 border-4 border-transparent border-l-foreground" />
+              </div>
             )}
-          >
-            <LogOut className="size-5 shrink-0" />
-            {!collapsed && <span>تسجيل الخروج</span>}
-          </a>
+          </div>
         </div>
       </aside>
     </>
