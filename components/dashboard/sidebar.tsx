@@ -123,7 +123,8 @@ export function Sidebar({
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 space-y-0.5 overflow-y-auto scrollbar-hide px-2 py-1">
+        <nav className="flex flex-1 flex-col justify-between px-2 py-2">
+          <div className="flex flex-col gap-0.5">
           {navItems.map((item) => {
             const active =
               item.href === '/'
@@ -138,7 +139,7 @@ export function Sidebar({
                 aria-current={active ? 'page' : undefined}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors',
+                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
                   collapsed ? 'justify-center px-0' : '',
                   active
                     ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/30'
@@ -155,6 +156,7 @@ export function Sidebar({
               </Link>
             )
           })}
+          </div>
         </nav>
 
         {/* Logout */}
