@@ -19,7 +19,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 const navItems = [
   { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/' },
@@ -102,26 +101,6 @@ export function Sidebar({
             )
           })}
         </nav>
-
-        {/* Profile */}
-        <div className="px-4 pb-2">
-          <Link
-            href="/settings"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-xl bg-white/5 px-3 py-3 transition-colors hover:bg-white/10"
-          >
-            <Avatar className="size-10 ring-2 ring-sidebar-primary/40">
-              <AvatarFallback className="bg-sidebar-primary/20 text-sm font-semibold text-white">
-                م أ
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 leading-tight">
-              <p className="text-sm font-semibold text-white">محمد أحمد</p>
-              <p className="text-xs text-sidebar-foreground/60">عرض الملف الشخصي</p>
-            </div>
-            <ChevronLeft className="size-4 text-sidebar-foreground/50" />
-          </Link>
-        </div>
 
         {/* Logout */}
         <div className="border-t border-sidebar-border px-4 py-4">
