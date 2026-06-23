@@ -1,7 +1,12 @@
+'use client'
+
 import { UserPlus, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useStudents } from './students-context'
 
 export function StudentsPageHeader() {
+  const { openCreate, exportData } = useStudents()
+
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="text-right">
@@ -15,11 +20,12 @@ export function StudentsPageHeader() {
         <Button
           variant="outline"
           className="border-border bg-card text-foreground hover:bg-secondary"
+          onClick={exportData}
         >
           <Download className="size-4" />
           تصدير البيانات
         </Button>
-        <Button>
+        <Button onClick={openCreate}>
           <UserPlus className="size-4" />
           إضافة طالب
         </Button>
