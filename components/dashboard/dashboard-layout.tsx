@@ -1,28 +1,13 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
+import { useTheme } from '@/components/theme-provider'
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isDark, setIsDark] = useState(false)
-
-  // استرجاع الوضع المحفوظ عند أول تحميل
-  useEffect(() => {
-    const stored = localStorage.getItem('theme')
-    const prefersDark =
-      stored === 'dark' ||
-      (stored === null &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches)
-    setIsDark(prefersDark)
-  }, [])
-
-  // تطبيق الوضع وحفظه عند أي تغيير
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark)
-    localStorage.setItem('theme', isDark ? 'dark' : 'light')
-  }, [isDark])
+  const { isDark, toggleTheme } = useTheme()
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -32,7 +17,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           isDark={isDark}
-          onToggleTheme={() => setIsDark((v) => !v)}
+          onToggleTheme={toggleTheme}
         />
 
         <main className="flex-1 space-y-6 p-4 sm:p-6">
