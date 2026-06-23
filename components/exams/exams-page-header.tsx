@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { FilePlus2, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -43,7 +44,7 @@ export function ExamsPageHeader() {
           <Download className="size-4" />
           تصدير البيانات
         </Button>
-        <Button onClick={() => toast.info('سيتم فتح نموذج إنشاء اختبار جديد قريبًا')}>
+        <Button render={<Link href="/exams/create" />}>
           <FilePlus2 className="size-4" />
           إنشاء اختبار
         </Button>
