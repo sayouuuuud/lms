@@ -81,7 +81,7 @@ function MessagesDropdown() {
       </Button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
           {/* header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm font-bold text-foreground">الرسائل</span>
@@ -179,7 +179,7 @@ function NotificationsDropdown() {
       </Button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
           {/* header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm font-bold text-foreground">
