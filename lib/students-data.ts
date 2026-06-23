@@ -1,15 +1,47 @@
 export type StudentStatus = 'نشط' | 'غير نشط' | 'موقوف'
 
+export type StudentGender = 'ذكر' | 'أنثى'
+
 export type StudentRecord = {
   id: string
   name: string
   email: string
   phone: string
+  gender: StudentGender
+  avatar?: string
   courses: number
   progress: number
   spent: string
   status: StudentStatus
   joinedAt: string
+}
+
+const maleAvatars = [
+  'https://assets.watermelon.sh/wm_ben.png',
+  'https://assets.watermelon.sh/wm_josh.png',
+]
+
+const femaleAvatars = [
+  'https://assets.watermelon.sh/wm_olivia.png',
+  'https://assets.watermelon.sh/wm_emma.png',
+]
+
+/**
+ * يرجّع صورة الأفاتار الخاصة بالطالب.
+ * لو الطالب رافع صورة بنفسه نستخدمها، وإلا نختار أفاتار حسب الجنس
+ * (أفاتار ولد للذكر وأفاتار بنت للأنثى) بشكل ثابت لكل طالب.
+ */
+export function getStudentAvatar(student: {
+  id: string
+  gender: StudentGender
+  avatar?: string
+}): string {
+  if (student.avatar) return student.avatar
+  const pool = student.gender === 'أنثى' ? femaleAvatars : maleAvatars
+  const seed = student.id
+    .split('')
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return pool[seed % pool.length]
 }
 
 export const studentRecords: StudentRecord[] = [
@@ -18,6 +50,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'محمد إبراهيم',
     email: 'mohamed.ibrahim@email.com',
     phone: '0100 123 4567',
+    gender: 'ذكر',
     courses: 5,
     progress: 82,
     spent: '2,450 ج.م',
@@ -29,6 +62,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'فاطمة الزهراء',
     email: 'fatma.az@gmail.com',
     phone: '0111 987 6543',
+    gender: 'أنثى',
     courses: 3,
     progress: 64,
     spent: '1,350 ج.م',
@@ -40,6 +74,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'يوسف محمد',
     email: 'youssef.mohamed@email.com',
     phone: '0122 456 7890',
+    gender: 'ذكر',
     courses: 2,
     progress: 38,
     spent: '900 ج.م',
@@ -51,6 +86,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'سارة محمود',
     email: 'sara.mahmoud@email.com',
     phone: '0109 321 6547',
+    gender: 'أنثى',
     courses: 7,
     progress: 91,
     spent: '3,800 ج.م',
@@ -62,6 +98,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'أحمد خالد',
     email: 'ahmed.khaled@email.com',
     phone: '0115 654 3210',
+    gender: 'ذكر',
     courses: 1,
     progress: 12,
     spent: '450 ج.م',
@@ -73,6 +110,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'نورهان السيد',
     email: 'nourhan.elsayed@email.com',
     phone: '0128 741 9630',
+    gender: 'أنثى',
     courses: 4,
     progress: 73,
     spent: '1,980 ج.م',
@@ -84,6 +122,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'محمود علي',
     email: 'mahmoud.ali@email.com',
     phone: '0106 852 7413',
+    gender: 'ذكر',
     courses: 2,
     progress: 45,
     spent: '750 ج.م',
@@ -95,6 +134,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'مريم حسن',
     email: 'mariam.hassan@email.com',
     phone: '0114 369 2580',
+    gender: 'أنثى',
     courses: 6,
     progress: 88,
     spent: '3,100 ج.م',
@@ -106,6 +146,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'عمر فاروق',
     email: 'omar.farouk@email.com',
     phone: '0127 159 7530',
+    gender: 'ذكر',
     courses: 3,
     progress: 57,
     spent: '1,200 ج.م',
@@ -117,6 +158,7 @@ export const studentRecords: StudentRecord[] = [
     name: 'ليلى عبد الله',
     email: 'laila.abdullah@email.com',
     phone: '0102 753 8520',
+    gender: 'أنثى',
     courses: 1,
     progress: 8,
     spent: '300 ج.م',

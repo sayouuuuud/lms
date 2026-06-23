@@ -6,10 +6,14 @@ import { toast } from 'sonner'
 import { Search, Trash2, Mail, Phone } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/get-initials'
 import { cn } from '@/lib/utils'
-import { statusFilters, type StudentStatus } from '@/lib/students-data'
+import {
+  getStudentAvatar,
+  statusFilters,
+  type StudentStatus,
+} from '@/lib/students-data'
 import { useStudents } from './students-context'
 
 const statusStyles: Record<StudentStatus, string> = {
@@ -96,6 +100,10 @@ export function StudentsTable() {
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-3">
                     <Avatar className="size-9">
+                      <AvatarImage
+                        src={getStudentAvatar(student)}
+                        alt={student.name}
+                      />
                       <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                         {getInitials(student.name)}
                       </AvatarFallback>
@@ -173,6 +181,7 @@ export function StudentsTable() {
               onClick={() => router.push(`/students/${student.id}`)}
             >
               <Avatar className="size-10">
+                <AvatarImage src={getStudentAvatar(student)} alt={student.name} />
                 <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                   {getInitials(student.name)}
                 </AvatarFallback>

@@ -21,9 +21,10 @@ import {
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/get-initials'
 import { cn } from '@/lib/utils'
+import { getStudentAvatar } from '@/lib/students-data'
 import type { StudentProfile, StudentStatus } from '@/lib/student-profile-data'
 import { MessageModal } from './message-modal'
 import { ProfileCharts } from './profile-charts'
@@ -113,6 +114,7 @@ export function StudentProfileView({ profile }: { profile: StudentProfile }) {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <Avatar className="size-16">
+              <AvatarImage src={getStudentAvatar(student)} alt={student.name} />
               <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">
                 {getInitials(student.name)}
               </AvatarFallback>
