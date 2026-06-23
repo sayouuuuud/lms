@@ -1,11 +1,12 @@
+import Link from 'next/link'
 import { BookOpen, UploadCloud, Tag, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const actions = [
-  { label: 'إضافة كورس', icon: BookOpen, primary: true },
-  { label: 'رفع درس', icon: UploadCloud },
-  { label: 'إنشاء كوبون', icon: Tag },
-  { label: 'إضافة طالب', icon: UserPlus },
+  { label: 'إضافة كورس', icon: BookOpen, href: '/courses', primary: true },
+  { label: 'رفع درس', icon: UploadCloud, href: '/courses' },
+  { label: 'إنشاء كوبون', icon: Tag, href: '/coupons' },
+  { label: 'إضافة طالب', icon: UserPlus, href: '/students' },
 ]
 
 export function PageHeader() {
@@ -28,6 +29,7 @@ export function PageHeader() {
                 ? ''
                 : 'border-border bg-card text-foreground hover:bg-secondary'
             }
+            render={<Link href={action.href} />}
           >
             <action.icon className="size-4" />
             {action.label}
