@@ -8,8 +8,20 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isDark, setIsDark] = useState(false)
 
+  // استرجاع الوضع المحفوظ عند أول تحميل
+  useEffect(() => {
+    const stored = localStorage.getItem('theme')
+    const prefersDark =
+      stored === 'dark' ||
+      (stored === null &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches)
+    setIsDark(prefersDark)
+  }, [])
+
+  // تطبيق الوضع وحفظه عند أي تغيير
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark)
+    localStorage.setItem('theme', isDark ? 'dark' : 'light')
   }, [isDark])
 
   return (
