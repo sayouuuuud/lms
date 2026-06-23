@@ -5,7 +5,7 @@ import { enrolledCourses } from '@/lib/student-data'
 export function MyCourses() {
   return (
     <PanelCard title="كورساتي" action="عرض الكل">
-      <ul className="space-y-3">
+      <ul className="space-y-0.5">
         {enrolledCourses.map((course) => {
           const percent = Math.round(
             (course.completedLessons / course.totalLessons) * 100,
@@ -13,7 +13,7 @@ export function MyCourses() {
           return (
             <li
               key={course.id}
-              className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-secondary/60"
+              className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-secondary/60"
             >
               <div className="relative size-14 shrink-0 overflow-hidden rounded-lg">
                 <Image

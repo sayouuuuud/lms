@@ -16,13 +16,13 @@ const typeConfig: Record<
 export function UpcomingSchedule() {
   return (
     <PanelCard title="جدولي القادم" action="عرض الكل">
-      <ul className="space-y-2">
+      <ul className="space-y-0.5">
         {upcomingSchedule.map((item) => {
           const config = typeConfig[item.type]
           return (
             <li
               key={item.id}
-              className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-secondary/60"
+              className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-secondary/60"
             >
               <div
                 className={cn(

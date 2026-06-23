@@ -5,7 +5,7 @@ import { announcements } from '@/lib/student-data'
 export function Announcements() {
   return (
     <PanelCard title="إعلانات و تنبيهات" action="عرض الكل">
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {announcements.map((item) => (
           <li key={item.id} className="flex gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">

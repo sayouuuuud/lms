@@ -41,7 +41,7 @@ export function StudentStats() {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {stats.map((stat) => (
-        <Card key={stat.label} className="gap-0 p-5 transition-shadow hover:shadow-md">
+        <Card key={stat.label} className="gap-0 p-4 transition-shadow hover:shadow-md">
           <div className="flex items-start justify-between">
             <p className="text-sm text-muted-foreground">{stat.label}</p>
             <div

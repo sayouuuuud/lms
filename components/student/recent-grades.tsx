@@ -12,13 +12,13 @@ function gradeColor(percent: number) {
 export function RecentGrades() {
   return (
     <PanelCard title="أحدث الدرجات" action="عرض الكل">
-      <ul className="space-y-1">
+      <ul className="space-y-0.5">
         {recentGrades.map((grade) => {
           const percent = Math.round((grade.score / grade.total) * 100)
           return (
             <li
               key={grade.id}
-              className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-secondary/60"
+              className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-secondary/60"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-foreground">
