@@ -37,7 +37,6 @@ export function VideoPlayer({
   const [current, setCurrent] = useState(0)
   const [duration, setDuration] = useState(0)
   const [speed, setSpeed] = useState<number>(1)
-  const [captions, setCaptions] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   // مزامنة سرعة التشغيل مع عنصر الفيديو
@@ -123,21 +122,7 @@ export function VideoPlayer({
               {s}x
             </button>
           ))}
-          <p className="px-2 pb-1 pt-2 text-xs font-medium text-white/60">
-            Captions
-          </p>
-          <button
-            type="button"
-            onClick={() => setCaptions((c) => !c)}
-            className={cn(
-              'w-full rounded-lg px-3 py-2 text-center text-sm font-medium transition-colors',
-              captions
-                ? 'bg-white text-neutral-900'
-                : 'text-white hover:bg-white/10',
-            )}
-          >
-            {captions ? 'On' : 'Off'}
-          </button>
+
         </div>
       )}
 
