@@ -10,6 +10,7 @@ import {
   FileText,
   CalendarDays,
   MessageSquare,
+  Bell,
   Receipt,
   Settings,
   LogOut,
@@ -27,6 +28,7 @@ const navItems = [
   { label: 'الواجبات', icon: FileText, href: '/student/assignments' },
   { label: 'جدولي', icon: CalendarDays, href: '/student/schedule' },
   { label: 'الرسائل', icon: MessageSquare, href: '/student/messages' },
+  { label: 'الإشعارات', icon: Bell, href: '/student/notifications' },
   { label: 'الفواتير', icon: Receipt, href: '/student/billing' },
   { label: 'الإعدادات', icon: Settings, href: '/student/settings' },
 ]
