@@ -15,6 +15,7 @@ import {
   LogOut,
   User,
   ArrowLeft,
+  Globe,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -363,6 +364,17 @@ export function Header({
             Ctrl K
           </kbd>
         </div>
+
+        {/* View site - visible on desktop */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-auto hidden text-muted-foreground hover:text-foreground md:flex"
+          aria-label="عرض الموقع"
+          title="عرض الموقع"
+        >
+          <Globe className="size-5" />
+        </Button>
 
         {/* Menu toggle - only visible on mobile */}
         <Button
