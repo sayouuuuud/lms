@@ -103,8 +103,8 @@ export function StudentSidebar({
         </div>
 
         {/* Nav */}
-        <nav className="flex flex-1 flex-col px-2 py-2">
-          <div className="flex flex-1 flex-col justify-around">
+        <nav className="flex-1 overflow-y-auto scrollbar-hide px-2 py-2">
+          <div className="flex flex-col gap-1">
             {navItems.map((item) => {
               const active =
                 item.href === '/student'
