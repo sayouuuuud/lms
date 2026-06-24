@@ -1,25 +1,24 @@
 import Image from 'next/image'
-import { Play, ChevronLeft } from 'lucide-react'
+import { Play } from 'lucide-react'
 import { PanelCard } from '@/components/dashboard/panel-card'
 import { Button } from '@/components/ui/button'
 import { enrolledCourses } from '@/lib/student-data'
 
 export function ContinueLearning() {
   const course = enrolledCourses[0]
-  const rest = enrolledCourses.slice(1, 4)
   const percent = Math.round(
     (course.completedLessons / course.totalLessons) * 100,
   )
 
   return (
     <PanelCard title="أكمل من حيث توقفت">
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl sm:w-48">
+      <div className="flex h-full flex-col gap-4 sm:flex-row">
+        <div className="relative w-full shrink-0 overflow-hidden rounded-xl sm:w-56">
           <Image
             src={course.image || '/placeholder.svg'}
             alt={course.title}
             fill
-            sizes="(max-width: 640px) 100vw, 192px"
+            sizes="(max-width: 640px) 100vw, 224px"
             className="object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
