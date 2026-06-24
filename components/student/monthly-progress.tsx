@@ -1,7 +1,6 @@
 'use client'
 
 import { PanelCard } from '@/components/dashboard/panel-card'
-import { TrendingUp } from 'lucide-react'
 
 const stats = [
   { label: 'درس مكتمل', value: 44, change: '+8 هذا الشهر', positive: true },
@@ -12,7 +11,7 @@ const stats = [
 
 export function MonthlyProgress() {
   return (
-    <PanelCard title="إنجازات هذا الشهر" icon={TrendingUp}>
+    <PanelCard title="إنجازات هذا الشهر">
       <div className="grid grid-cols-2 gap-2">
         {stats.map((s) => (
           <div
