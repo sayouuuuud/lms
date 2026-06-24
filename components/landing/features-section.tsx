@@ -13,42 +13,46 @@ const iconMap = {
 
 export function FeaturesSection() {
   const headRef = useReveal<HTMLDivElement>(undefined, { y: 30 })
-  const gridRef = useReveal<HTMLDivElement>('.feature-card', { y: 50, duration: 0.6 })
+  const listRef = useReveal<HTMLDivElement>('.feature-row', { y: 40, duration: 0.6 })
 
   return (
-    <section id="features" className="bg-cream py-20 md:py-28">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div ref={headRef} className="mx-auto max-w-2xl text-center">
-          <span className="text-sm font-bold uppercase tracking-wide text-emerald-brand">
-            ليه تختار منصتنا؟
+    <section id="features" className="relative bg-cream py-20 md:py-28">
+      <div className="mx-auto max-w-7xl px-5 md:px-8">
+        <div ref={headRef} className="max-w-2xl">
+          <span className="font-mono text-sm font-semibold text-emerald-deep">
+            {'// إزاي بنذاكر مع بعض'}
           </span>
-          <h2 className="mt-3 text-balance text-3xl font-extrabold text-navy md:text-4xl">
-            كل اللي محتاجه عشان تتفوق في الرياضيات
+          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl">
+            نظام تعليمي متكامل، مبني على خطوات واضحة.
           </h2>
-          <p className="mt-4 text-pretty text-lg leading-relaxed text-navy/60">
-            منظومة تعليمية متكاملة صُمّمت بخبرة سنين عشان توصّلك لأعلى الدرجات
-            بأقل مجهود.
+          <p className="mt-5 text-pretty text-lg leading-relaxed text-ink-muted">
+            مش مجرد فيديوهات؛ ده مسار متدرّج يمسكك من أول فكرة لحد ما تدخل الامتحان واثق
+            من نفسك.
           </p>
         </div>
 
-        <div ref={gridRef} className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div ref={listRef} className="mt-14 border-t border-navy/10">
           {features.map((f) => {
             const Icon = iconMap[f.icon as keyof typeof iconMap]
             return (
               <div
-                key={f.title}
-                className="feature-card group relative overflow-hidden rounded-3xl border border-navy/10 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-gold/40 hover:shadow-xl hover:shadow-navy/10"
+                key={f.step}
+                className="feature-row group grid grid-cols-[auto_1fr] items-start gap-5 border-b border-navy/10 py-8 transition-colors hover:bg-cream-deep/40 md:grid-cols-[6rem_3rem_1fr] md:items-center md:gap-8 md:px-4"
               >
-                <span className="absolute -right-6 -top-6 size-24 rounded-full bg-gold/10 transition-transform duration-500 group-hover:scale-150" />
-                <span className="relative flex size-14 items-center justify-center rounded-2xl bg-navy text-gold shadow-lg shadow-navy/20">
-                  <Icon className="size-7" />
+                <span className="font-mono text-3xl font-black text-navy/15 transition-colors group-hover:text-gold md:text-5xl">
+                  {f.step}
                 </span>
-                <h3 className="relative mt-5 text-lg font-extrabold text-navy">
-                  {f.title}
-                </h3>
-                <p className="relative mt-2 text-sm leading-relaxed text-navy/60">
-                  {f.description}
-                </p>
+
+                <span className="row-start-1 grid size-12 place-items-center rounded-xl bg-navy text-cream transition-transform duration-300 group-hover:-translate-y-1 md:row-auto">
+                  <Icon className="size-6" />
+                </span>
+
+                <div className="col-span-2 md:col-span-1">
+                  <h3 className="text-xl font-bold text-navy md:text-2xl">{f.title}</h3>
+                  <p className="mt-2 max-w-2xl text-pretty leading-relaxed text-ink-muted">
+                    {f.description}
+                  </p>
+                </div>
               </div>
             )
           })}

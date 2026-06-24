@@ -7,15 +7,43 @@
 
 /* Landing / brand palette (matches Mr. Abdelsalam hero artwork) */
 @theme {
-  --color-navy: oklch(0.28 0.07 264);
-  --color-navy-deep: oklch(0.21 0.06 264);
-  --color-navy-soft: oklch(0.4 0.08 264);
-  --color-gold: oklch(0.78 0.13 85);
-  --color-gold-deep: oklch(0.68 0.13 78);
-  --color-emerald-brand: oklch(0.55 0.13 158);
-  --color-emerald-deep: oklch(0.46 0.12 159);
-  --color-cream: oklch(0.96 0.013 92);
-  --color-cream-deep: oklch(0.92 0.018 92);
+  --color-navy: oklch(0.27 0.066 264);
+  --color-navy-deep: oklch(0.2 0.055 264);
+  --color-navy-soft: oklch(0.42 0.07 264);
+  --color-gold: oklch(0.77 0.125 84);
+  --color-gold-deep: oklch(0.66 0.13 76);
+  --color-emerald-brand: oklch(0.56 0.12 159);
+  --color-emerald-deep: oklch(0.46 0.115 160);
+  --color-cream: oklch(0.965 0.012 92);
+  --color-cream-deep: oklch(0.93 0.016 90);
+  --color-ink-muted: oklch(0.5 0.03 264);
+  --color-graph-line: oklch(0.86 0.02 264);
+}
+
+@utility graph-paper {
+  background-image:
+    linear-gradient(to right, var(--color-graph-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-graph-line) 1px, transparent 1px);
+  background-size: 2.5rem 2.5rem;
+}
+
+@keyframes marquee-rtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee-rtl 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
 }
 
 @theme inline {

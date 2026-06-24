@@ -43,6 +43,15 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
       : [el]
     if (targets.length === 0) return
 
+    // Respect reduced-motion: show everything, skip the animation.
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      gsap.set(targets, { y: 0, opacity: 1 })
+      return
+    }
+
     gsap.set(targets, { y, opacity: 0 })
 
     let done = false

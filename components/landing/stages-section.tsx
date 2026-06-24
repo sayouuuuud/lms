@@ -1,128 +1,243 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, GraduationCap, BookOpen } from 'lucide-react'
-import { stages } from '@/lib/landing-data'
+import gsap from 'gsap'
+import { ArrowLeft, BookOpen, ChevronDown } from 'lucide-react'
+import { stages, type Stage } from '@/lib/landing-data'
 import { cn } from '@/lib/utils'
 import { useReveal } from '@/lib/use-reveal'
 
-const accentStyles = {
-  gold: {
-    ring: 'hover:border-gold/50',
-    chip: 'bg-gold/15 text-gold-deep',
-    icon: 'bg-gold text-navy',
-    glow: 'bg-gold/20',
-  },
-  emerald: {
-    ring: 'hover:border-emerald-brand/50',
-    chip: 'bg-emerald-brand/15 text-emerald-deep',
-    icon: 'bg-emerald-brand text-white',
-    glow: 'bg-emerald-brand/20',
-  },
-  navy: {
-    ring: 'hover:border-navy/40',
-    chip: 'bg-navy/10 text-navy',
-    icon: 'bg-navy text-gold',
-    glow: 'bg-navy/15',
-  },
-}
-
 export function StagesSection() {
   const headRef = useReveal<HTMLDivElement>(undefined, { y: 30 })
-  const gridRef = useReveal<HTMLDivElement>('.stage-card', {
-    y: 60,
-    duration: 0.6,
-    ease: 'back.out(1.4)',
-  })
+  const [active, setActive] = useState(0)
 
   return (
-    <section
-      id="stages"
-      className="relative overflow-hidden bg-navy py-20 md:py-28"
-    >
-      {/* decorative grid */}
+    <section id="stages" className="relative overflow-hidden bg-navy py-20 md:py-28">
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage:
             'linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)',
           backgroundSize: '48px 48px',
         }}
+        aria-hidden="true"
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 md:px-8">
-        <div ref={headRef} className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-4 py-1.5 text-sm font-bold text-gold">
-            <GraduationCap className="size-4" />
-            اختر مرحلتك
+      <div className="relative mx-auto max-w-7xl px-5 md:px-8">
+        <div ref={headRef} className="max-w-2xl">
+          <span className="font-mono text-sm font-semibold text-gold">
+            {'// اختار مرحلتك'}
           </span>
-          <h2 className="mt-4 text-balance text-3xl font-extrabold text-cream md:text-4xl">
-            انت في أنهي مرحلة دراسية؟
+          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-cream sm:text-4xl lg:text-5xl">
+            انت في أنهي سنة؟ اختار وادخل على المنهج بتاعك.
           </h2>
-          <p className="mt-4 text-pretty text-lg leading-relaxed text-cream/70">
-            اختار صفك الدراسي وادخل على صفحة فيها كل المواد والكورسات مرتبة
-            مخصوص ليك.
+          <p className="mt-5 text-pretty text-lg leading-relaxed text-cream/65">
+            كل مرحلة فيها المواد مرتبة خطوة بخطوة. عدّي على السنة اللي انت فيها وشوف
+            اللي مستنيك جواها.
           </p>
         </div>
 
-        <div ref={gridRef} className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {stages.map((stage) => {
-            const a = accentStyles[stage.accent]
-            return (
-              <Link
-                key={stage.id}
-                href={`/stages/${stage.id}`}
-                className={cn(
-                  'stage-card group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:bg-white/10',
-                  a.ring,
-                )}
-              >
-                <span
-                  className={cn(
-                    'absolute -left-8 -top-8 size-28 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-150',
-                    a.glow,
-                  )}
-                />
-                <span
-                  className={cn(
-                    'relative flex size-14 items-center justify-center rounded-2xl shadow-lg',
-                    a.icon,
-                  )}
+        {/* Desktop: list + preview */}
+        <div className="mt-14 hidden gap-10 lg:grid lg:grid-cols-[1.1fr_0.9fr]">
+          <ul className="border-t border-white/10">
+            {stages.map((stage, i) => (
+              <li key={stage.id}>
+                <Link
+                  href={`/stages/${stage.id}`}
+                  onMouseEnter={() => setActive(i)}
+                  onFocus={() => setActive(i)}
+                  className="group grid grid-cols-[5rem_1fr_auto] items-center gap-4 border-b border-white/10 py-8 transition-colors"
                 >
-                  <BookOpen className="size-7" />
-                </span>
-
-                <h3 className="relative mt-5 text-xl font-extrabold text-cream">
-                  {stage.title}
-                </h3>
-                <p className="relative mt-2 text-sm leading-relaxed text-cream/60">
-                  {stage.subtitle}
-                </p>
-
-                <div className="relative mt-4 flex flex-wrap gap-2">
-                  {stage.grades.map((g) => (
+                  <span
+                    className={cn(
+                      'font-mono text-4xl font-black transition-colors xl:text-6xl',
+                      active === i ? 'text-gold' : 'text-white/15',
+                    )}
+                  >
+                    {stage.index}
+                  </span>
+                  <span>
                     <span
-                      key={g}
                       className={cn(
-                        'rounded-full px-3 py-1 text-xs font-bold',
-                        a.chip,
+                        'block text-2xl font-extrabold transition-colors xl:text-3xl',
+                        active === i ? 'text-cream' : 'text-cream/70',
                       )}
                     >
-                      {g}
+                      {stage.title}
                     </span>
-                  ))}
-                </div>
+                    <span className="mt-1 block font-mono text-sm text-emerald-brand">
+                      {stage.formula}
+                    </span>
+                  </span>
+                  <ArrowLeft
+                    className={cn(
+                      'size-7 transition-all',
+                      active === i
+                        ? '-translate-x-1 text-gold'
+                        : 'text-white/25 group-hover:text-white/50',
+                    )}
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-                <span className="relative mt-6 inline-flex items-center gap-2 text-sm font-bold text-gold transition-transform group-hover:-translate-x-1">
-                  ادخل المرحلة
-                  <ArrowLeft className="size-4" />
-                </span>
-              </Link>
-            )
-          })}
+          <StagePreview stage={stages[active]} />
+        </div>
+
+        {/* Mobile: accordion */}
+        <div className="mt-12 border-t border-white/10 lg:hidden">
+          {stages.map((stage, i) => (
+            <MobileStage
+              key={stage.id}
+              stage={stage}
+              open={active === i}
+              onToggle={() => setActive(active === i ? -1 : i)}
+            />
+          ))}
         </div>
       </div>
     </section>
+  )
+}
+
+function StagePreview({ stage }: { stage: Stage }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    gsap.fromTo(
+      el,
+      { opacity: 0, y: 16 },
+      { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out' },
+    )
+  }, [stage.id])
+
+  return (
+    <div className="relative">
+      <div className="sticky top-28">
+        <div
+          ref={ref}
+          className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
+        >
+          <span className="pointer-events-none absolute -left-10 -top-10 select-none font-mono text-[9rem] font-black leading-none text-white/[0.04]">
+            {stage.index}
+          </span>
+
+          <span
+            className={cn(
+              'relative grid size-14 place-items-center rounded-2xl',
+              stage.accent === 'gold' ? 'bg-gold text-navy' : 'bg-emerald-brand text-cream',
+            )}
+          >
+            <BookOpen className="size-7" />
+          </span>
+
+          <h3 className="relative mt-6 text-2xl font-extrabold text-cream">
+            {stage.title}
+          </h3>
+          <p className="relative mt-2 leading-relaxed text-cream/65">{stage.subtitle}</p>
+
+          <div className="relative mt-7">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-cream/40">
+              الصفوف داخل المرحلة
+            </span>
+            <ul className="mt-3 space-y-2">
+              {stage.rows.map((row, idx) => (
+                <li
+                  key={row}
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-3 text-cream/90"
+                >
+                  <span className="font-mono text-sm text-gold">{`0${idx + 1}`}</span>
+                  {row}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <Link
+            href={`/stages/${stage.id}`}
+            className="relative mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-7 py-4 text-base font-bold text-navy-deep transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            ادخل المرحلة
+            <ArrowLeft className="size-5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MobileStage({
+  stage,
+  open,
+  onToggle,
+}: {
+  stage: Stage
+  open: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="border-b border-white/10">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-4 py-5 text-right"
+        aria-expanded={open}
+      >
+        <span
+          className={cn(
+            'font-mono text-3xl font-black transition-colors',
+            open ? 'text-gold' : 'text-white/20',
+          )}
+        >
+          {stage.index}
+        </span>
+        <span className="flex-1">
+          <span className="block text-lg font-extrabold text-cream">{stage.title}</span>
+          <span className="mt-0.5 block font-mono text-xs text-emerald-brand">
+            {stage.formula}
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            'size-5 text-cream/50 transition-transform duration-300',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+
+      <div
+        className={cn(
+          'grid transition-all duration-300',
+          open ? 'grid-rows-[1fr] pb-6' : 'grid-rows-[0fr]',
+        )}
+      >
+        <div className="overflow-hidden">
+          <p className="text-pretty leading-relaxed text-cream/65">{stage.subtitle}</p>
+          <ul className="mt-4 space-y-2">
+            {stage.rows.map((row, idx) => (
+              <li
+                key={row}
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-3 text-sm text-cream/90"
+              >
+                <span className="font-mono text-gold">{`0${idx + 1}`}</span>
+                {row}
+              </li>
+            ))}
+          </ul>
+          <Link
+            href={`/stages/${stage.id}`}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-base font-bold text-navy-deep"
+          >
+            ادخل المرحلة
+            <ArrowLeft className="size-5" />
+          </Link>
+        </div>
+      </div>
+    </div>
   )
 }
