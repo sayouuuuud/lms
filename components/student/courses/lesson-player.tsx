@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   FileText,
   Lock,
   PlayCircle,
@@ -44,6 +45,16 @@ export function LessonPlayer({
     (all.filter((l) => l.completed).length / all.length) * 100,
   )
 
+  // الوحدة الحالية وواجب/اختبارها (يظهر بعد آخر درس في الوحدة)
+  const currentSection = course.sections.find((s) =>
+    s.lessons.some((l) => l.id === lesson.id),
+  )
+  const isLastInSection =
+    currentSection?.lessons[currentSection.lessons.length - 1]?.id === lesson.id
+  const sectionAssignment = currentSection?.assignment
+  // بعد آخر درس في الوحدة ننتقل إلى الواجب/الاختبار بدل الدرس التالي
+  const goToAssignment = isLastInSection && sectionAssignment
+
   const goTo = (l?: Lesson) => {
     if (l && !l.locked) {
       router.push(`/student/courses/${course.id}/lessons/${l.id}`)
@@ -73,14 +84,14 @@ export function LessonPlayer({
                   key={lesson.id}
                   controls
                   poster={course.image}
-                  className="size-full"
+                  className="absolute inset-0 size-full object-contain"
                   preload="metadata"
                 >
                   <source src={lesson.videoUrl} type="video/mp4" />
                   متصفحك لا يدعم تشغيل الفيديو.
                 </video>
               ) : (
-                <div className="flex size-full flex-col items-center justify-center gap-3 text-white/80">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/80">
                   <FileText className="size-12" />
                   <p className="text-sm">هذا الدرس عبارة عن محتوى نصي</p>
                 </div>
@@ -120,6 +131,47 @@ export function LessonPlayer({
             </p>
           </Card>
 
+          {/* تنبيه: واجب/اختبار الوحدة بعد إكمال هذا الدرس */}
+          {goToAssignment && sectionAssignment && (
+            <Card className="flex flex-col gap-3 border-primary/30 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  {sectionAssignment.type === 'اختبار' ? (
+                    <ClipboardList className="size-5" />
+                  ) : (
+                    <FileText className="size-5" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">
+                    {sectionAssignment.type === 'اختبار'
+                      ? 'اختبار الوحدة'
+                      : 'واجب الوحدة'}
+                    : {sectionAssignment.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {completed
+                      ? 'أكملت الدرس، يمكنك الآن الانتقال إلى المهمة.'
+                      : 'أكمل هذا الدرس أولاً لفتح المهمة.'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                disabled={!completed}
+                className="shrink-0"
+                render={
+                  completed ? (
+                    <Link href={`/student/assignments/${sectionAssignment.id}`} />
+                  ) : undefined
+                }
+              >
+                {sectionAssignment.type === 'اختبار' ? 'ابدأ الاختبار' : 'فتح الواجب'}
+                <ChevronLeft className="size-4" />
+              </Button>
+            </Card>
+          )}
+
           {/* Prev / Next */}
           <div className="flex items-center justify-between gap-3">
             <Button
@@ -131,14 +183,29 @@ export function LessonPlayer({
               <ChevronRight className="size-4" />
               الدرس السابق
             </Button>
-            <Button
-              disabled={!next || next.locked}
-              onClick={() => goTo(next)}
-              className="gap-1"
-            >
-              الدرس التالي
-              <ChevronLeft className="size-4" />
-            </Button>
+            {goToAssignment && sectionAssignment ? (
+              <Button
+                disabled={!completed}
+                className="gap-1"
+                render={
+                  completed ? (
+                    <Link href={`/student/assignments/${sectionAssignment.id}`} />
+                  ) : undefined
+                }
+              >
+                {sectionAssignment.type === 'اختبار' ? 'الاختبار' : 'الواجب'}
+                <ChevronLeft className="size-4" />
+              </Button>
+            ) : (
+              <Button
+                disabled={!next || next.locked}
+                onClick={() => goTo(next)}
+                className="gap-1"
+              >
+                الدرس التالي
+                <ChevronLeft className="size-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -165,67 +232,116 @@ export function LessonPlayer({
           </Card>
 
           <Card className="p-0">
-            <ul className="max-h-[32rem] divide-y divide-border overflow-y-auto scrollbar-hide">
-              {all.map((l, i) => {
-                const active = l.id === lesson.id
-                const Icon = iconFor(l, active)
-                const content = (
-                  <div
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-3 transition-colors',
-                      active && 'bg-primary/5',
-                      l.locked
-                        ? 'cursor-not-allowed opacity-60'
-                        : 'hover:bg-secondary/40',
-                    )}
-                  >
-                    <span className="w-5 shrink-0 text-center text-xs text-muted-foreground">
-                      {i + 1}
-                    </span>
-                    <Icon
-                      className={cn(
-                        'size-5 shrink-0',
-                        l.completed
-                          ? 'text-primary'
-                          : active
-                            ? 'text-primary'
-                            : l.locked
-                              ? 'text-muted-foreground'
-                              : 'text-foreground',
+            <div className="max-h-[32rem] divide-y divide-border overflow-y-auto scrollbar-hide">
+              {course.sections.map((section) => {
+                const sectionDone = section.lessons.every((l) => l.completed)
+                const assignmentLocked = !sectionDone
+                return (
+                  <div key={section.id}>
+                    <p className="bg-secondary/40 px-4 py-2 text-xs font-bold text-foreground">
+                      {section.title}
+                    </p>
+                    <ul className="divide-y divide-border">
+                      {section.lessons.map((l) => {
+                        const active = l.id === lesson.id
+                        const Icon = iconFor(l, active)
+                        const content = (
+                          <div
+                            className={cn(
+                              'flex items-center gap-3 px-4 py-3 transition-colors',
+                              active && 'bg-primary/5',
+                              l.locked
+                                ? 'cursor-not-allowed opacity-60'
+                                : 'hover:bg-secondary/40',
+                            )}
+                          >
+                            <Icon
+                              className={cn(
+                                'size-5 shrink-0',
+                                l.completed || active
+                                  ? 'text-primary'
+                                  : l.locked
+                                    ? 'text-muted-foreground'
+                                    : 'text-foreground',
+                              )}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={cn(
+                                  'truncate text-sm',
+                                  active
+                                    ? 'font-semibold text-foreground'
+                                    : 'font-medium text-foreground',
+                                )}
+                              >
+                                {l.title}
+                              </p>
+                              <span className="text-xs text-muted-foreground">
+                                {l.duration}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                        return (
+                          <li key={l.id}>
+                            {l.locked ? (
+                              content
+                            ) : (
+                              <Link
+                                href={`/student/courses/${course.id}/lessons/${l.id}`}
+                              >
+                                {content}
+                              </Link>
+                            )}
+                          </li>
+                        )
+                      })}
+
+                      {section.assignment && (
+                        <li>
+                          {(() => {
+                            const a = section.assignment
+                            const content = (
+                              <div
+                                className={cn(
+                                  'flex items-center gap-3 px-4 py-3 transition-colors',
+                                  assignmentLocked
+                                    ? 'cursor-not-allowed opacity-60'
+                                    : 'hover:bg-secondary/40',
+                                )}
+                              >
+                                {assignmentLocked ? (
+                                  <Lock className="size-5 shrink-0 text-muted-foreground" />
+                                ) : a.type === 'اختبار' ? (
+                                  <ClipboardList className="size-5 shrink-0 text-primary" />
+                                ) : (
+                                  <FileText className="size-5 shrink-0 text-primary" />
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-foreground">
+                                    {a.title}
+                                  </p>
+                                  <span className="text-xs text-muted-foreground">
+                                    {a.type === 'اختبار' ? 'اختبار الوحدة' : 'واجب الوحدة'}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                            return assignmentLocked ? (
+                              content
+                            ) : (
+                              <Link href={`/student/assignments/${a.id}`}>
+                                {content}
+                              </Link>
+                            )
+                          })()}
+                        </li>
                       )}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          'truncate text-sm',
-                          active
-                            ? 'font-semibold text-foreground'
-                            : 'font-medium text-foreground',
-                        )}
-                      >
-                        {l.title}
-                      </p>
-                      <span className="text-xs text-muted-foreground">
-                        {l.duration}
-                      </span>
-                    </div>
+                    </ul>
                   </div>
                 )
-                return (
-                  <li key={l.id}>
-                    {l.locked ? (
-                      content
-                    ) : (
-                      <Link
-                        href={`/student/courses/${course.id}/lessons/${l.id}`}
-                      >
-                        {content}
-                      </Link>
-                    )}
-                  </li>
-                )
               })}
-            </ul>
+            </div>
           </Card>
         </div>
       </div>

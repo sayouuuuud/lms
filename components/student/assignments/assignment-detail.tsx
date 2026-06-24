@@ -7,12 +7,14 @@ import {
   Award,
   CalendarClock,
   CheckCircle2,
+  ClipboardList,
   Download,
   FileText,
   ListChecks,
   Paperclip,
   Send,
   UploadCloud,
+  XCircle,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,9 +44,35 @@ export function AssignmentDetail({
   const [status, setStatus] = useState<AssignmentStatus>(assignment.status)
   const submitted = status === 'تم التسليم' || status === 'مصحّح'
 
+  const isQuiz = assignment.type === 'اختبار'
+  const questions = assignment.questions ?? []
+
+  // إجابات الاختبار: معرّف السؤال -> رقم الخيار المختار
+  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [quizSubmitted, setQuizSubmitted] = useState(
+    assignment.status === 'مصحّح' || assignment.status === 'تم التسليم',
+  )
+  const correctCount = questions.filter(
+    (q) => answers[q.id] === q.correctIndex,
+  ).length
+  const quizScore =
+    questions.length > 0
+      ? Math.round((correctCount / questions.length) * assignment.points)
+      : 0
+  const quizPercent =
+    questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
+  const allAnswered = questions.every((q) => answers[q.id] != null)
+  const displayScore = isQuiz && quizSubmitted ? quizScore : assignment.score
+
   const handleSubmit = () => {
     if (!text.trim() && files.length === 0) return
     setStatus('تم التسليم')
+  }
+
+  const handleQuizSubmit = () => {
+    if (!allAnswered) return
+    setQuizSubmitted(true)
+    setStatus('مصحّح')
   }
 
   const handleFiles = (list: FileList | null) => {
@@ -68,7 +96,11 @@ export function AssignmentDetail({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <FileText className="size-6" />
+              {isQuiz ? (
+                <ClipboardList className="size-6" />
+              ) : (
+                <FileText className="size-6" />
+              )}
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground text-balance">
@@ -113,8 +145,8 @@ export function AssignmentDetail({
             <div>
               <p className="text-xs text-muted-foreground">نتيجتك</p>
               <p className="text-sm font-semibold text-foreground">
-                {assignment.score != null
-                  ? `${assignment.score}/${assignment.points}`
+                {displayScore != null
+                  ? `${displayScore}/${assignment.points}`
                   : '—'}
               </p>
             </div>
@@ -147,7 +179,119 @@ export function AssignmentDetail({
             </ul>
           </Card>
 
-          {/* Submission */}
+          {/* Quiz */}
+          {isQuiz ? (
+            <Card className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-foreground">أسئلة الاختبار</h2>
+                <span className="text-xs text-muted-foreground">
+                  {questions.length} أسئلة
+                </span>
+              </div>
+
+              {quizSubmitted && (
+                <div
+                  className={cn(
+                    'mb-5 flex items-center gap-3 rounded-xl p-4',
+                    quizPercent >= 60
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-destructive/10 text-destructive',
+                  )}
+                >
+                  {quizPercent >= 60 ? (
+                    <CheckCircle2 className="size-6 shrink-0" />
+                  ) : (
+                    <XCircle className="size-6 shrink-0" />
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {quizPercent >= 60 ? 'أحسنت، لقد نجحت!' : 'لم تجتز الاختبار'}
+                    </p>
+                    <p className="text-xs">
+                      أجبت {correctCount} من {questions.length} بشكل صحيح • النتيجة{' '}
+                      {quizScore}/{assignment.points} ({quizPercent}%)
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <ol className="flex flex-col gap-6">
+                {questions.map((q, qi) => (
+                  <li key={q.id} className="flex flex-col gap-3">
+                    <p className="flex gap-2 text-sm font-semibold text-foreground">
+                      <span className="text-primary">{qi + 1}.</span>
+                      {q.question}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {q.options.map((opt, oi) => {
+                        const selected = answers[q.id] === oi
+                        const isCorrect = oi === q.correctIndex
+                        const showState = quizSubmitted
+                        return (
+                          <button
+                            key={oi}
+                            type="button"
+                            disabled={quizSubmitted}
+                            onClick={() =>
+                              setAnswers((prev) => ({ ...prev, [q.id]: oi }))
+                            }
+                            className={cn(
+                              'flex items-center gap-3 rounded-xl border p-3 text-right text-sm transition-colors',
+                              !showState &&
+                                (selected
+                                  ? 'border-primary bg-primary/5 text-foreground'
+                                  : 'border-border text-foreground hover:bg-secondary/50'),
+                              showState &&
+                                isCorrect &&
+                                'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                              showState &&
+                                selected &&
+                                !isCorrect &&
+                                'border-destructive/50 bg-destructive/10 text-destructive',
+                              showState &&
+                                !isCorrect &&
+                                !selected &&
+                                'border-border text-muted-foreground',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold',
+                                selected
+                                  ? 'border-current'
+                                  : 'border-muted-foreground/40 text-muted-foreground',
+                              )}
+                            >
+                              {['أ', 'ب', 'ج', 'د'][oi] ?? oi + 1}
+                            </span>
+                            <span className="flex-1">{opt}</span>
+                            {showState && isCorrect && (
+                              <CheckCircle2 className="size-4 shrink-0" />
+                            )}
+                            {showState && selected && !isCorrect && (
+                              <XCircle className="size-4 shrink-0" />
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              {!quizSubmitted && (
+                <Button
+                  onClick={handleQuizSubmit}
+                  disabled={!allAnswered}
+                  className="mt-6 w-fit"
+                >
+                  <Send className="size-4" />
+                  تسليم الاختبار
+                </Button>
+              )}
+            </Card>
+          ) : (
+          /* Submission */
           <Card className="p-6">
             <h2 className="mb-4 text-lg font-bold text-foreground">تسليم الواجب</h2>
 
@@ -238,6 +382,7 @@ export function AssignmentDetail({
               </div>
             )}
           </Card>
+          )}
         </div>
 
         {/* Sidebar: attachments */}

@@ -8,6 +8,7 @@ import {
   BookOpen,
   CheckCircle2,
   ChevronDown,
+  ClipboardList,
   Clock,
   FileText,
   Lock,
@@ -24,6 +25,7 @@ import {
   getCourseAssignments,
   type CourseDetail,
   type Lesson,
+  type Section,
 } from '@/lib/student-courses-data'
 
 const lessonIcon = (lesson: Lesson) => {
@@ -35,17 +37,17 @@ const lessonIcon = (lesson: Lesson) => {
 
 function CurriculumSection({
   courseId,
-  title,
-  lessons,
+  section,
   defaultOpen,
 }: {
   courseId: string
-  title: string
-  lessons: Lesson[]
+  section: Section
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false)
+  const { title, lessons, assignment } = section
   const done = lessons.filter((l) => l.completed).length
+  const assignmentLocked = !lessons.every((l) => l.completed)
 
   return (
     <div className="overflow-hidden rounded-xl border border-border">
@@ -64,7 +66,7 @@ function CurriculumSection({
           <span className="text-sm font-bold text-foreground">{title}</span>
         </div>
         <span className="shrink-0 text-xs text-muted-foreground">
-          {done}/{lessons.length} درس
+          {done}/{lessons.length} درس{assignment ? ' • مهمة' : ''}
         </span>
       </button>
 
@@ -114,6 +116,48 @@ function CurriculumSection({
               </li>
             )
           })}
+
+          {assignment && (
+            <li>
+              {(() => {
+                const content = (
+                  <div
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 transition-colors',
+                      assignmentLocked
+                        ? 'cursor-not-allowed opacity-60'
+                        : 'hover:bg-primary/5',
+                    )}
+                  >
+                    {assignmentLocked ? (
+                      <Lock className="size-5 shrink-0 text-muted-foreground" />
+                    ) : assignment.type === 'اختبار' ? (
+                      <ClipboardList className="size-5 shrink-0 text-primary" />
+                    ) : (
+                      <FileText className="size-5 shrink-0 text-primary" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {assignment.title}
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {assignment.type === 'اختبار' ? 'اختبار الوحدة' : 'واجب الوحدة'}
+                        {assignmentLocked && ' • أكمل دروس الوحدة لفتحه'}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                      {assignment.points} نقطة
+                    </span>
+                  </div>
+                )
+                return assignmentLocked ? (
+                  content
+                ) : (
+                  <Link href={`/student/assignments/${assignment.id}`}>{content}</Link>
+                )
+              })()}
+            </li>
+          )}
         </ul>
       )}
     </div>
@@ -207,7 +251,7 @@ export function CourseOverview({ course }: { course: CourseDetail }) {
               }
             >
               <Play className="size-4" />
-              {percent === 0 ? 'ابدأ الكورس' : 'متابعة الدرس'}
+              {percent === 0 ? 'ابدأ الكورس' : '��تابعة الدرس'}
             </Button>
           </div>
         </div>
@@ -243,8 +287,7 @@ export function CourseOverview({ course }: { course: CourseDetail }) {
                 <CurriculumSection
                   key={section.id}
                   courseId={course.id}
-                  title={section.title}
-                  lessons={section.lessons}
+                  section={section}
                   defaultOpen={i === 0}
                 />
               ))}

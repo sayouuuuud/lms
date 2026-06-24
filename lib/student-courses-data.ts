@@ -17,13 +17,27 @@ export type Section = {
   id: string
   title: string
   lessons: Lesson[]
+  /** واجب أو اختبار الوحدة، يظهر بعد دروسها مباشرةً ضمن محتوى الكورس */
+  assignment?: Assignment
 }
 
 export type AssignmentStatus = 'لم يبدأ' | 'قيد التنفيذ' | 'تم التسليم' | 'مصحّح'
 
+export type AssignmentType = 'تسليم' | 'اختبار'
+
+export type QuizQuestion = {
+  id: string
+  question: string
+  options: string[]
+  correctIndex: number
+}
+
 export type Assignment = {
   id: string
   courseId: string
+  /** الوحدة التي ينتمي إليها الواجب داخل الكورس */
+  sectionId?: string
+  type: AssignmentType
   title: string
   description: string
   instructions: string[]
@@ -32,7 +46,14 @@ export type Assignment = {
   score?: number
   status: AssignmentStatus
   attachments: { name: string; size: string }[]
+  /** أسئلة الاختبار، تُستخدم فقط عندما يكون النوع "اختبار" */
+  questions?: QuizQuestion[]
 }
+
+/** عنصر موحّد في تدفّق محتوى الكورس: درس ثم (اختيارياً) واجب/اختبار الوحدة */
+export type CourseItem =
+  | { kind: 'lesson'; lesson: Lesson; sectionId: string }
+  | { kind: 'assignment'; assignment: Assignment; sectionId: string }
 
 export type CourseDetail = CourseProgress & {
   description: string
@@ -187,6 +208,57 @@ export const assignments: Assignment[] = [
   {
     id: 'as1',
     courseId: 'c1',
+    sectionId: 'c1-s1',
+    type: 'اختبار',
+    title: 'اختبار: أساسيات React',
+    description:
+      'اختبار قصير لقياس فهمك لأساسيات React التي تناولناها في الوحدة الأولى. اجتزه بعد إكمال دروس الوحدة.',
+    instructions: [
+      'أجب عن جميع الأسئلة',
+      'لكل سؤال إجابة واحدة صحيحة',
+      'تحتاج إلى 60% على الأقل للنجاح',
+    ],
+    dueDate: '26 يونيو 2024',
+    points: 10,
+    status: 'لم يبدأ',
+    attachments: [],
+    questions: [
+      {
+        id: 'q1',
+        question: 'ما هي الأداة المستخدمة لإدارة الحالة داخل المكوّن في React؟',
+        options: ['useState', 'useFetch', 'useRouter', 'useStyle'],
+        correctIndex: 0,
+      },
+      {
+        id: 'q2',
+        question: 'ماذا تُعيد دالة المكوّن (Functional Component) في React؟',
+        options: ['كائن CSS', 'عنصر JSX', 'سلسلة نصية فقط', 'دالة أخرى'],
+        correctIndex: 1,
+      },
+      {
+        id: 'q3',
+        question: 'أي خطّاف (Hook) يُستخدم لمشاركة الحالة بين عدة مكوّنات دون تمريرها يدوياً؟',
+        options: ['useEffect', 'useMemo', 'useContext', 'useRef'],
+        correctIndex: 2,
+      },
+      {
+        id: 'q4',
+        question: 'متى يُنفَّذ الكود داخل useEffect بمصفوفة اعتماديات فارغة []؟',
+        options: [
+          'عند كل إعادة رسم',
+          'مرة واحدة بعد أول تركيب للمكوّن',
+          'لا يُنفَّذ أبداً',
+          'عند تغيّر أي حالة',
+        ],
+        correctIndex: 1,
+      },
+    ],
+  },
+  {
+    id: 'as3',
+    courseId: 'c1',
+    sectionId: 'c1-s3',
+    type: 'تسليم',
     title: 'بناء لوحة تحكم تفاعلية بـ React',
     description:
       'قم ببناء لوحة تحكم تعرض بيانات المستخدمين مع إمكانية الفلترة والبحث، مستخدماً المكوّنات وإدارة الحالة التي تعلّمناها.',
@@ -196,7 +268,7 @@ export const assignments: Assignment[] = [
       'استخدم Context لإدارة الحالة المشتركة',
       'تأكد من أن التصميم متجاوب مع الجوال',
     ],
-    dueDate: '26 يونيو 2024',
+    dueDate: '28 يونيو 2024',
     points: 40,
     status: 'قيد التنفيذ',
     attachments: [
@@ -207,6 +279,8 @@ export const assignments: Assignment[] = [
   {
     id: 'as2',
     courseId: 'c2',
+    sectionId: 'c2-s2',
+    type: 'تسليم',
     title: 'تصميم نموذج أولي لتطبيق جوال',
     description:
       'صمّم نموذجاً أولياً تفاعلياً لتطبيق جوال يحتوي على ثلاث شاشات رئيسية مع تطبيق مبادئ التصميم.',
@@ -216,30 +290,19 @@ export const assignments: Assignment[] = [
       'طبّق نظام ألوان متناسق',
       'اربط الشاشات بتفاعلات واقعية',
     ],
-    dueDate: '28 يونيو 2024',
+    dueDate: '30 يونيو 2024',
     points: 30,
     status: 'لم يبدأ',
     attachments: [{ name: 'دليل-الهوية-البصرية.pdf', size: '1.2 MB' }],
   },
-  {
-    id: 'as3',
-    courseId: 'c1',
-    title: 'تحليل أداء مكوّنات React',
-    description:
-      'حلّل أداء تطبيق React معطى وحدّد نقاط الاختناق، ثم طبّق تحسينات لرفع الأداء.',
-    instructions: [
-      'استخدم React DevTools لقياس الأداء',
-      'حدّد المكوّنات التي تُعاد رسمتها بكثرة',
-      'طبّق memo و useMemo حيث يلزم',
-      'وثّق النتائج قبل وبعد التحسين',
-    ],
-    dueDate: '20 يونيو 2024',
-    points: 25,
-    score: 23,
-    status: 'مصحّح',
-    attachments: [{ name: 'التطبيق-المصدر.zip', size: '540 KB' }],
-  },
 ]
+
+// اربط كل واجب/اختبار بالوحدة التي ينتمي إليها داخل الكورس
+for (const course of courseDetails) {
+  for (const section of course.sections) {
+    section.assignment = assignments.find((a) => a.sectionId === section.id)
+  }
+}
 
 export function getAssignment(id: string): Assignment | undefined {
   return assignments.find((a) => a.id === id)
@@ -247,4 +310,29 @@ export function getAssignment(id: string): Assignment | undefined {
 
 export function getCourseAssignments(courseId: string): Assignment[] {
   return assignments.filter((a) => a.courseId === courseId)
+}
+
+/** تدفّق محتوى الكورس مرتّباً: دروس كل وحدة يتبعها واجب/اختبار الوحدة إن وُجد */
+export function getCourseItems(course: CourseDetail): CourseItem[] {
+  const items: CourseItem[] = []
+  for (const section of course.sections) {
+    for (const lesson of section.lessons) {
+      items.push({ kind: 'lesson', lesson, sectionId: section.id })
+    }
+    if (section.assignment) {
+      items.push({
+        kind: 'assignment',
+        assignment: section.assignment,
+        sectionId: section.id,
+      })
+    }
+  }
+  return items
+}
+
+/** هل اكتملت كل دروس الوحدة التي يتبعها هذا الواجب؟ (شرط فتح الواجب) */
+export function isAssignmentUnlocked(course: CourseDetail, assignmentId: string): boolean {
+  const section = course.sections.find((s) => s.assignment?.id === assignmentId)
+  if (!section) return true
+  return section.lessons.every((l) => l.completed)
 }
