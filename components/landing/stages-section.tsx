@@ -1,15 +1,10 @@
 'use client'
 
-import { useRef } from 'react'
 import Link from 'next/link'
-import { useGSAP } from '@gsap/react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowLeft, GraduationCap, BookOpen } from 'lucide-react'
 import { stages } from '@/lib/landing-data'
 import { cn } from '@/lib/utils'
-
-gsap.registerPlugin(ScrollTrigger)
+import { useReveal } from '@/lib/use-reveal'
 
 const accentStyles = {
   gold: {
@@ -33,32 +28,15 @@ const accentStyles = {
 }
 
 export function StagesSection() {
-  const root = useRef<HTMLElement>(null)
-
-  useGSAP(
-    () => {
-      gsap.from('.stages-head', {
-        scrollTrigger: { trigger: '.stages-head', start: 'top 85%' },
-        y: 30,
-        opacity: 0,
-        duration: 0.7,
-        ease: 'power3.out',
-      })
-      gsap.from('.stage-card', {
-        scrollTrigger: { trigger: '.stages-grid', start: 'top 80%' },
-        y: 60,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.12,
-        ease: 'back.out(1.4)',
-      })
-    },
-    { scope: root },
-  )
+  const headRef = useReveal<HTMLDivElement>(undefined, { y: 30 })
+  const gridRef = useReveal<HTMLDivElement>('.stage-card', {
+    y: 60,
+    duration: 0.6,
+    ease: 'back.out(1.4)',
+  })
 
   return (
     <section
-      ref={root}
       id="stages"
       className="relative overflow-hidden bg-navy py-20 md:py-28"
     >
@@ -74,7 +52,7 @@ export function StagesSection() {
       />
 
       <div className="relative mx-auto max-w-7xl px-4 md:px-8">
-        <div className="stages-head mx-auto max-w-2xl text-center">
+        <div ref={headRef} className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full bg-gold/15 px-4 py-1.5 text-sm font-bold text-gold">
             <GraduationCap className="size-4" />
             اختر مرحلتك
@@ -88,7 +66,7 @@ export function StagesSection() {
           </p>
         </div>
 
-        <div className="stages-grid mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div ref={gridRef} className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {stages.map((stage) => {
             const a = accentStyles[stage.accent]
             return (

@@ -1,13 +1,8 @@
 'use client'
 
-import { useRef } from 'react'
-import { useGSAP } from '@gsap/react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Lightbulb, ClipboardCheck, Video, LineChart } from 'lucide-react'
 import { features } from '@/lib/landing-data'
-
-gsap.registerPlugin(ScrollTrigger)
+import { useReveal } from '@/lib/use-reveal'
 
 const iconMap = {
   lightbulb: Lightbulb,
@@ -17,33 +12,13 @@ const iconMap = {
 }
 
 export function FeaturesSection() {
-  const root = useRef<HTMLElement>(null)
-
-  useGSAP(
-    () => {
-      gsap.from('.feature-head', {
-        scrollTrigger: { trigger: '.feature-head', start: 'top 85%' },
-        y: 30,
-        opacity: 0,
-        duration: 0.7,
-        ease: 'power3.out',
-      })
-      gsap.from('.feature-card', {
-        scrollTrigger: { trigger: '.feature-grid', start: 'top 80%' },
-        y: 50,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.12,
-        ease: 'power3.out',
-      })
-    },
-    { scope: root },
-  )
+  const headRef = useReveal<HTMLDivElement>(undefined, { y: 30 })
+  const gridRef = useReveal<HTMLDivElement>('.feature-card', { y: 50, duration: 0.6 })
 
   return (
-    <section ref={root} id="features" className="bg-cream py-20 md:py-28">
+    <section id="features" className="bg-cream py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="feature-head mx-auto max-w-2xl text-center">
+        <div ref={headRef} className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-bold uppercase tracking-wide text-emerald-brand">
             ليه تختار منصتنا؟
           </span>
@@ -56,7 +31,7 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div className="feature-grid mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div ref={gridRef} className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => {
             const Icon = iconMap[f.icon as keyof typeof iconMap]
             return (
