@@ -17,38 +17,24 @@ export function DashboardShell() {
 
       <StatCards />
 
-      {/* Row 1: الإيرادات (عريض) + نشاط المنصة */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        <div className="xl:col-span-1">
           <RevenueChart />
+        </div>
+        <div className="xl:col-span-1">
+          <StudentsChart />
+        </div>
+        <div className="xl:col-span-1">
+          <TopCourses />
         </div>
         <div className="xl:col-span-1">
           <ActivityChart />
         </div>
       </div>
 
-      {/* Row 2: نمو الطلاب (عريض) + أكثر الكورسات مبيعاً */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <StudentsChart />
-        </div>
-        <div className="xl:col-span-1">
-          <TopCourses />
-        </div>
-      </div>
-
-      {/* Row 3: آخر المدفوعات (عريض) + آخر الرسائل */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <LatestPayments />
-        </div>
-        <div className="xl:col-span-1">
-          <LatestMessages />
-        </div>
-      </div>
-
-      {/* Row 4: آخر الطلاب + آخر الكورسات */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
+        <LatestMessages />
+        <LatestPayments />
         <LatestStudents />
         <LatestCourses />
       </div>
