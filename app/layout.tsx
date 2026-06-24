@@ -41,6 +41,13 @@ export default function RootLayout({
       className={`${cairo.variable} ${geistMono.variable} bg-background`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className={`${cairo.className} font-sans antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
         <Toaster position="top-center" richColors dir="rtl" theme="system" />
