@@ -114,7 +114,12 @@ export function StudentBillingPage() {
     })
   }, [invoices, query, status])
 
-  function submitPayment(id: string, method: PaymentMethod, reference: string) {
+  function submitPayment(
+    id: string,
+    method: PaymentMethod,
+    reference: string,
+    senderInfo: string,
+  ) {
     setInvoices((prev) =>
       prev.map((i) =>
         i.id === id
@@ -123,6 +128,7 @@ export function StudentBillingPage() {
               status: 'قيد المراجعة',
               method,
               reference,
+              senderInfo,
               submittedAt: 'الآن',
               rejectionReason: undefined,
             }
@@ -224,6 +230,16 @@ export function StudentBillingPage() {
                           {inv.reference}
                         </span>
                       )}
+                      {inv.senderInfo && (
+                        <span className="flex items-center gap-1 font-mono" dir="ltr">
+                          {inv.method === 'فودافون كاش' ? (
+                            <Smartphone className="size-3.5" />
+                          ) : (
+                            <CreditCard className="size-3.5" />
+                          )}
+                          {inv.senderInfo}
+                        </span>
+                      )}
                     </div>
                     {inv.status === 'مرفوضة' && inv.rejectionReason && (
                       <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
@@ -286,16 +302,24 @@ function PaymentModal({
 }: {
   invoice: Invoice
   onClose: () => void
-  onSubmit: (id: string, method: PaymentMethod, reference: string) => void
+  onSubmit: (
+    id: string,
+    method: PaymentMethod,
+    reference: string,
+    senderInfo: string,
+  ) => void
 }) {
   const [method, setMethod] = useState<PaymentMethod>('انستاباي')
   const [reference, setReference] = useState('')
+  const [senderInfo, setSenderInfo] = useState('')
   const [fileName, setFileName] = useState('')
   const [copied, setCopied] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const isInsta = method === 'انستاباي'
   const account = paymentAccounts.find((a) => a.method === method)
-  const canSubmit = reference.trim().length >= 4 && fileName !== ''
+  const canSubmit =
+    reference.trim().length >= 4 && senderInfo.trim().length >= 4 && fileName !== ''
 
   function copyAccount() {
     if (account) {
@@ -347,7 +371,10 @@ function PaymentModal({
                 <button
                   key={m}
                   type="button"
-                  onClick={() => setMethod(m)}
+                  onClick={() => {
+                    setMethod(m)
+                    setSenderInfo('')
+                  }}
                   className={cn(
                     'flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
                     selected
@@ -394,6 +421,28 @@ function PaymentModal({
           />
         </div>
 
+        {/* بيانات المُحوِّل: رقم الهاتف (فودافون كاش) أو عنوان انستاباي */}
+        <div className="mt-4">
+          <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
+            {isInsta
+              ? 'عنوان انستاباي الذي حوّلت منه'
+              : 'رقم الهاتف الذي حوّلت منه'}
+          </label>
+          <div className="relative">
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              {isInsta ? <CreditCard className="size-4" /> : <Smartphone className="size-4" />}
+            </span>
+            <input
+              type={isInsta ? 'text' : 'tel'}
+              value={senderInfo}
+              onChange={(e) => setSenderInfo(e.target.value)}
+              placeholder={isInsta ? 'مثال: your.name@instapay' : 'مثال: 010 1234 5678'}
+              dir="ltr"
+              className="w-full rounded-lg border border-border bg-background py-2 pr-9 pl-3 text-left font-mono text-sm text-foreground outline-none transition-colors placeholder:text-right placeholder:font-sans placeholder:text-muted-foreground focus:border-primary"
+            />
+          </div>
+        </div>
+
         {/* رفع الإيصال */}
         <div className="mt-4">
           <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
@@ -421,7 +470,11 @@ function PaymentModal({
           </button>
         </div>
 
-        <Button className="mt-5 w-full" disabled={!canSubmit} onClick={() => onSubmit(invoice.id, method, reference.trim())}>
+        <Button
+          className="mt-5 w-full"
+          disabled={!canSubmit}
+          onClick={() => onSubmit(invoice.id, method, reference.trim(), senderInfo.trim())}
+        >
           إرسال طلب الدفع للمراجعة
         </Button>
         <p className="mt-2 text-center text-xs text-muted-foreground">

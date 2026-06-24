@@ -17,6 +17,8 @@ export type Invoice = {
   // تفاصيل الدفع المرسل (إن وُجد)
   method?: PaymentMethod
   reference?: string
+  // رقم الهاتف (فودافون كاش) أو عنوان انستاباي الذي حوّل منه الطالب
+  senderInfo?: string
   submittedAt?: string
   // سبب الرفض إن رُفض الطلب
   rejectionReason?: string
@@ -42,6 +44,7 @@ export const studentInvoices: Invoice[] = [
     status: 'قيد المراجعة',
     method: 'انستاباي',
     reference: 'IPN-7741209',
+    senderInfo: 'kareem.student@instapay',
     submittedAt: 'منذ ساعتين',
   },
   {
@@ -54,6 +57,7 @@ export const studentInvoices: Invoice[] = [
     status: 'مرفوضة',
     method: 'فودافون كاش',
     reference: 'VFC-339102',
+    senderInfo: '011 2345 6789',
     submittedAt: 'منذ 5 أيام',
     rejectionReason: 'صورة الإيصال غير واضحة، برجاء إعادة إرسال إيصال أوضح.',
   },
