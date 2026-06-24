@@ -92,8 +92,7 @@ export function StudentSchedulePage() {
     () =>
       [...scheduleEvents]
         .filter((e) => e.date >= todayKey)
-        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
-        .slice(0, 6),
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)),
     [],
   )
 
@@ -321,7 +320,7 @@ export function StudentSchedulePage() {
           {/* الأحداث القادمة */}
           <Card className="gap-0 p-5">
             <h3 className="text-base font-bold text-foreground">المواعيد القادمة</h3>
-            <div className="mt-4 space-y-2.5">
+            <div className="mt-4 max-h-[360px] space-y-2.5 overflow-y-auto pl-1">
               {upcoming.length === 0 && (
                 <p className="py-6 text-center text-sm text-muted-foreground">
                   لا توجد مواعيد قادمة
