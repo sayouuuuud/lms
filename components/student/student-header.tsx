@@ -68,7 +68,7 @@ function NotificationsDropdown() {
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <div className="glass-surface absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border shadow-xl">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm font-bold text-foreground">
               الإشعارات
@@ -173,7 +173,7 @@ function ProfileDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <div className="glass-surface absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border shadow-xl">
           <div className="border-b border-border px-4 py-3">
             <p className="text-sm font-bold text-foreground">{studentProfile.name}</p>
             <p className="text-xs text-muted-foreground">{studentProfile.email}</p>
@@ -220,7 +220,7 @@ export function StudentHeader({
   onToggleTheme: () => void
 }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur">
+    <header className="glass-surface sticky top-0 z-30 border-b">
       <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
         <ProfileDropdown />
 
