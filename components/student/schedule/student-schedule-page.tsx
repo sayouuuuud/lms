@@ -293,9 +293,10 @@ export function StudentSchedulePage() {
         </Card>
 
         {/* اللوحة الجانبية */}
-        <div className="space-y-6">
+        <div className="relative">
+        <div className="flex flex-col gap-6 xl:absolute xl:inset-0">
           {/* اليوم المحدد */}
-          <Card className="gap-0 p-5">
+          <Card className="shrink-0 gap-0 p-5">
             <h3 className="text-base font-bold text-foreground">
               {selectedDate ? formatDateLabel(selectedDate) : 'اختر يومًا'}
             </h3>
@@ -318,9 +319,9 @@ export function StudentSchedulePage() {
           </Card>
 
           {/* الأحداث القادمة */}
-          <Card className="gap-0 p-5">
-            <h3 className="text-base font-bold text-foreground">المواعيد القادمة</h3>
-            <div className="mt-4 max-h-[360px] space-y-2.5 overflow-y-auto pl-1">
+          <Card className="flex min-h-0 flex-1 flex-col gap-0 p-5">
+            <h3 className="shrink-0 text-base font-bold text-foreground">المواعيد القادمة</h3>
+            <div className="mt-4 max-h-[360px] min-h-0 flex-1 space-y-2.5 overflow-y-auto pl-1 xl:max-h-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {upcoming.length === 0 && (
                 <p className="py-6 text-center text-sm text-muted-foreground">
                   لا توجد مواعيد قادمة
@@ -364,6 +365,7 @@ export function StudentSchedulePage() {
               ))}
             </div>
           </Card>
+        </div>
         </div>
       </div>
     </div>
