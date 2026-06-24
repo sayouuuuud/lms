@@ -30,16 +30,16 @@ export function DashboardShell() {
         </div>
       </div>
 
-      {/* Row 2: نمو الطلاب (wide) + آخر الرسائل + آخر الطلاب المسجلين */}
+      {/* Row 2: آخر الرسائل + آخر الطلاب المسجلين + نمو الطلاب (wide) */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
-        <div className="xl:col-span-2">
-          <StudentsChart />
-        </div>
         <div className="xl:col-span-1">
           <LatestMessages />
         </div>
         <div className="xl:col-span-1">
           <LatestStudents />
+        </div>
+        <div className="xl:col-span-2">
+          <StudentsChart />
         </div>
       </div>
 
