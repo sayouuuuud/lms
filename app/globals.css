@@ -150,14 +150,29 @@
 
 /* اجعل كل الكروت داخل لوحة الطالب زجاجية تلقائياً */
 .glass-theme [data-slot='card'] {
-  background-color: color-mix(in oklab, var(--card) 52%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(170%);
-  backdrop-filter: blur(18px) saturate(170%);
+  background-color: color-mix(in oklab, var(--card) 45%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(175%);
+  backdrop-filter: blur(20px) saturate(175%);
   border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
   box-shadow:
     0 10px 34px -16px oklch(0.35 0.12 287 / 0.45),
     inset 0 1px 0 0 color-mix(in oklab, var(--foreground) 8%, transparent);
   --tw-ring-color: transparent;
+}
+
+/* الأسطح الداخلية (مربعات الإحصائيات/خلفيات الأيقونات) تبقى شفافة كمان */
+.glass-theme [data-slot='card'] .bg-secondary,
+.glass-theme [data-slot='card'] .bg-muted {
+  background-color: color-mix(in oklab, var(--foreground) 6%, transparent) !important;
+}
+
+/* بانر الترحيب: زجاج داكن مائل للون الأساسي بدل اللون الصلب */
+.glass-theme .bg-sidebar {
+  background-color: color-mix(in oklab, var(--sidebar) 62%, transparent) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid color-mix(in oklab, oklch(1 0 0) 16%, transparent);
+  box-shadow: 0 14px 44px -18px oklch(0.35 0.14 287 / 0.6);
 }
 
 @layer base {
