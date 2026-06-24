@@ -1,11 +1,12 @@
 import Image from 'next/image'
-import { Play } from 'lucide-react'
+import { Play, ChevronLeft } from 'lucide-react'
 import { PanelCard } from '@/components/dashboard/panel-card'
 import { Button } from '@/components/ui/button'
 import { enrolledCourses } from '@/lib/student-data'
 
 export function ContinueLearning() {
   const course = enrolledCourses[0]
+  const rest = enrolledCourses.slice(1, 4)
   const percent = Math.round(
     (course.completedLessons / course.totalLessons) * 100,
   )
