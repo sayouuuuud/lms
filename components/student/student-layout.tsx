@@ -11,7 +11,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
   const { isDark, toggleTheme } = useTheme()
 
   return (
-    <div className="glass-theme flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <StudentSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
