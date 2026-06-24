@@ -16,9 +16,10 @@ import {
   ArrowLeft,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { studentProfile } from '@/lib/student-data'
+import { getStudentAvatar } from '@/lib/students-data'
 
 const mockNotifications = [
   { id: 1, text: 'تم رفع درس جديد في كورس React', time: 'منذ 10 د', read: false },
