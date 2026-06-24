@@ -1,18 +1,18 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { Sidebar } from './sidebar'
-import { Header } from './header'
+import { StudentSidebar } from './student-sidebar'
+import { StudentHeader } from './student-header'
 import { useTheme } from '@/components/theme-provider'
 
-export function DashboardLayout({ children }: { children: ReactNode }) {
+export function StudentLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const { isDark, toggleTheme } = useTheme()
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar
+      <StudentSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
@@ -20,7 +20,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Header
+        <StudentHeader
           onMenuClick={() => setSidebarOpen(true)}
           isDark={isDark}
           onToggleTheme={toggleTheme}

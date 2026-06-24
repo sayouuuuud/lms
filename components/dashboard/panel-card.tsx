@@ -15,7 +15,7 @@ export function PanelCard({
 }) {
   return (
     <Card className="flex h-full flex-col gap-0 p-5">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-bold text-foreground">{title}</h3>
         {filter && (
           <button
@@ -35,7 +35,7 @@ export function PanelCard({
           </button>
         )}
       </div>
-      <div className="flex min-h-0 flex-1 flex-col justify-center">
+      <div className="flex min-h-0 flex-1 flex-col">
         {children}
       </div>
     </Card>

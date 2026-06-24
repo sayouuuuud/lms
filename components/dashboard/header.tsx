@@ -305,17 +305,7 @@ function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleT
               <Settings className="size-4 text-muted-foreground" />
               الإعدادات
             </Link>
-            <button
-              onClick={() => { onToggleTheme(); setOpen(false) }}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary/60"
-            >
-              {isDark ? (
-                <Sun className="size-4 text-muted-foreground" />
-              ) : (
-                <Moon className="size-4 text-muted-foreground" />
-              )}
-              {isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}
-            </button>
+
           </div>
 
           <div className="border-t border-border py-1.5">
@@ -350,6 +340,15 @@ export function Header({
         <div className="flex items-center gap-1">
           <NotificationsDropdown />
           <MessagesDropdown />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleTheme}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label={isDark ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'}
+          >
+            {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
+          </Button>
         </div>
 
         {/* Search */}

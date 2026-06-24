@@ -5,16 +5,12 @@ import { usePathname } from 'next/navigation'
 import {
   GraduationCap,
   LayoutDashboard,
-  Users,
   BookOpen,
   ClipboardList,
+  FileText,
   CalendarDays,
-  CreditCard,
   MessageSquare,
-  Bell,
-  Tag,
-  FolderTree,
-  BarChart3,
+  Receipt,
   Settings,
   LogOut,
   ChevronLeft,
@@ -25,21 +21,17 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
-  { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/' },
-  { label: 'الطلاب', icon: Users, href: '/students' },
-  { label: 'الكورسات', icon: BookOpen, href: '/courses' },
-  { label: 'الاختبارات', icon: ClipboardList, href: '/exams' },
-  { label: 'التقويم', icon: CalendarDays, href: '/calendar' },
-  { label: 'التصنيفات', icon: FolderTree, href: '/categories' },
-  { label: 'المدفوعات', icon: CreditCard, href: '/payments' },
-  { label: 'رسائل', icon: MessageSquare, href: '/messages' },
-  { label: 'الإشعارات', icon: Bell, href: '/notifications' },
-  { label: 'خصومات و الكوبونات', icon: Tag, href: '/coupons' },
-  { label: 'التقارير', icon: BarChart3, href: '/reports' },
-  { label: 'الإعدادات', icon: Settings, href: '/settings' },
+  { label: 'الرئيسية', icon: LayoutDashboard, href: '/student' },
+  { label: 'كورساتي', icon: BookOpen, href: '/student/courses' },
+  { label: 'الاختبارات', icon: ClipboardList, href: '/student/exams' },
+  { label: 'الواجبات', icon: FileText, href: '/student/assignments' },
+  { label: 'جدولي', icon: CalendarDays, href: '/student/schedule' },
+  { label: 'الرسائل', icon: MessageSquare, href: '/student/messages' },
+  { label: 'الفواتير', icon: Receipt, href: '/student/billing' },
+  { label: 'الإعدادات', icon: Settings, href: '/student/settings' },
 ]
 
-export function Sidebar({
+export function StudentSidebar({
   open,
   onClose,
   collapsed,
@@ -76,7 +68,7 @@ export function Sidebar({
               </div>
               <div className="leading-tight">
                 <h1 className="text-base font-bold text-white">منصة تعليمية</h1>
-                <p className="text-xs text-sidebar-foreground/60">لوحة الإدارة</p>
+                <p className="text-xs text-sidebar-foreground/60">بوابة الطالب</p>
               </div>
             </div>
           )}
@@ -109,47 +101,47 @@ export function Sidebar({
         </div>
 
         {/* Nav */}
-        <nav className="flex flex-1 flex-col px-2 py-2">
-          <div className="flex flex-1 flex-col justify-around">
-          {navItems.map((item) => {
-            const active =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname === item.href ||
-                  pathname.startsWith(`${item.href}/`)
-            return (
-              <div key={item.label} className="group relative">
-                <Link
-                  href={item.href}
-                  onClick={onClose}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(
-                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                    collapsed ? 'justify-center' : '',
-                    active
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/30'
-                      : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-white',
-                  )}
-                >
-                  <item.icon className="size-5 shrink-0" />
-                  {!collapsed && (
-                    <>
-                      <span className="flex-1">{item.label}</span>
-                      {active && <ChevronLeft className="size-4 opacity-70" />}
-                    </>
-                  )}
-                </Link>
+        <nav className="flex-1 overflow-y-auto scrollbar-hide px-2 py-2">
+          <div className="flex flex-col gap-1">
+            {navItems.map((item) => {
+              const active =
+                item.href === '/student'
+                  ? pathname === '/student'
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`)
+              return (
+                <div key={item.label} className="group relative">
+                  <Link
+                    href={item.href}
+                    onClick={onClose}
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                      collapsed ? 'justify-center' : '',
+                      active
+                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-sidebar-primary/30'
+                        : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-white',
+                    )}
+                  >
+                    <item.icon className="size-5 shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1">{item.label}</span>
+                        {active && <ChevronLeft className="size-4 opacity-70" />}
+                      </>
+                    )}
+                  </Link>
 
-                {/* Tooltip on collapsed */}
-                {collapsed && (
-                  <div className="pointer-events-none absolute right-full top-1/2 z-50 me-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
-                    {item.label}
-                    <span className="absolute right-[-4px] top-1/2 -translate-y-1/2 border-4 border-transparent border-l-foreground" />
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                  {/* Tooltip on collapsed */}
+                  {collapsed && (
+                    <div className="pointer-events-none absolute right-full top-1/2 z-50 me-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+                      {item.label}
+                      <span className="absolute right-[-4px] top-1/2 -translate-y-1/2 border-4 border-transparent border-l-foreground" />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </nav>
 
