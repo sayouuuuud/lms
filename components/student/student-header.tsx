@@ -258,7 +258,7 @@ export function StudentHeader({
           aria-label="رجوع"
           title="رجوع"
         >
-          <ArrowRight className="size-5" />
+          <ArrowLeft className="size-5" />
         </Button>
 
         <Button
