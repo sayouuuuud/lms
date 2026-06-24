@@ -16,6 +16,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { VideoPlayer } from '@/components/student/courses/video-player'
 import type { CourseDetail, Lesson } from '@/lib/student-courses-data'
 
 const iconFor = (lesson: Lesson, active: boolean) => {
@@ -80,16 +81,11 @@ export function LessonPlayer({
           <Card className="overflow-hidden p-0">
             <div className="relative aspect-video w-full bg-black">
               {lesson.type === 'فيديو' ? (
-                <video
+                <VideoPlayer
                   key={lesson.id}
-                  controls
+                  src={lesson.videoUrl}
                   poster={course.image}
-                  className="absolute inset-0 size-full object-contain"
-                  preload="metadata"
-                >
-                  <source src={lesson.videoUrl} type="video/mp4" />
-                  متصفحك لا يدعم تشغيل الفيديو.
-                </video>
+                />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/80">
                   <FileText className="size-12" />
