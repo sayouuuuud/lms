@@ -20,38 +20,44 @@ export function StudentDashboardShell() {
         <StudentWelcome />
         <StudentStats />
 
-        {/* Row 1: أكمل من حيث توقفت + الجدول + الاختبارات القادمة */}
+        {/* Row 1: أكمل من حيث توقفت (wide) + الاختبارات القادمة */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-1">
+          <div className="xl:col-span-2">
             <ContinueLearning />
-          </div>
-          <div className="xl:col-span-1">
-            <UpcomingSchedule />
           </div>
           <div className="xl:col-span-1">
             <UpcomingExams />
           </div>
         </div>
 
-        {/* Row 2: نشاط التعلم (wide) + أحدث الدرجات */}
+        {/* Row 2: الجدول + نشاط التعلم (wide) */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <div className="xl:col-span-1">
+            <UpcomingSchedule />
+          </div>
           <div className="xl:col-span-2">
             <LearningActivityChart />
           </div>
+        </div>
+
+        {/* Row 3: أحدث الدرجات + الأهداف الأسبوعية + إنجازات الشهر */}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <RecentGrades />
+          <WeeklyGoals />
+          <MonthlyProgress />
+        </div>
+
+        {/* Row 4: إعلانات + كورساتي */}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="xl:col-span-1">
-            <RecentGrades />
+            <Announcements />
+          </div>
+          <div className="xl:col-span-2">
+            <MyCourses />
           </div>
         </div>
 
-        {/* Row 3: الأهداف الأسبوعية + إنجازات الشهر + إعلانات */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <WeeklyGoals />
-          <MonthlyProgress />
-          <Announcements />
-        </div>
 
-        {/* Row 4: كورساتي */}
-        <MyCourses />
       </div>
     </StudentLayout>
   )
