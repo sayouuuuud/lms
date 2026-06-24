@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const navItems = [
-  { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/' },
+  { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/dashboard' },
   { label: 'الطلاب', icon: Users, href: '/students' },
   { label: 'الكورسات', icon: BookOpen, href: '/courses' },
   { label: 'الاختبارات', icon: ClipboardList, href: '/exams' },
