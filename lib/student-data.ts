@@ -48,6 +48,8 @@ export const studentProfile = {
   email: 'mariam.khaled@email.com',
   initials: 'م خ',
   level: 'طالبة مجتهدة',
+  id: 'STD-1035',
+  gender: 'أنثى' as const,
 }
 
 export const enrolledCourses: CourseProgress[] = [

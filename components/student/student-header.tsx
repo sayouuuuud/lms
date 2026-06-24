@@ -16,9 +16,10 @@ import {
   ArrowLeft,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { studentProfile } from '@/lib/student-data'
+import { getStudentAvatar } from '@/lib/students-data'
 
 const mockNotifications = [
   { id: 1, text: 'تم رفع درس جديد في كورس React', time: 'منذ 10 د', read: false },
@@ -151,6 +152,10 @@ function ProfileDropdown() {
         aria-label="قائمة الحساب"
       >
         <Avatar className="size-10 ring-2 ring-primary/20">
+          <AvatarImage
+            src={getStudentAvatar(studentProfile)}
+            alt={studentProfile.name}
+          />
           <AvatarFallback className="bg-primary/10 font-semibold text-primary">
             {studentProfile.initials}
           </AvatarFallback>
