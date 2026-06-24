@@ -251,7 +251,7 @@ export function CourseOverview({ course }: { course: CourseDetail }) {
               }
             >
               <Play className="size-4" />
-              {percent === 0 ? 'ابدأ الكورس' : '��تابعة الدرس'}
+              {percent === 0 ? 'ابدأ الكورس' : 'تابعة الدرس'}
             </Button>
           </div>
         </div>
