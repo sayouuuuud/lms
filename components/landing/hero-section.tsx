@@ -81,37 +81,6 @@ export function HeroSection() {
       <WireCube className="float-obj left-[44%] top-[20%] hidden text-violet-glow/70 dark:block" />
       <WireTriangle className="float-obj bottom-[18%] left-[40%] hidden text-teal-glow/70 dark:block" />
 
-      {/* Dark-mode-only code snippet, echoing the "math is just logic" idea */}
-      <pre
-        className="float-obj pointer-events-none absolute left-[2%] top-[26%] hidden font-mono text-[11px] leading-relaxed opacity-80 dark:lg:block"
-        aria-hidden="true"
-      >
-        <code>
-          <span className="text-teal-glow">for</span>{' '}
-          <span className="text-ink-dim">i</span>{' '}
-          <span className="text-teal-glow">in</span>{' '}
-          <span className="text-ink-dim">range(n):</span>
-          {'\n'}
-          {'  '}
-          <span className="text-violet-glow">if</span>{' '}
-          <span className="text-ink-dim">arr[i] {'>'} target:</span>
-          {'\n'}
-          {'    '}
-          <span className="text-teal-glow">return True</span>
-          {'\n'}
-          {'  '}
-          <span className="text-violet-glow">else</span>
-          <span className="text-ink-dim">:</span>
-          {'\n'}
-          {'    '}
-          <span className="text-teal-glow">return False</span>
-          {'\n'}
-          <span className="text-ink-dim">print(</span>
-          <span className="text-violet-glow">&quot;Keep Learning&quot;</span>
-          <span className="text-ink-dim">)</span>
-        </code>
-      </pre>
-
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-end gap-6 px-5 md:grid-cols-12 md:gap-8 md:px-8">
         {/* Text column */}
         <div className="order-2 pb-16 md:order-1 md:col-span-6 md:pb-24">
@@ -189,7 +158,7 @@ export function HeroSection() {
           />
           {/* negative margin-top raises the image above the section baseline while
               staying clipped by overflow-hidden on the section — never bleeds into navbar */}
-          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[520px] lg:-mt-24 xl:-mt-12">
+          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[520px] lg:-mt-24 xl:-mt-12 dark:mt-0 dark:md:mt-0 dark:lg:mt-0 dark:xl:mt-0">
             {/* light-mode portrait */}
             <Image
               src="/teacher-abdelsalam.webp"
