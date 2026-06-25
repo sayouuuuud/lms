@@ -175,7 +175,7 @@ export function HeroSection() {
               width={772}
               height={1024}
               priority
-              className="hidden h-auto w-full object-contain dark:block"
+              className="mt-10 hidden h-auto w-full object-contain md:mt-12 dark:block"
             />
           </div>
         </div>
