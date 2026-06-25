@@ -14,7 +14,7 @@ export function LandingPage() {
       <ScrollRefresh />
       {/* Continuous graph-paper backdrop behind every section */}
       <div
-        className="graph-paper pointer-events-none fixed inset-0 z-0 opacity-[0.45] dark:opacity-[0.6]"
+        className="graph-paper pointer-events-none fixed inset-0 z-0 opacity-[0.45] dark:opacity-[0.22]"
         aria-hidden="true"
       />
       {/* Dark-mode ambient glow — teal on the right, violet on the left */}

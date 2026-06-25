@@ -180,7 +180,7 @@
   --sidebar-border: oklch(0.28 0.025 271);
   --sidebar-ring: oklch(0.45 0.08 264);
   /* faint grid lines so the graph-paper backdrop reads on near-black */
-  --color-graph-line: oklch(0.32 0.018 264);
+  --color-graph-line: oklch(0.24 0.014 264);
 }
 
 @utility scrollbar-hide {
