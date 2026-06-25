@@ -110,17 +110,17 @@ export function HeroSection() {
             رحلتك للتفوق.
           </p>
 
-          <div className="hero-stagger mt-9 flex flex-col gap-3 sm:flex-row">
+          <div className="hero-stagger mt-9 flex flex-col gap-3 sm:flex-row md:gap-2.5 lg:gap-3">
             <a
               href="#stages"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-base font-bold text-navy-deep shadow-lg shadow-gold/30 transition-transform duration-200 hover:-translate-y-0.5 dark:bg-violet-glow dark:text-white dark:shadow-[0_0_30px_oklch(0.66_0.2_292_/_0.45)]"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-base font-bold text-navy-deep shadow-lg shadow-gold/30 transition-transform duration-200 hover:-translate-y-0.5 md:px-5 md:py-3 md:text-sm lg:px-8 lg:py-4 lg:text-base dark:bg-violet-glow dark:text-white dark:shadow-[0_0_30px_oklch(0.66_0.2_292_/_0.45)]"
             >
               اختار مرحلتك الدراسية
-              <ArrowLeft className="size-5 transition-transform duration-200 group-hover:-translate-x-1" />
+              <ArrowLeft className="size-5 transition-transform duration-200 group-hover:-translate-x-1 md:size-4 lg:size-5" />
             </a>
             <a
               href="#features"
-              className="inline-flex items-center justify-center rounded-full border border-navy/20 bg-cream/60 px-8 py-4 text-base font-bold text-navy backdrop-blur transition-colors hover:bg-navy/5 dark:border-white/15 dark:bg-white/5 dark:text-ink-fg dark:hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-full border border-navy/20 bg-cream/60 px-8 py-4 text-base font-bold text-navy backdrop-blur transition-colors hover:bg-navy/5 md:px-5 md:py-3 md:text-sm lg:px-8 lg:py-4 lg:text-base dark:border-white/15 dark:bg-white/5 dark:text-ink-fg dark:hover:bg-white/10"
             >
               اعرف أكتر عن المنصة
             </a>
