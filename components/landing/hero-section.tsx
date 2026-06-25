@@ -158,7 +158,7 @@ export function HeroSection() {
           />
           {/* negative margin-top raises the image above the section baseline while
               staying clipped by overflow-hidden on the section — never bleeds into navbar */}
-          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[520px] lg:-mt-24 xl:-mt-12 dark:mt-0 dark:md:mt-0 dark:lg:mt-0 dark:xl:mt-0">
+          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[520px] lg:-mt-24 xl:-mt-12">
             {/* light-mode portrait */}
             <Image
               src="/teacher-abdelsalam.webp"
