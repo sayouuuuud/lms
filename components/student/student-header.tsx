@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { studentProfile } from '@/lib/student-data'
 import { getStudentAvatar } from '@/lib/students-data'
+import { useLogout } from '@/lib/use-logout'
 
 const mockNotifications = [
   { id: 1, text: 'تم رفع درس جديد في كورس React', time: 'منذ 10 د', read: false },
@@ -143,6 +144,7 @@ function NotificationsDropdown() {
 function ProfileDropdown() {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const logout = useLogout()
   useOutsideClick(ref, () => setOpen(false))
 
   return (
@@ -201,11 +203,15 @@ function ProfileDropdown() {
           </div>
 
           <div className="border-t border-border py-1.5">
-            <button className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10">
+            <button
+              onClick={logout}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
+            >
               <LogOut className="size-4" />
               تسجيل الخروج
             </button>
           </div>
+
         </div>
       )}
     </div>

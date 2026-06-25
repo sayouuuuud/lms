@@ -15,8 +15,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
-  courseRecords,
   courseStatusFilters,
+  type CourseRecord,
   type CourseStatus,
 } from '@/lib/courses-data'
 
@@ -26,13 +26,13 @@ const statusStyles: Record<CourseStatus, string> = {
   مؤرشف: 'bg-secondary text-muted-foreground',
 }
 
-export function CoursesGrid() {
+export function CoursesGrid({ courses }: { courses: CourseRecord[] }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<CourseStatus | 'الكل'>('الكل')
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return courseRecords.filter((course) => {
+    return courses.filter((course) => {
       const matchesStatus = filter === 'الكل' || course.status === filter
       const matchesQuery =
         q === '' ||
@@ -41,7 +41,7 @@ export function CoursesGrid() {
         course.category.toLowerCase().includes(q)
       return matchesStatus && matchesQuery
     })
-  }, [query, filter])
+  }, [courses, query, filter])
 
   return (
     <Card className="gap-0 p-5">
@@ -178,7 +178,7 @@ export function CoursesGrid() {
       <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
         <span>
           عرض <strong className="text-foreground">{filtered.length}</strong> من أصل{' '}
-          <strong className="text-foreground">{courseRecords.length}</strong> كورس
+          <strong className="text-foreground">{courses.length}</strong> كورس
         </span>
         <div className="flex gap-2">
           <Button

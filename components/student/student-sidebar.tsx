@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { useLogout } from '@/lib/use-logout'
 
 const navItems = [
   { label: 'الرئيسية', icon: LayoutDashboard, href: '/student' },
@@ -45,6 +46,7 @@ export function StudentSidebar({
   onToggleCollapse: () => void
 }) {
   const pathname = usePathname()
+  const logout = useLogout()
   return (
     <>
       {open && (
@@ -150,16 +152,17 @@ export function StudentSidebar({
         {/* Logout */}
         <div className="shrink-0 border-t border-sidebar-border px-2 py-2">
           <div className="group relative">
-            <a
-              href="#"
+            <button
+              type="button"
+              onClick={logout}
               className={cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-white/5 hover:text-white',
+                'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-white/5 hover:text-white',
                 collapsed && 'justify-center',
               )}
             >
               <LogOut className="size-5 shrink-0" />
               {!collapsed && <span>تسجيل الخروج</span>}
-            </a>
+            </button>
             {collapsed && (
               <div className="pointer-events-none absolute right-full top-1/2 z-50 me-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
                 تسجيل الخروج

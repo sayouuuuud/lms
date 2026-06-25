@@ -57,6 +57,7 @@ export function StudentFormModal() {
     submitForm({
       name: name.trim(),
       email: email.trim(),
+      password: password.trim(),
       phone: phone.trim(),
       gender,
       status,
