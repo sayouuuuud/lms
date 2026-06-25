@@ -51,7 +51,7 @@
 - **ألوان Tailwind (color/bg) لا تُولَّد ديناميكيًا.** خزّنها كنصوص حرفية في DB (نفس القيم الموجودة في الـ mock مثل `text-pink-600` و`bg-pink-50 dark:bg-pink-500/10`). لا تبنِ class names بالـ string interpolation.
 - **التواريخ النسبية:** ملف `lib/calendar-data.ts` يستخدم `relativeDate()`. في DB خزّن تواريخ **مطلقة** (`date`). عند الـ seed احسبها نسبةً لوقت الـ seed.
 - **الأنواع المقيّدة (CHECK):** كل عمود status/type له قيم عربية محددة — انسخها حرفيًا في `check (col in (...))`. أي اختلاف حرف واحد = فشل.
-- **رفع الملفات (الإيصالات/المرفقات):** عمود `receiptUrl` في المدفوعات و`attachments` في الواجبات يتطلب تخزين ملفات. استخدم **Supabase Storage** (انظر Phase 5). لا تخزّن base64 في DB.
+- **رفع الملفات (الإيصالات/المرفقات) = UploadThing فقط، ممنوع Supabase Storage.** أي رفع ملف (إيصال دفع، مرفق واجب، صورة كورس/تصنيف، صورة بروفايل) يتم عبر **UploadThing**. الإعداد مرة واحدة في الخطوة التمهيدية 0.5. النمط الثابت: العميل يرفع عبر مكوّن UploadThing فيرجع **رابط `ufsUrl`** (نص URL كامل)، ثم نمرّر هذا الرابط لـ Server Action تخزّنه في عمود نصّي عادي (مثل `receipt_url text` أو `image_url text` أو `attachment_url text`). **لا تخزّن الملف نفسه ولا base64 في DB — فقط الرابط النصّي.** لا تنشئ أي bucket في Supabase ولا تستخدم `storage.objects` إطلاقًا.
 - **`student-courses-data.ts` معقّد:** يبني الأقسام/الدروس برمجيًا. عند الانتقال لـ DB (Phase 6) يجب الحفاظ على نفس دوال الـ helper (`getCourseDetail`, `getLesson`, `getCourseItems`, `isAssignmentUnlocked`) بنفس التواقيع لكن تقرأ من DB.
 - **الهوية في بوابة الطالب:** حاليًا `studentProfile` ثابت (مريم خالد). في Phase 10 سيُستبدل بالمستخدم المسجّل فعليًا عبر `auth.uid()` و`students.user_id`.
 
@@ -116,7 +116,94 @@ export const iconNames = Object.keys(ICONS)
 
 > **مهم:** أعِد استخدام `requireAdmin` المستوردة من `lib/auth-guard.ts` في `app/students/actions.ts` و`app/courses/actions.ts` لاحقًا لو حبيت توحّد الكود (اختياري، غير مطلوب).
 
-### 0.5 كيف تشغّل migration وتتحقق
+### 0.5 إعداد UploadThing للتخزين (نفّذها مرة واحدة قبل Phase 5)
+
+> **التخزين كله على UploadThing — لا Supabase Storage إطلاقًا.** هذه الخطوة تُنشئ البنية التحتية للرفع التي ستستخدمها Phase 5 (إيصالات)، Phase 8 (مرفقات الواجبات)، و(اختياريًا) صور الكورسات/التصنيفات/البروفايل. **نفّذها كاملةً قبل البدء في Phase 5.**
+
+**(أ) تثبيت الحزم** (المشروع يستخدم **pnpm**؛ ثبّت أولًا ثم اكتب الكود الذي يستوردها):
+```bash
+pnpm add uploadthing @uploadthing/react
+```
+
+**(ب) متغيّر البيئة:** UploadThing يحتاج `UPLOADTHING_TOKEN`. إنه **ليس** ضمن متغيّرات Supabase. تحقّق أولًا عبر `GetOrRequestIntegration` أو بفحص البيئة؛ إن لم يكن موجودًا **اطلبه من المستخدم** عبر `SystemAction(requestEnvironmentVariables)` بالمفتاح `UPLOADTHING_TOKEN`. **لا تكتب توكنًا وهميًا ولا تخمّنه.** لا تكمل Phase 5 قبل توفّره.
+
+**(ج) الـ File Router** — `app/api/uploadthing/core.ts`. عرّف ثلاثة مسارات رفع (router endpoints) حسب الحاجة. كل مسار يستخدم `requireAdmin`/`getCurrentStudent` في الـ middleware للحماية:
+```ts
+import { createUploadthing, type FileRouter } from 'uploadthing/next'
+import { UploadThingError } from 'uploadthing/server'
+import { createClient } from '@/lib/supabase/server'
+
+const f = createUploadthing()
+
+export const ourFileRouter = {
+  // إيصالات الدفع — يرفعها الطالب المسجّل (Phase 5/10)
+  receiptUploader: f({ image: { maxFileSize: '8MB' }, pdf: { maxFileSize: '8MB' } })
+    .middleware(async () => {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new UploadThingError('غير مصرّح')
+      return { userId: user.id }
+    })
+    .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
+
+  // مرفقات الواجبات — يرفعها الطالب المسجّل (Phase 8)
+  assignmentUploader: f({ image: { maxFileSize: '16MB' }, pdf: { maxFileSize: '16MB' }, blob: { maxFileSize: '16MB' } })
+    .middleware(async () => {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new UploadThingError('غير مصرّح')
+      return { userId: user.id }
+    })
+    .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
+
+  // صور (كورسات/تصنيفات/بروفايل) — أدمن فقط (اختياري)
+  imageUploader: f({ image: { maxFileSize: '4MB' } })
+    .middleware(async () => {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new UploadThingError('غير مصرّح')
+      return { userId: user.id }
+    })
+    .onUploadComplete(async ({ file }) => ({ url: file.ufsUrl })),
+} satisfies FileRouter
+
+export type OurFileRouter = typeof ourFileRouter
+```
+> **ملاحظة حرجة:** استخدم `file.ufsUrl` (الإصدار الحديث)، **وليس** `file.url` المهجور.
+
+**(د) Route Handler** — `app/api/uploadthing/route.ts`:
+```ts
+import { createRouteHandler } from 'uploadthing/next'
+import { ourFileRouter } from './core'
+
+export const { GET, POST } = createRouteHandler({ router: ourFileRouter })
+```
+
+**(هـ) مكوّنات العميل** — `lib/uploadthing.ts`:
+```ts
+import { generateUploadButton, generateUploadDropzone } from '@uploadthing/react'
+import type { OurFileRouter } from '@/app/api/uploadthing/core'
+
+export const UploadButton = generateUploadButton<OurFileRouter>()
+export const UploadDropzone = generateUploadDropzone<OurFileRouter>()
+```
+الاستخدام في أي مكوّن client:
+```tsx
+<UploadDropzone
+  endpoint="receiptUploader"
+  onClientUploadComplete={(res) => {
+    const url = res?.[0]?.serverData?.url // الرابط النصّي الكامل
+    // مرّر url لـ Server Action لتخزينه في العمود النصّي
+  }}
+  onUploadError={() => toast.error('فشل رفع الملف')}
+/>
+```
+
+**(و) استثناء مسار الرفع من حارس المصادقة (حرج جدًا):** الـ proxy في `lib/supabase/proxy.ts` يعيد توجيه غير المسجّلين إلى `/auth`. مسار `/api/uploadthing` يجب أن يبقى **مسموحًا** (لأن UploadThing يستدعيه كـ webhook من سيرفره). تأكّد أن منطق إعادة التوجيه في `proxy.ts` **يستثني** أي مسار يبدأ بـ `/api`. إن لم يكن مستثنى، أضف الشرط: لا تُعِد التوجيه إذا `request.nextUrl.pathname.startsWith('/api')`. (الـ `middleware.ts` matcher يستثني الملفات الساكنة بالفعل، لكن تحقّق من منطق `proxy.ts` نفسه.)
+
+**(ز) التحقق:** بعد الإعداد، يجب أن يفتح `GET /api/uploadthing` بدون خطأ، وأن يعمل مكوّن `UploadDropzone` في المتصفح ويعيد رابط `ufsUrl` صالحًا.
+
+### 0.6 كيف تشغّل migration وتتحقق
 - استخدم **Supabase MCP**: أداة `apply_migration` للـ DDL، و`execute_sql` للـ seed والتحقق، و`list_tables` للمعاينة.
 - طبّق الـ schema **قبل** كتابة الكود الذي يعتمد عليه.
 - للتحقق البصري: شغّل `agent-browser` على المسار المعني وسجّل دخول بحساب الأدمن.
@@ -131,7 +218,7 @@ export const iconNames = Object.keys(ICONS)
 | 2 | Coupons (كوبونات) | — |
 | 3 | Calendar (تقويم) | — |
 | 4 | Notifications (إشعارات) | — |
-| 5 | Payments + Storage (مدفوعات) | Storage |
+| 5 | Payments + UploadThing (مدفوعات) | UploadThing (خطوة 0.5) |
 | 6 | Course Content & Enrollments (محتوى الكورسات والتسجيلات) | courses |
 | 7 | Exams & Exam Builder (اختبارات) | courses |
 | 8 | Assignments, Submissions & Grades (واجبات ودرجات) | 6 |
@@ -237,7 +324,7 @@ create policy "coupons_admin_all" on public.coupons
 
 ### 2.4 Verification
 - [ ] 6 كوبونات تظهر، الكود (WELCOME25) ومعرّف CPN-01 صحيحان.
-- [ ] إضافة/تعديل/حذف تعمل وتنعكس في DB.
+- [ ] إضافة/تعديل/حذف تعمل وتنعكس ف�� DB.
 - [ ] فلترة الحالة (نشط/منتهي/متوقف) ما زالت تعمل.
 
 ---
@@ -319,23 +406,19 @@ create policy "notifications_admin_all" on public.notifications
 
 ---
 
-## Phase 5 — Payments + Supabase Storage (المدفوعات)
+## Phase 5 — Payments + UploadThing (المدفوعات)
 
-**الهدف:** ربط `/payments` (مراجعة الأدمن: قبول/رفض) + تمهيد لتسليم الطالب للإيصال (Phase 10). يتطلب **Supabase Storage** للإيصالات.
+**الهدف:** ربط `/payments` (مراجعة الأدمن: قبول/رفض) + تمهيد لتسليم الطالب للإيصال (Phase 10). الإيصالات تُرفع عبر **UploadThing** (لا Supabase Storage).
+
+**شرط مسبق:** يجب إكمال الخطوة التمهيدية **0.5 (إعداد UploadThing)** بالكامل قبل البدء هنا، بما في ذلك توفّر `UPLOADTHING_TOKEN`.
 
 **مرجع:** `lib/payments-data.ts`، `app/payments/page.tsx`، كومبوننتات المدفوعات.
 
-### 5.1 Storage
-- عبر Supabase MCP (`execute_sql`) أنشئ bucket:
-  ```sql
-  insert into storage.buckets (id, name, public) values ('receipts','receipts', false)
-  on conflict (id) do nothing;
-  ```
-- سياسات Storage: الأدمن يقرأ الكل، والطالب يرفع/يقرأ ملفاته. (الطالب يرفع في Phase 10؛ هنا يكفي قراءة الأدمن.)
-  ```sql
-  create policy "receipts_admin_read" on storage.objects for select
-    using (bucket_id = 'receipts' and public.is_admin());
-  ```
+### 5.1 التخزين — UploadThing (لا تنشئ أي bucket)
+- **ممنوع** إنشاء `storage.buckets` أو سياسات `storage.objects` في Supabase.
+- الإيصال يُرفع من العميل عبر مكوّن `UploadDropzone` بـ `endpoint="receiptUploader"` (مُعرّف في 0.5)، فيعيد **رابط `ufsUrl` نصّي كامل**.
+- هذا الرابط يُمرَّر لـ Server Action ويُخزَّن مباشرةً في عمود `receipt_url text`. لا توقيع روابط، ولا مسارات — رابط عام كامل يُخزَّن كنص.
+- ملاحظة خصوصية: روابط UploadThing عامة لكن غير قابلة للتخمين (random key)؛ هذا مقبول للإيصالات في هذا المشروع.
 
 ### 5.2 Schema (`create_payments`)
 ```sql
@@ -349,7 +432,7 @@ create table if not exists public.payments (
   course text,
   amount numeric not null default 0,
   method text not null check (method in ('انستاباي','فودافون كاش')),
-  receipt_path text,                          -- مسار داخل bucket receipts
+  receipt_url text,                           -- رابط UploadThing الكامل (ufsUrl)
   reference text,
   status text not null default 'قيد المراجعة' check (status in ('قيد المراجعة','مقبول','مرفوض')),
   created_at timestamptz not null default now()
@@ -367,17 +450,20 @@ create policy "payments_insert_own" on public.payments
   );
 ```
 
-### 5.3 Seed — الـ 8 مدفوعات. `receipt_path` اتركها null أو ضع مسارًا وهميًا. `submittedAt` نصّي → نفس حل Phase 4: أضف `submitted_label text` وماب `submittedAt ← submitted_label`.
+### 5.3 Seed — الـ 8 مدفوعات. `receipt_url` اتركها null أو ضع رابطًا وهميًا. `submittedAt` نصّي → نفس حل Phase 4: أضف `submitted_label text` وماب `submittedAt ← submitted_label`.
 
 ### 5.4 الكود
-- `app/payments/actions.ts`: `getPayments`, `approvePayment(id)`, `rejectPayment(id)`. عند `getPayments` ولّد رابطًا موقّتًا للإيصال إن وُجد: `supabase.storage.from('receipts').createSignedUrl(receipt_path, 3600)` وماب `receiptUrl ← signedUrl`.
+- `app/payments/actions.ts`: `getPayments`, `approvePayment(id)`, `rejectPayment(id)`. عند `getPayments` ماب `receiptUrl ← row.receipt_url` مباشرةً (لا توليد روابط موقّتة — الرابط مخزَّن كامل بالفعل).
 - اربط أزرار القبول/الرفض في كومبوننت المدفوعات بالـ actions + `router.refresh()`.
 - دالة `getPaymentStats` الموجودة في الـ lib تعمل على المصفوفة — مرّر لها الصفوف المحوّلة.
+- (رفع الطالب لإيصال جديد عبر `UploadDropzone` ثم action `submitPayment` يتم في Phase 10.)
 
 ### 5.5 Verification
-- [ ] bucket `receipts` موجود.
+- [ ] لا يوجد أي bucket في Supabase Storage (التخزين على UploadThing فقط).
+- [ ] جدول `payments` يحتوي عمود `receipt_url text`.
 - [ ] المدفوعات تظهر بإحصاءاتها (قيد المراجعة/مقبول/مرفوض/الإيرادات).
 - [ ] قبول/رفض دفعة يغيّر حالتها في DB.
+- [ ] عند فتح إيصال له `receipt_url`، يُعرض الرابط/الصورة بشكل صحيح.
 
 ---
 
@@ -582,6 +668,7 @@ create table if not exists public.assignment_submissions (
   student_id uuid not null references public.students(id) on delete cascade,
   status text not null default 'لم يبدأ' check (status in ('لم يبدأ','قيد التنفيذ','تم التسليم','مصحّح')),
   score integer,
+  attachment_url text,                        -- رابط UploadThing لمرفق التسليم (نوع 'تسليم')
   submitted_at timestamptz,
   unique (assignment_id, student_id)
 );
@@ -602,12 +689,14 @@ create policy "sub_own" on public.assignment_submissions for all using (
 ### 8.2 Seed — الواجبات الـ 6 من `assignments` + أسئلة الاختبار في `as1`. اربط `course_id`/`section_id` بالكورسات/الأقسام المنشأة في Phase 6 (طابِق عبر mapping منطقي بما أن mock تستخدم c1..c4). للطالب التجريبي أنشئ submissions بالحالات/الدرجات الموجودة.
 
 ### 8.3 الكود
-- `app/student/assignments/actions.ts`: `getAssignments(studentId)`, `getAssignmentDetail(code, studentId)`, `submitAssignment(assignmentId, studentId)` (للتسليم), `submitQuiz(assignmentId, studentId, answers)` (يصحّح mcq ويحسب score ويضبط status='مصحّح').
+- `app/student/assignments/actions.ts`: `getAssignments(studentId)`, `getAssignmentDetail(code, studentId)`, `submitAssignment(assignmentId, studentId, attachmentUrl?)` (للتسليم — يخزّن `attachment_url`), `submitQuiz(assignmentId, studentId, answers)` (يصحّح mcq ويحسب score ويضبط status='مصحّح').
+- لواجبات نوع 'تسليم': استخدم مكوّن `UploadDropzone` بـ `endpoint="assignmentUploader"` (من خطوة 0.5) لرفع المرفق، فيعيد رابط `ufsUrl`، ثم مرّره لـ `submitAssignment`. **لا Supabase Storage.**
 - اربط صفحات الواجبات وحالاتها. الدرجات (`recentGrades`) تُشتق من submissions المصحّحة.
 
 ### 8.4 Verification
 - [ ] واجبات الطالب تظهر بحالاتها الصحيحة.
 - [ ] تسليم واجب يغيّر الحالة في DB.
+- [ ] رفع مرفق لواجب نوع 'تسليم' يخزّن `attachment_url` (رابط UploadThing) ويظهر للأدمن عند التصحيح.
 - [ ] حل اختبار mcq يحسب الدرجة ويخزّنها.
 - [ ] الدرجات الأخيرة تظهر من submissions.
 
@@ -697,7 +786,7 @@ create policy "msg_own" on public.messages for all using (
 - `app/student/exams/**`: اختبارات الكورسات المسجّل فيها (Phase 7) + نتائجه.
 - `app/student/assignments/**`: من Phase 8.
 - `app/student/schedule`: من `calendar_events` المرتبطة بكورساته.
-- `app/student/billing`: من `payments` الخاصة به + رفع إيصال جديد (Storage، Phase 5) عبر action `submitPayment` (insert في payments بحالة 'قيد المراجعة').
+- `app/student/billing`: من `payments` الخاصة به + رفع إيصال جديد عبر مكوّن `UploadDropzone` (`endpoint="receiptUploader"`، من خطوة 0.5) الذي يعيد رابط `ufsUrl`، ثم تمرير الرابط لـ action `submitPayment` (insert في payments بحالة 'قيد المراجعة' مع `receipt_url` = الرابط).
 - `app/student/notifications`, `app/student/messages`, `app/student/settings`, `app/student/profile`: اربطها بالمستخدم الحالي.
 - استبدل `studentProfile` الثابت بـ بيانات `getCurrentStudent()`.
 
