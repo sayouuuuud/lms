@@ -83,7 +83,7 @@ export function HeroSection() {
 
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-end gap-6 px-5 md:grid-cols-12 md:gap-8 md:px-8">
         {/* Text column */}
-        <div className="order-2 pb-16 md:order-1 md:col-span-6 md:pb-24">
+        <div className="order-2 pb-16 md:order-1 md:col-span-5 md:pb-24 lg:col-span-6">
           <span className="hero-stagger inline-flex items-center gap-2 rounded-full border border-navy/15 bg-cream/80 px-4 py-1.5 text-sm font-semibold text-navy-soft backdrop-blur dark:border-white/10 dark:bg-ink-raised/70 dark:text-teal-glow">
             <Sparkles className="size-4 text-gold-deep dark:text-teal-glow" />
             منصة الرياضيات الأولى للثانوية العامة
@@ -141,7 +141,7 @@ export function HeroSection() {
         </div>
 
         {/* Photo column */}
-        <div className="relative order-1 flex items-end justify-center self-end md:order-2 md:col-span-6">
+        <div className="relative order-1 flex items-end justify-center self-end md:order-2 md:col-span-7 lg:col-span-6">
           {/* soft grounding glow under the figure */}
           <div
             className="pointer-events-none absolute bottom-2 left-1/2 h-24 w-[78%] -translate-x-1/2 rounded-[50%] bg-navy/15 blur-2xl dark:bg-teal-glow/25"
@@ -158,7 +158,7 @@ export function HeroSection() {
           />
           {/* negative margin-top raises the image above the section baseline while
               staying clipped by overflow-hidden on the section — never bleeds into navbar */}
-          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[520px] lg:-mt-24 xl:-mt-12">
+          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[560px] lg:-mt-24 lg:max-w-[520px] xl:-mt-12">
             {/* light-mode portrait */}
             <Image
               src="/teacher-abdelsalam.webp"
