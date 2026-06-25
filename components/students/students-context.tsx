@@ -7,14 +7,15 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { exportToCsv } from '@/lib/export-csv'
 import {
-  studentRecords,
   type StudentGender,
   type StudentRecord,
   type StudentStatus,
 } from '@/lib/students-data'
+import { createStudent, deleteStudent } from '@/app/students/actions'
 
 export type StudentFormValues = {
   name: string
@@ -45,8 +46,15 @@ export function useStudents() {
   return ctx
 }
 
-export function StudentsProvider({ children }: { children: ReactNode }) {
-  const [students, setStudents] = useState<StudentRecord[]>(studentRecords)
+export function StudentsProvider({
+  children,
+  initialStudents,
+}: {
+  children: ReactNode
+  initialStudents: StudentRecord[]
+}) {
+  const router = useRouter()
+  const [students, setStudents] = useState<StudentRecord[]>(initialStudents)
   const [formOpen, setFormOpen] = useState(false)
   const [deleting, setDeleting] = useState<StudentRecord | null>(null)
 
@@ -75,39 +83,41 @@ export function StudentsProvider({ children }: { children: ReactNode }) {
       },
       formOpen,
       closeForm: () => setFormOpen(false),
-      submitForm: (values) => {
-        const nextNum = 1043
-        const newStudent: StudentRecord = {
-          id: `STD-${nextNum + students.length}`,
+      submitForm: async (values) => {
+        setFormOpen(false)
+        const result = await createStudent({
           name: values.name,
           email: values.email,
           phone: values.phone,
           gender: values.gender,
           status: values.status,
-          courses: 0,
-          progress: 0,
-          spent: '0 ج.م',
-          joinedAt: new Date().toLocaleDateString('ar-EG', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          }),
+        })
+        if (result?.error) {
+          toast.error(result.error)
+          return
         }
-        setStudents((prev) => [newStudent, ...prev])
         toast.success('تم إضافة الطالب بنجاح')
-        setFormOpen(false)
+        router.refresh()
       },
       deleting,
       closeDelete: () => setDeleting(null),
-      confirmDelete: () => {
-        if (deleting) {
-          setStudents((prev) => prev.filter((s) => s.id !== deleting.id))
-          toast.success('تم حذف الطالب')
-        }
+      confirmDelete: async () => {
+        const target = deleting
         setDeleting(null)
+        if (!target) return
+        // Optimistic removal for instant feedback.
+        setStudents((prev) => prev.filter((s) => s.id !== target.id))
+        const result = await deleteStudent(target.id)
+        if (result?.error) {
+          toast.error(result.error)
+          router.refresh()
+          return
+        }
+        toast.success('تم حذف الطالب')
+        router.refresh()
       },
     }),
-    [students, formOpen, deleting],
+    [students, formOpen, deleting, router],
   )
 
   return (

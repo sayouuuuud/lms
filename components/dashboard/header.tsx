@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { useLogout } from '@/lib/use-logout'
 
 /* ─── mock data ─── */
 const mockMessages = [
@@ -253,6 +254,7 @@ function NotificationsDropdown() {
 function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleTheme: () => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const logout = useLogout()
   useOutsideClick(ref, () => setOpen(false))
 
   return (
@@ -310,11 +312,15 @@ function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleT
           </div>
 
           <div className="border-t border-border py-1.5">
-            <button className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10">
+            <button
+              onClick={logout}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
+            >
               <LogOut className="size-4" />
               تسجيل الخروج
             </button>
           </div>
+
         </div>
       )}
     </div>

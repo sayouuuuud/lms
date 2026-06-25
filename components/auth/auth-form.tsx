@@ -2,8 +2,10 @@
 
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User, GraduationCap, Check } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User, GraduationCap, Check, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 type Tab = 'login' | 'register'
 
@@ -14,10 +16,13 @@ const grades = [
 ]
 
 export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
+  const router = useRouter()
   const [tab, setTab] = useState<Tab>(initialTab)
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [doneMessage, setDoneMessage] = useState('')
+  const [error, setError] = useState('')
 
   // login state
   const [loginEmail, setLoginEmail] = useState('')
@@ -33,18 +38,83 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
   const switchTab = (next: Tab) => {
     setTab(next)
     setDone(false)
+    setError('')
     setShowPassword(false)
   }
 
-  // Front-end only: simulate a submit with no backend call.
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setDone(false)
-    setTimeout(() => {
+    setError('')
+
+    const supabase = createClient()
+
+    try {
+      if (tab === 'login') {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: loginEmail.trim(),
+          password: loginPassword,
+        })
+        if (signInError) {
+          setError('البريد الإلكتروني أو كلمة السر غير صحيحة.')
+          return
+        }
+        // Fetch role to decide destination.
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        let destination = '/student'
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+          destination = profile?.role === 'admin' ? '/dashboard' : '/student'
+        }
+        router.push(destination)
+        router.refresh()
+      } else {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            emailRedirectTo:
+              process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
+              `${window.location.origin}/auth/callback`,
+            data: {
+              full_name: name.trim(),
+              phone: phone.trim(),
+              grade,
+              role: 'student',
+            },
+          },
+        })
+        if (signUpError) {
+          setError(
+            signUpError.message.includes('already')
+              ? 'البريد الإلكتروني مستخدم بالفعل.'
+              : 'حصلت مشكلة أثناء إنشاء الحساب. حاول تاني.',
+          )
+          return
+        }
+        // If a session exists immediately (email confirmation disabled), go in.
+        if (data.session) {
+          router.push('/student')
+          router.refresh()
+          return
+        }
+        setDoneMessage(
+          'تم إنشاء حسابك! بصّ على بريدك الإلكتروني وأكّد الحساب عشان تقدر تدخل.',
+        )
+        setDone(true)
+      }
+    } catch {
+      setError('حصل خطأ غير متوقّع. حاول تاني.')
+    } finally {
       setSubmitting(false)
-      setDone(true)
-    }, 1100)
+    }
   }
 
   return (
@@ -80,17 +150,23 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
         </button>
       </div>
 
-      {/* Success message (front-end mock) */}
+      {/* Success message */}
       {done && (
         <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-brand/30 bg-emerald-brand/10 px-4 py-3 text-emerald-deep">
           <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-brand/20">
             <Check className="size-4" />
           </span>
-          <p className="text-sm font-semibold">
-            {tab === 'login'
-              ? 'تم تسجيل الدخول بنجاح (واجهة تجريبية).'
-              : 'تم إنشاء الحساب بنجاح (واجهة تجريبية).'}
-          </p>
+          <p className="text-sm font-semibold">{doneMessage}</p>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-600 dark:text-red-400">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-red-500/20">
+            <AlertCircle className="size-4" />
+          </span>
+          <p className="text-sm font-semibold">{error}</p>
         </div>
       )}
 
