@@ -83,7 +83,7 @@ export function HeroSection() {
 
       {/* Dark-mode-only code snippet, echoing the "math is just logic" idea */}
       <pre
-        className="float-obj pointer-events-none absolute left-[2%] top-[26%] hidden font-mono text-[11px] leading-relaxed opacity-80 lg:block dark:block"
+        className="float-obj pointer-events-none absolute left-[2%] top-[26%] hidden font-mono text-[11px] leading-relaxed opacity-80 dark:lg:block"
         aria-hidden="true"
       >
         <code>
