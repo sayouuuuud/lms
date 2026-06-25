@@ -178,11 +178,24 @@ export function HeroSection() {
               className="mx-auto hidden h-auto w-[96%] object-contain dark:block"
             />
           </div>
+
+          {/* mobile-only "x-axis" ground line directly under the teacher */}
+          <div className="absolute inset-x-0 bottom-0 md:hidden">
+            <div
+              className="hero-axis mx-auto h-px w-full origin-center bg-gradient-to-l from-transparent via-gold to-transparent dark:via-teal-glow"
+              aria-hidden="true"
+            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex justify-between px-5">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <span key={i} className="h-2 w-px bg-gold/40 dark:bg-teal-glow/40" aria-hidden="true" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Creative bridge: a gold "x-axis" the teacher stands on, flowing into the next section */}
-      <div className="relative">
+      <div className="relative hidden md:block">
         <div
           className="hero-axis mx-auto h-px w-full max-w-7xl origin-center bg-gradient-to-l from-transparent via-gold to-transparent dark:via-teal-glow"
           aria-hidden="true"
