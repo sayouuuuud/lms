@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type {
   StudentGender,
   StudentRecord,
@@ -11,9 +12,24 @@ import type {
 export type StudentInput = {
   name: string
   email: string
+  password?: string
   phone: string
   gender: StudentGender
   status: StudentStatus
+}
+
+// Ensures the current session belongs to an admin before privileged writes.
+async function requireAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return false
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  return profile?.role === 'admin'
 }
 
 type StudentRow = {
@@ -98,9 +114,36 @@ async function generateStudentCode(
 export async function createStudent(input: StudentInput) {
   const supabase = await createClient()
 
+  if (!(await requireAdmin(supabase))) {
+    return { error: 'غير مسموح. لازم تكون أدمن عشان تضيف طالب.' }
+  }
+
   const code = await generateStudentCode(supabase)
+  let userId: string | null = null
+
+  // If a password is provided, create a real login account for the student.
+  if (input.email && input.password) {
+    const admin = createAdminClient()
+    const { data: created, error: authError } = await admin.auth.admin.createUser({
+      email: input.email,
+      password: input.password,
+      email_confirm: true,
+      user_metadata: { full_name: input.name, phone: input.phone, role: 'student' },
+    })
+    if (authError) {
+      console.log('[v0] createStudent auth error:', authError.message)
+      return {
+        error: authError.message.toLowerCase().includes('already')
+          ? 'البريد الإلكتروني مستخدم بالفعل.'
+          : 'تعذّر إنشاء حساب الطالب. حاول تاني.',
+      }
+    }
+    userId = created.user?.id ?? null
+  }
+
   const { error } = await supabase.from('students').insert({
     code,
+    user_id: userId,
     name: input.name,
     email: input.email || null,
     phone: input.phone || null,
@@ -119,6 +162,11 @@ export async function createStudent(input: StudentInput) {
 
 export async function deleteStudent(code: string) {
   const supabase = await createClient()
+
+  if (!(await requireAdmin(supabase))) {
+    return { error: 'غير مسموح. لازم تكون أدمن عشان تحذف طالب.' }
+  }
+
   const { error } = await supabase.from('students').delete().eq('code', code)
 
   if (error) {

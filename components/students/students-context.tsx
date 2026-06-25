@@ -20,6 +20,7 @@ import { createStudent, deleteStudent } from '@/app/students/actions'
 export type StudentFormValues = {
   name: string
   email: string
+  password?: string
   phone: string
   gender: StudentGender
   status: StudentStatus
@@ -88,6 +89,7 @@ export function StudentsProvider({
         const result = await createStudent({
           name: values.name,
           email: values.email,
+          password: values.password,
           phone: values.phone,
           gender: values.gender,
           status: values.status,
