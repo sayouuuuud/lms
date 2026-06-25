@@ -24,12 +24,12 @@ export default async function AuthPage({
   const initialTab = mode === 'register' ? 'register' : 'login'
 
   return (
-    <main className="relative min-h-screen bg-cream lg:grid lg:grid-cols-2">
+    <main className="relative min-h-screen bg-cream lg:grid lg:grid-cols-2 dark:bg-ink-base">
       {/* graph paper backdrop */}
-      <div className="graph-paper pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
+      <div className="graph-paper pointer-events-none absolute inset-0 opacity-60 dark:opacity-30" aria-hidden="true" />
 
       {/* Brand / visual panel */}
-      <aside className="relative hidden overflow-hidden bg-navy lg:block">
+      <aside className="relative hidden overflow-hidden bg-navy lg:block dark:bg-ink-raised">
         <div className="graph-paper-light pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="relative flex h-full flex-col justify-between p-12">
           <Link href="/" className="flex items-center gap-2.5">
@@ -40,7 +40,7 @@ export default async function AuthPage({
           </Link>
 
           <div className="max-w-md">
-            <span className="text-sm font-semibold text-gold">
+            <span className="text-sm font-semibold text-gold dark:text-teal-glow">
               <span className="font-mono">{'// '}</span>
               منصة الرياضيات الأولى للثانوية العامة
             </span>
@@ -74,27 +74,27 @@ export default async function AuthPage({
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-soft transition-colors hover:text-navy"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-soft transition-colors hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg"
           >
             <ArrowLeft className="size-4" />
             الرجوع للرئيسية
           </Link>
           {/* mobile-only logo */}
           <Link href="/" className="flex items-center gap-2 lg:hidden">
-            <span className="grid size-8 place-items-center rounded-md bg-navy font-mono text-xs font-bold text-cream">
+            <span className="grid size-8 place-items-center rounded-md bg-navy font-mono text-xs font-bold text-cream dark:bg-violet-glow dark:text-white">
               ƒ(x)
             </span>
-            <span className="font-heading text-lg font-bold text-navy">عبد السلام</span>
+            <span className="font-heading text-lg font-bold text-navy dark:text-ink-fg">عبد السلام</span>
           </Link>
         </div>
 
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-md">
             <div className="mb-8 text-center">
-              <h2 className="text-balance text-2xl font-extrabold text-navy sm:text-3xl">
+              <h2 className="text-balance text-2xl font-extrabold text-navy sm:text-3xl dark:text-ink-fg">
                 أهلاً بيك من جديد
               </h2>
-              <p className="mt-2 text-sm text-navy-soft">
+              <p className="mt-2 text-sm text-navy-soft dark:text-ink-dim">
                 سجّل دخولك أو اعمل حساب جديد وابدأ رحلتك في التفوق.
               </p>
             </div>
@@ -109,7 +109,7 @@ export default async function AuthPage({
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
-      <div className="font-mono text-xl font-black text-gold">{value}</div>
+      <div className="font-mono text-xl font-black text-gold dark:text-teal-glow">{value}</div>
       <div className="text-xs font-medium">{label}</div>
     </div>
   )

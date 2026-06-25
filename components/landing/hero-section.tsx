@@ -83,7 +83,7 @@ export function HeroSection() {
 
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-end gap-6 px-5 md:grid-cols-12 md:gap-8 md:px-8">
         {/* Text column */}
-        <div className="order-2 pb-16 md:order-1 md:col-span-6 md:pb-24">
+        <div className="order-2 pb-16 md:order-1 md:col-span-5 md:pb-24 lg:col-span-6">
           <span className="hero-stagger inline-flex items-center gap-2 rounded-full border border-navy/15 bg-cream/80 px-4 py-1.5 text-sm font-semibold text-navy-soft backdrop-blur dark:border-white/10 dark:bg-ink-raised/70 dark:text-teal-glow">
             <Sparkles className="size-4 text-gold-deep dark:text-teal-glow" />
             منصة الرياضيات الأولى للثانوية العامة
@@ -110,17 +110,17 @@ export function HeroSection() {
             رحلتك للتفوق.
           </p>
 
-          <div className="hero-stagger mt-9 flex flex-col gap-3 sm:flex-row">
+          <div className="hero-stagger mt-9 flex flex-col gap-3 sm:flex-row md:gap-2.5 lg:gap-3">
             <a
               href="#stages"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-base font-bold text-navy-deep shadow-lg shadow-gold/30 transition-transform duration-200 hover:-translate-y-0.5 dark:bg-violet-glow dark:text-white dark:shadow-[0_0_30px_oklch(0.66_0.2_292_/_0.45)]"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-gold px-8 py-4 text-base font-bold text-navy-deep shadow-lg shadow-gold/30 transition-transform duration-200 hover:-translate-y-0.5 md:px-5 md:py-3 md:text-sm lg:px-8 lg:py-4 lg:text-base dark:bg-violet-glow dark:text-white dark:shadow-[0_0_30px_oklch(0.66_0.2_292_/_0.45)]"
             >
               اختار مرحلتك الدراسية
-              <ArrowLeft className="size-5 transition-transform duration-200 group-hover:-translate-x-1" />
+              <ArrowLeft className="size-5 transition-transform duration-200 group-hover:-translate-x-1 md:size-4 lg:size-5" />
             </a>
             <a
               href="#features"
-              className="inline-flex items-center justify-center rounded-full border border-navy/20 bg-cream/60 px-8 py-4 text-base font-bold text-navy backdrop-blur transition-colors hover:bg-navy/5 dark:border-white/15 dark:bg-white/5 dark:text-ink-fg dark:hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-full border border-navy/20 bg-cream/60 px-8 py-4 text-base font-bold text-navy backdrop-blur transition-colors hover:bg-navy/5 md:px-5 md:py-3 md:text-sm lg:px-8 lg:py-4 lg:text-base dark:border-white/15 dark:bg-white/5 dark:text-ink-fg dark:hover:bg-white/10"
             >
               اعرف أكتر عن المنصة
             </a>
@@ -141,7 +141,7 @@ export function HeroSection() {
         </div>
 
         {/* Photo column */}
-        <div className="relative order-1 flex items-end justify-center self-end md:order-2 md:col-span-6">
+        <div className="relative order-1 flex items-end justify-center self-end md:order-2 md:col-span-7 lg:col-span-6">
           {/* soft grounding glow under the figure */}
           <div
             className="pointer-events-none absolute bottom-2 left-1/2 h-24 w-[78%] -translate-x-1/2 rounded-[50%] bg-navy/15 blur-2xl dark:bg-teal-glow/25"
@@ -158,7 +158,7 @@ export function HeroSection() {
           />
           {/* negative margin-top raises the image above the section baseline while
               staying clipped by overflow-hidden on the section — never bleeds into navbar */}
-          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[520px] lg:-mt-24 xl:-mt-12">
+          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[560px] lg:-mt-24 lg:max-w-[520px] xl:-mt-12">
             {/* light-mode portrait */}
             <Image
               src="/teacher-abdelsalam.webp"
@@ -175,24 +175,25 @@ export function HeroSection() {
               width={772}
               height={1024}
               priority
-              className="mt-10 hidden h-auto w-full object-contain md:mt-12 dark:block"
+              className="mx-auto hidden h-auto w-[96%] object-contain dark:block"
             />
+          </div>
+
+          {/* "x-axis" ground line directly under the teacher, on every screen size */}
+          <div className="absolute inset-x-0 bottom-0">
+            <div
+              className="hero-axis mx-auto h-px w-full origin-center bg-gradient-to-l from-transparent via-gold to-transparent dark:via-teal-glow"
+              aria-hidden="true"
+            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex justify-between px-5 md:px-8">
+              {Array.from({ length: 11 }).map((_, i) => (
+                <span key={i} className="h-2 w-px bg-gold/40 dark:bg-teal-glow/40" aria-hidden="true" />
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Creative bridge: a gold "x-axis" the teacher stands on, flowing into the next section */}
-      <div className="relative">
-        <div
-          className="hero-axis mx-auto h-px w-full max-w-7xl origin-center bg-gradient-to-l from-transparent via-gold to-transparent dark:via-teal-glow"
-          aria-hidden="true"
-        />
-        <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex max-w-7xl justify-between px-8">
-          {Array.from({ length: 13 }).map((_, i) => (
-            <span key={i} className="h-2 w-px bg-gold/40 dark:bg-teal-glow/40" aria-hidden="true" />
-          ))}
-        </div>
-      </div>
     </section>
   )
 }
