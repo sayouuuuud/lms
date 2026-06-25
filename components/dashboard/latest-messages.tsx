@@ -1,0 +1,34 @@
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { PanelCard } from './panel-card'
+import { messages } from '@/lib/dashboard-data'
+import { getInitials } from '@/lib/get-initials'
+
+export function LatestMessages() {
+  return (
+    <PanelCard title="آخر الرسائل" action="عرض الكل">
+      <ul className="divide-y divide-border">
+        {messages.map((msg) => (
+          <li key={msg.name} className="flex items-start gap-3 py-3 first:pt-0">
+            <Avatar className="size-10">
+              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                {getInitials(msg.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-foreground">{msg.name}</p>
+                <span className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
+                  {msg.time}
+                  {msg.unread && (
+                    <span className="size-2 rounded-full bg-primary" aria-label="غير مقروءة" />
+                  )}
+                </span>
+              </div>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">{msg.text}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </PanelCard>
+  )
+}
