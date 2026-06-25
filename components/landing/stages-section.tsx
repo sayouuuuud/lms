@@ -14,7 +14,7 @@ export function StagesSection() {
   const [active, setActive] = useState(0)
 
   return (
-    <section id="stages" className="relative overflow-hidden bg-navy py-20 md:py-28">
+    <section id="stages" className="relative overflow-hidden bg-navy py-20 md:py-28 dark:bg-transparent">
 
       <div className="relative mx-auto max-w-7xl px-5 md:px-8">
 
@@ -22,7 +22,7 @@ export function StagesSection() {
         <div className="hidden items-start gap-10 lg:grid lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div ref={headRef}>
-              <span className="text-sm font-semibold text-gold">
+              <span className="text-sm font-semibold text-gold dark:text-teal-glow">
                 <span className="font-mono">{'// '}</span>
                 اختار مرحلتك
               </span>
@@ -46,7 +46,7 @@ export function StagesSection() {
                   <span
                     className={cn(
                       'font-mono text-4xl font-black transition-colors xl:text-6xl',
-                      active === i ? 'text-gold' : 'text-white/15',
+                      active === i ? 'text-gold dark:text-teal-glow' : 'text-white/15',
                     )}
                   >
                     {stage.index}
@@ -66,7 +66,7 @@ export function StagesSection() {
                     className={cn(
                       'size-7 transition-all',
                       active === i
-                        ? '-translate-x-1 text-gold'
+                        ? '-translate-x-1 text-gold dark:text-teal-glow'
                         : 'text-white/25 group-hover:text-white/50',
                     )}
                   />
@@ -81,7 +81,7 @@ export function StagesSection() {
 
         {/* Mobile heading — only shows below lg */}
         <div className="lg:hidden">
-          <span className="text-sm font-semibold text-gold">
+          <span className="text-sm font-semibold text-gold dark:text-teal-glow">
             <span className="font-mono">{'// '}</span>
             اختار مرحلتك
           </span>
@@ -157,7 +157,7 @@ function StagePreview({ stage }: { stage: Stage }) {
                   key={row}
                   className="flex items-center gap-3 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-3 text-cream/90"
                 >
-                  <span className="font-mono text-sm text-gold">{`0${idx + 1}`}</span>
+                  <span className="font-mono text-sm text-gold dark:text-teal-glow">{`0${idx + 1}`}</span>
                   {row}
                 </li>
               ))}
@@ -166,7 +166,7 @@ function StagePreview({ stage }: { stage: Stage }) {
 
           <Link
             href={`/stages/${stage.id}`}
-            className="relative mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-7 py-4 text-base font-bold text-navy-deep transition-transform duration-200 hover:-translate-y-0.5"
+            className="relative mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-7 py-4 text-base font-bold text-navy-deep transition-transform duration-200 hover:-translate-y-0.5 dark:bg-violet-glow dark:text-white dark:shadow-[0_0_24px_oklch(0.66_0.2_292_/_0.4)]"
           >
             ادخل المرحلة
             <ArrowLeft className="size-5" />
@@ -197,7 +197,7 @@ function MobileStage({
         <span
           className={cn(
             'font-mono text-3xl font-black transition-colors',
-            open ? 'text-gold' : 'text-white/20',
+            open ? 'text-gold dark:text-teal-glow' : 'text-white/20',
           )}
         >
           {stage.index}
@@ -228,14 +228,14 @@ function MobileStage({
                 key={row}
                 className="flex items-center gap-3 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-3 text-sm text-cream/90"
               >
-                <span className="font-mono text-gold">{`0${idx + 1}`}</span>
+                <span className="font-mono text-gold dark:text-teal-glow">{`0${idx + 1}`}</span>
                 {row}
               </li>
             ))}
           </ul>
           <Link
             href={`/stages/${stage.id}`}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-base font-bold text-navy-deep"
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-base font-bold text-navy-deep dark:bg-violet-glow dark:text-white"
           >
             ادخل المرحلة
             <ArrowLeft className="size-5" />

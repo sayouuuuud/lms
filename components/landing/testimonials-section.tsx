@@ -27,25 +27,25 @@ export function TestimonialsSection() {
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         {/* heading */}
         <div className="reveal-item mx-auto mb-12 max-w-2xl text-center md:mb-16">
-          <span className="text-sm font-semibold text-emerald-deep">
+          <span className="text-sm font-semibold text-emerald-deep dark:text-teal-glow">
             <span className="font-mono">{'// '}</span>
             قصص نجاح حقيقية
           </span>
-          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
             كل طالب رحلة... وكل رحلة منحنى صاعد
           </h2>
-          <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted">
+          <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">
             مش مجرد كلام. دي درجات طلاب حقيقيين اتحسّنت شهر ورا شهر لحد الامتحان النهائي.
           </p>
         </div>
 
         {/* featured panel: curve + story */}
-        <div className="reveal-item grid grid-cols-1 gap-px overflow-hidden rounded-[2rem] border border-navy/15 bg-navy/15 shadow-2xl shadow-navy/10 lg:grid-cols-5">
+        <div className="reveal-item grid grid-cols-1 gap-px overflow-hidden rounded-[2rem] border border-navy/15 bg-navy/15 shadow-2xl shadow-navy/10 lg:grid-cols-5 dark:border-white/10 dark:bg-white/5 dark:shadow-black/40">
           {/* chart card (navy) */}
-          <div className="relative bg-navy p-6 sm:p-8 lg:col-span-3">
+          <div className="relative bg-navy p-6 sm:p-8 lg:col-span-3 dark:bg-ink-raised">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-wider text-gold">
+                <p className="text-xs font-semibold tracking-wider text-gold dark:text-teal-glow">
                   منحنى التقدّم
                 </p>
                 <p className="mt-1 text-lg font-bold text-cream">{student.subject}</p>
@@ -126,7 +126,7 @@ export function TestimonialsSection() {
                 <span className="block text-xs text-cream/50">قبل</span>
                 <span className="text-2xl font-bold text-red-400">{student.before}%</span>
               </div>
-              <ArrowLeft className="size-6 text-gold" />
+              <ArrowLeft className="size-6 text-gold dark:text-teal-glow" />
               <div className="text-center">
                 <span className="block text-xs text-cream/50">بعد</span>
                 <span className="text-3xl font-extrabold text-emerald-300">
@@ -137,20 +137,20 @@ export function TestimonialsSection() {
           </div>
 
           {/* story card (cream) */}
-          <div className="flex flex-col bg-cream p-6 sm:p-8 lg:col-span-2">
-            <Quote className="size-9 text-gold" />
-            <blockquote className="mt-4 flex-1 text-pretty text-lg font-medium leading-relaxed text-navy sm:text-xl">
+          <div className="flex flex-col bg-cream p-6 sm:p-8 lg:col-span-2 dark:bg-ink-raised">
+            <Quote className="size-9 text-gold dark:text-teal-glow" />
+            <blockquote className="mt-4 flex-1 text-pretty text-lg font-medium leading-relaxed text-navy sm:text-xl dark:text-ink-fg">
               {student.quote}
             </blockquote>
 
-            <div className="mt-6 border-t border-navy/10 pt-5">
+            <div className="mt-6 border-t border-navy/10 pt-5 dark:border-white/10">
               <div className="flex items-center gap-3">
-                <span className="grid size-12 place-items-center rounded-full bg-navy font-bold text-cream">
+                <span className="grid size-12 place-items-center rounded-full bg-navy font-bold text-cream dark:bg-teal-glow dark:text-ink-base">
                   {student.name.charAt(0)}
                 </span>
                 <div>
-                  <p className="font-bold text-navy">{student.name}</p>
-                  <p className="text-sm text-ink-muted">{student.grade}</p>
+                  <p className="font-bold text-navy dark:text-ink-fg">{student.name}</p>
+                  <p className="text-sm text-ink-muted dark:text-ink-dim">{student.grade}</p>
                 </div>
               </div>
             </div>
@@ -168,14 +168,16 @@ export function TestimonialsSection() {
               className={cn(
                 'inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-all',
                 active === i
-                  ? 'border-navy bg-navy text-cream shadow-lg'
-                  : 'border-navy/15 bg-cream/70 text-navy hover:border-navy/40',
+                  ? 'border-navy bg-navy text-cream shadow-lg dark:border-teal-glow dark:bg-teal-glow dark:text-ink-base'
+                  : 'border-navy/15 bg-cream/70 text-navy hover:border-navy/40 dark:border-white/10 dark:bg-white/5 dark:text-ink-fg dark:hover:border-white/30',
               )}
             >
               <span
                 className={cn(
                   'grid size-6 place-items-center rounded-full text-xs',
-                  active === i ? 'bg-gold text-navy' : 'bg-navy/10 text-navy',
+                  active === i
+                    ? 'bg-gold text-navy dark:bg-ink-base dark:text-teal-glow'
+                    : 'bg-navy/10 text-navy dark:bg-white/10 dark:text-ink-fg',
                 )}
               >
                 {t.name.charAt(0)}

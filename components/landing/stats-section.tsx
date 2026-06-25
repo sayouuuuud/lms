@@ -60,33 +60,33 @@ export function StatsSection() {
     <section ref={root} id="stats" className="py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="mx-auto mb-12 max-w-2xl text-center">
-          <span className="text-sm font-semibold text-gold-deep">
+          <span className="text-sm font-semibold text-gold-deep dark:text-teal-glow">
             <span className="font-mono">{'// '}</span>
             أرقامنا
           </span>
-          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
             نتائج بتتكلم عن نفسها
           </h2>
-          <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted">
+          <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">
             سنين من الخبرة وآلاف الطلاب اللي وصلوا لأعلى الدرجات مع مستر عبد السلام.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-navy/10 bg-navy/10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-navy/10 bg-navy/10 sm:grid-cols-2 lg:grid-cols-4 dark:border-white/10 dark:bg-white/10">
           {stats.map((s) => (
-            <div key={s.label} className="bg-cream/80 p-8 backdrop-blur md:p-10">
-              <div className="flex items-baseline gap-1 text-navy">
+            <div key={s.label} className="bg-cream/80 p-8 backdrop-blur md:p-10 dark:bg-ink-raised/70">
+              <div className="flex items-baseline gap-1 text-navy dark:text-ink-fg">
                 <span
                   className="stat-num font-mono text-5xl font-black md:text-4xl lg:text-5xl xl:text-6xl"
                   data-value={s.value}
                 >
                   0
                 </span>
-                <span className="font-mono text-3xl font-black text-gold-deep md:text-2xl lg:text-3xl xl:text-4xl">
+                <span className="font-mono text-3xl font-black text-gold-deep md:text-2xl lg:text-3xl xl:text-4xl dark:text-teal-glow">
                   {s.suffix}
                 </span>
               </div>
-              <p className="mt-3 text-pretty leading-relaxed text-ink-muted">{s.label}</p>
+              <p className="mt-3 text-pretty leading-relaxed text-ink-muted dark:text-ink-dim">{s.label}</p>
             </div>
           ))}
         </div>

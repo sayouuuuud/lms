@@ -18,6 +18,17 @@
   --color-cream-deep: oklch(0.93 0.016 90);
   --color-ink-muted: oklch(0.5 0.03 264);
   --color-graph-line: oklch(0.86 0.02 264);
+
+  /* Dark-mode landing accents (matches the neon hero artwork) */
+  --color-teal-glow: oklch(0.84 0.13 184);
+  --color-teal-deep: oklch(0.72 0.13 187);
+  --color-violet-glow: oklch(0.66 0.2 292);
+  --color-violet-deep: oklch(0.57 0.21 293);
+  --color-ink-base: oklch(0.16 0.028 264);
+  --color-ink-raised: oklch(0.21 0.032 264);
+  --color-ink-line: oklch(0.34 0.03 264);
+  --color-ink-fg: oklch(0.96 0.012 230);
+  --color-ink-dim: oklch(0.74 0.022 240);
 }
 
 /* Shared graph-paper cell metrics so every section's grid lines up perfectly.
@@ -168,6 +179,8 @@
   --sidebar-accent-foreground: oklch(0.99 0 0);
   --sidebar-border: oklch(0.28 0.025 271);
   --sidebar-ring: oklch(0.45 0.08 264);
+  /* faint grid lines so the graph-paper backdrop reads on near-black */
+  --color-graph-line: oklch(0.32 0.018 264);
 }
 
 @utility scrollbar-hide {
