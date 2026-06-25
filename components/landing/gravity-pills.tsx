@@ -14,18 +14,18 @@ type Pill = {
 }
 
 const PILLS: Pill[] = [
-  { label: 'تفاضل', className: 'bg-gold text-navy-deep', big: true },
-  { label: 'تكامل', className: 'bg-navy text-cream', big: true },
-  { label: 'جبر', className: 'bg-emerald-brand text-cream', big: true },
-  { label: 'هندسة', className: 'bg-gold-deep text-cream' },
-  { label: 'مثلثات', className: 'bg-navy text-cream' },
-  { label: 'إحصاء', className: 'bg-emerald-deep text-cream' },
-  { label: 'ميكانيكا', className: 'bg-gold text-navy-deep', big: true },
-  { label: 'احتمالات', className: 'bg-emerald-brand text-cream' },
-  { label: 'π', className: 'bg-gold text-navy-deep', shape: 'circle', big: true },
-  { label: '√', className: 'bg-emerald-brand text-cream', shape: 'circle', big: true },
-  { label: 'Σ', className: 'bg-navy text-cream', shape: 'circle', big: true },
-  { label: '∞', className: 'bg-gold-deep text-cream', shape: 'circle' },
+  { label: 'تفاضل', className: 'bg-gold text-navy-deep dark:bg-gold dark:text-ink-base', big: true },
+  { label: 'تكامل', className: 'bg-navy text-cream dark:bg-violet-glow dark:text-white', big: true },
+  { label: 'جبر', className: 'bg-emerald-brand text-cream dark:bg-teal-glow dark:text-ink-base', big: true },
+  { label: 'هندسة', className: 'bg-gold-deep text-cream dark:bg-gold-deep dark:text-white' },
+  { label: 'مثلثات', className: 'bg-navy text-cream dark:bg-violet-glow dark:text-white' },
+  { label: 'إحصاء', className: 'bg-emerald-deep text-cream dark:bg-teal-glow dark:text-ink-base' },
+  { label: 'ميكانيكا', className: 'bg-gold text-navy-deep dark:bg-gold dark:text-ink-base', big: true },
+  { label: 'احتمالات', className: 'bg-emerald-brand text-cream dark:bg-teal-glow dark:text-ink-base' },
+  { label: 'π', className: 'bg-gold text-navy-deep dark:bg-gold dark:text-ink-base', shape: 'circle', big: true },
+  { label: '√', className: 'bg-emerald-brand text-cream dark:bg-teal-glow dark:text-ink-base', shape: 'circle', big: true },
+  { label: 'Σ', className: 'bg-navy text-cream dark:bg-violet-glow dark:text-white', shape: 'circle', big: true },
+  { label: '∞', className: 'bg-gold-deep text-cream dark:bg-gold-deep dark:text-white', shape: 'circle' },
 ]
 
 export function GravityPills() {
