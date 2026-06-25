@@ -20,9 +20,9 @@ export function StageDetail({ stage }: { stage: Stage }) {
   const totalLectures = stage.branches.reduce((sum, b) => sum + b.lectures.length, 0)
 
   return (
-    <main className="min-h-screen bg-cream">
+    <main className="min-h-screen bg-cream dark:bg-ink-base">
       {/* ── Header / hero ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-navy">
+      <section className="relative overflow-hidden bg-navy dark:bg-ink-raised">
         <div
           className="graph-paper-light pointer-events-none absolute inset-0 opacity-60"
           aria-hidden="true"
@@ -35,7 +35,7 @@ export function StageDetail({ stage }: { stage: Stage }) {
         <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-28 md:px-8 md:pb-24 md:pt-32">
           <Link
             href="/#stages"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-cream/60 transition-colors hover:text-gold"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-cream/60 transition-colors hover:text-gold dark:hover:text-teal-glow"
           >
             <ArrowRight className="size-4" />
             رجوع للمراحل
@@ -43,7 +43,7 @@ export function StageDetail({ stage }: { stage: Stage }) {
 
           <div className="mt-8 grid items-center gap-12 lg:grid-cols-[1.3fr_0.7fr]">
             <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-semibold text-gold backdrop-blur">
+              <span                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-semibold text-gold backdrop-blur dark:text-teal-glow">
                 <Sparkles className="size-4" />
                 المرحلة {stage.index}
               </span>
@@ -89,21 +89,21 @@ export function StageDetail({ stage }: { stage: Stage }) {
 
         {/* curved bottom divider */}
         <div className="relative h-12 md:h-16">
-          <div className="absolute inset-x-0 bottom-0 h-12 rounded-t-[2.5rem] bg-cream md:h-16 md:rounded-t-[3.5rem]" />
+          <div className="absolute inset-x-0 bottom-0 h-12 rounded-t-[2.5rem] bg-cream md:h-16 md:rounded-t-[3.5rem] dark:bg-ink-base" />
         </div>
       </section>
 
       {/* ── Branches ──────────────────────────────────────────────────── */}
       <section className="relative mx-auto max-w-7xl px-5 py-12 md:px-8 md:py-16">
         <div className="flex flex-col items-center text-center">
-          <span className="text-sm font-semibold text-gold-deep">
+          <span className="text-sm font-semibold text-gold-deep dark:text-teal-glow">
             <span className="font-mono">{'// '}</span>
             فروع المادة
           </span>
-          <h2 className="mt-3 text-balance font-heading text-3xl font-extrabold text-navy md:text-4xl">
+          <h2 className="mt-3 text-balance font-heading text-3xl font-extrabold text-navy md:text-4xl dark:text-ink-fg">
             اختار الفرع اللي محتاجه، أو خد المرحلة كاملة
           </h2>
-          <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-navy-soft">
+          <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-navy-soft dark:text-ink-dim">
             كل فرع مشروح من الصفر خطوة بخطوة، وكل درس وراه امتحان يثبّت المعلومة.
           </p>
         </div>
@@ -113,7 +113,7 @@ export function StageDetail({ stage }: { stage: Stage }) {
             <Link
               key={branch.id}
               href={`/stages/${stage.id}/${branch.id}`}
-              className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-navy/10 bg-white shadow-sm ring-1 ring-transparent transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-navy/10 hover:ring-gold/40"
+              className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-navy/10 bg-white shadow-sm ring-1 ring-transparent transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-navy/10 hover:ring-gold/40 dark:border-ink-line dark:bg-ink-raised dark:hover:ring-teal-glow/40"
             >
               {/* branch image with overlays */}
               <div className="relative aspect-[16/10] w-full overflow-hidden">
@@ -138,11 +138,11 @@ export function StageDetail({ stage }: { stage: Stage }) {
               </div>
 
               <div className="flex flex-1 flex-col p-6">
-                <p className="text-pretty text-sm leading-relaxed text-navy-soft">
+                <p className="text-pretty text-sm leading-relaxed text-navy-soft dark:text-ink-dim">
                   {branch.description}
                 </p>
 
-                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-navy-soft">
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-navy-soft dark:text-ink-dim">
                   <span className="inline-flex items-center gap-1.5">
                     <Layers className="size-4 text-emerald-deep" />
                     {branch.lectures.length} محاضرة
@@ -153,9 +153,9 @@ export function StageDetail({ stage }: { stage: Stage }) {
                   </span>
                 </div>
 
-                <ul className="mt-5 space-y-2.5 border-t border-navy/10 pt-5">
+                <ul className="mt-5 space-y-2.5 border-t border-navy/10 pt-5 dark:border-ink-line">
                   {branch.topics.map((topic) => (
-                    <li key={topic} className="flex items-center gap-2.5 text-sm text-navy">
+                    <li key={topic} className="flex items-center gap-2.5 text-sm text-navy dark:text-ink-fg">
                       <Check className="size-4 shrink-0 text-emerald-deep" />
                       {topic}
                     </li>
@@ -164,10 +164,10 @@ export function StageDetail({ stage }: { stage: Stage }) {
 
                 {/* footer: CTA pinned to bottom — no price (prices live on lectures) */}
                 <div className="mt-auto flex items-center justify-between gap-3 pt-6">
-                  <span className="text-sm font-semibold text-navy-soft">
+                  <span className="text-sm font-semibold text-navy-soft dark:text-ink-dim">
                     شوف المحاضرات والأسعار
                   </span>
-                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-navy text-cream transition-all duration-200 group-hover:bg-gold group-hover:text-navy-deep">
+                  <span className="inline-flex size-11 items-center justify-center rounded-full bg-navy text-cream transition-all duration-200 group-hover:bg-gold group-hover:text-navy-deep dark:bg-ink-base dark:text-ink-fg dark:group-hover:bg-violet-glow dark:group-hover:text-white">
                     <ArrowRight className="size-5" />
                   </span>
                 </div>
@@ -179,7 +179,7 @@ export function StageDetail({ stage }: { stage: Stage }) {
 
       {/* ── Full term banner ──────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-5 pb-20 md:px-8 md:pb-28">
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-navy p-8 text-cream shadow-2xl shadow-navy/20 md:p-12">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-navy p-8 text-cream shadow-2xl shadow-navy/20 md:p-12 dark:bg-ink-raised">
           <div
             className="graph-paper-light pointer-events-none absolute inset-0 opacity-40"
             aria-hidden="true"
@@ -241,7 +241,7 @@ export function StageDetail({ stage }: { stage: Stage }) {
 
               <Link
                 href="/auth?mode=register"
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 text-base font-bold text-navy-deep transition-transform duration-200 hover:-translate-y-0.5"
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 text-base font-bold text-navy-deep transition-transform duration-200 hover:-translate-y-0.5 dark:bg-violet-glow dark:text-white dark:shadow-[0_0_24px_oklch(0.66_0.2_292_/_0.4)]"
               >
                 اشترك في المرحلة كاملة
                 <ArrowRight className="size-5 rotate-180" />

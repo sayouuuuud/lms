@@ -53,38 +53,36 @@ export function TestimonialsSection() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [active, root])
 
-
-
   return (
     <section ref={root} id="testimonials" className="relative h-[300vh]">
       <div className="sticky top-20 flex min-h-[calc(100vh-5rem)] w-full flex-col justify-center pb-8 pt-4 md:pb-12">
         <div className="mx-auto w-full max-w-7xl px-5 md:px-8">
           {/* heading */}
           <div className="reveal-item mx-auto mb-6 max-w-4xl text-center md:mb-10">
-            <span className="text-sm font-semibold text-emerald-deep">
+            <span className="text-sm font-semibold text-emerald-deep dark:text-teal-glow">
               <span className="font-mono">{'// '}</span>
               قصص نجاح حقيقية
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl">
+            <h2 className="mt-3 text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
               كل طالب رحلة... وكل رحلة منحنى صاعد
             </h2>
-            <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted">
+            <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">
               مش مجرد كلام. دي درجات طلاب حقيقيين اتحسّنت شهر ورا شهر لحد الامتحان النهائي.
             </p>
           </div>
 
           {/* featured panel: curve + story */}
-          <div className="reveal-item grid grid-cols-1 gap-px overflow-hidden rounded-[2rem] border border-navy/15 bg-navy/15 shadow-2xl shadow-navy/10 lg:grid-cols-5">
+          <div className="reveal-item grid grid-cols-1 gap-px overflow-hidden rounded-[2rem] border border-navy/15 bg-navy/15 shadow-2xl shadow-navy/10 lg:grid-cols-5 dark:border-white/10 dark:bg-white/5 dark:shadow-black/40">
             {/* chart card (navy) */}
-            <div className="relative bg-navy p-5 sm:p-6 lg:p-7 lg:col-span-3">
+            <div className="relative bg-navy p-5 sm:p-6 lg:p-7 lg:col-span-3 dark:bg-ink-raised">
               <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold tracking-wider text-gold">
+                  <p className="text-xs font-semibold tracking-wider text-gold dark:text-teal-glow">
                     منحنى التقدّم
                   </p>
-                  <p className="mt-1 text-lg font-bold text-cream">{student.subject}</p>
+                  <p className="mt-1 text-lg font-bold text-cream dark:text-ink-fg">{student.subject}</p>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-brand/15 px-3 py-1.5 text-emerald-300">
+                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-brand/15 px-3 py-1.5 text-emerald-300 dark:bg-teal-glow/15 dark:text-teal-glow">
                   <TrendingUp className="size-4" />
                   <span className="text-sm font-bold">
                     <span className="font-mono">+{jump}</span> نقطة
@@ -157,13 +155,13 @@ export function TestimonialsSection() {
               {/* before -> after result, written like a math statement */}
               <div className="mt-6 flex items-center justify-center gap-4 font-mono">
                 <div className="text-center">
-                  <span className="block text-xs text-cream/50">قبل</span>
-                  <span className="text-2xl font-bold text-red-400">{student.before}%</span>
+                  <span className="block text-xs text-cream/50 dark:text-ink-dim">قبل</span>
+                  <span className="text-2xl font-bold text-red-400 dark:text-red-400/90">{student.before}%</span>
                 </div>
-                <ArrowLeft className="size-6 text-gold" />
+                <ArrowLeft className="size-6 text-gold dark:text-teal-glow/50" />
                 <div className="text-center">
-                  <span className="block text-xs text-cream/50">بعد</span>
-                  <span className="text-3xl font-extrabold text-emerald-300">
+                  <span className="block text-xs text-cream/50 dark:text-ink-dim">بعد</span>
+                  <span className="text-3xl font-extrabold text-emerald-300 dark:text-teal-glow">
                     {student.after}%
                   </span>
                 </div>
@@ -171,26 +169,25 @@ export function TestimonialsSection() {
             </div>
 
             {/* story card (cream) */}
-            <div className="flex flex-col bg-cream p-5 sm:p-6 lg:p-7 lg:col-span-2">
-              <Quote className="size-9 text-gold" />
-              <blockquote className="mt-4 flex-1 text-pretty text-lg font-medium leading-relaxed text-navy sm:text-xl">
+            <div className="flex flex-col bg-cream p-5 sm:p-6 lg:p-7 lg:col-span-2 dark:bg-ink-base">
+              <Quote className="size-9 text-gold dark:text-teal-glow/40" />
+              <blockquote className="mt-4 flex-1 text-pretty text-lg font-medium leading-relaxed text-navy sm:text-xl dark:text-ink-fg">
                 {student.quote}
               </blockquote>
 
-              <div className="mt-6 border-t border-navy/10 pt-5">
+              <div className="mt-6 border-t border-navy/10 pt-5 dark:border-white/10">
                 <div className="flex items-center gap-3">
-                  <span className="grid size-12 place-items-center rounded-full bg-navy font-bold text-cream">
+                  <span className="grid size-12 place-items-center rounded-full bg-navy font-bold text-cream dark:bg-teal-glow dark:text-ink-base">
                     {student.name.charAt(0)}
                   </span>
                   <div>
-                    <p className="font-bold text-navy">{student.name}</p>
-                    <p className="text-sm text-ink-muted">{student.grade}</p>
+                    <p className="font-bold text-navy dark:text-ink-fg">{student.name}</p>
+                    <p className="text-sm text-ink-muted dark:text-ink-dim">{student.grade}</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
 
         </div>
       </div>

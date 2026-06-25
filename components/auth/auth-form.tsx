@@ -50,10 +50,10 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
   return (
     <div className="w-full">
       {/* Tabs */}
-      <div className="relative grid grid-cols-2 rounded-full border border-navy/10 bg-cream-deep/60 p-1">
+      <div className="relative grid grid-cols-2 rounded-full border border-navy/10 bg-cream-deep/60 p-1 dark:border-ink-line dark:bg-ink-base/60">
         <span
           className={cn(
-            'absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-full bg-navy shadow-sm transition-transform duration-300',
+            'absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-full bg-navy shadow-sm transition-transform duration-300 dark:bg-violet-glow',
             tab === 'login' ? 'translate-x-0' : '-translate-x-full',
           )}
           aria-hidden="true"
@@ -63,7 +63,7 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
           onClick={() => switchTab('login')}
           className={cn(
             'relative z-10 rounded-full py-2.5 text-sm font-bold transition-colors',
-            tab === 'login' ? 'text-cream' : 'text-navy-soft hover:text-navy',
+            tab === 'login' ? 'text-cream' : 'text-navy-soft hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg',
           )}
         >
           تسجيل الدخول
@@ -73,7 +73,7 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
           onClick={() => switchTab('register')}
           className={cn(
             'relative z-10 rounded-full py-2.5 text-sm font-bold transition-colors',
-            tab === 'register' ? 'text-cream' : 'text-navy-soft hover:text-navy',
+            tab === 'register' ? 'text-cream' : 'text-navy-soft hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg',
           )}
         >
           حساب جديد
@@ -135,11 +135,11 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
             />
 
             <div className="space-y-1.5">
-              <label htmlFor="grade" className="block text-sm font-semibold text-navy">
+              <label htmlFor="grade" className="block text-sm font-semibold text-navy dark:text-ink-fg">
                 الصف الدراسي
               </label>
               <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-navy-soft">
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-navy-soft dark:text-ink-dim">
                   <GraduationCap className="size-4" />
                 </span>
                 <select
@@ -148,9 +148,9 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
                   value={grade}
                   onChange={(e) => setGrade(e.target.value)}
                   className={cn(
-                    'h-12 w-full appearance-none rounded-xl border border-navy/15 bg-cream/60 pr-10 pl-4 text-sm font-medium text-navy outline-none transition-colors',
-                    'focus:border-gold focus:ring-4 focus:ring-gold/15',
-                    grade === '' && 'text-navy-soft',
+                    'h-12 w-full appearance-none rounded-xl border border-navy/15 bg-cream/60 pr-10 pl-4 text-sm font-medium text-navy outline-none transition-colors dark:border-ink-line dark:bg-ink-base/60 dark:text-ink-fg',
+                    'focus:border-gold focus:ring-4 focus:ring-gold/15 dark:focus:border-teal-glow dark:focus:ring-teal-glow/15',
+                    grade === '' && 'text-navy-soft dark:text-ink-dim',
                   )}
                 >
                   <option value="" disabled>
@@ -170,17 +170,17 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
         {/* Password */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-semibold text-navy">
+            <label htmlFor="password" className="block text-sm font-semibold text-navy dark:text-ink-fg">
               كلمة السر
             </label>
             {tab === 'login' && (
-              <button type="button" className="text-xs font-semibold text-gold-deep hover:underline">
+              <button type="button" className="text-xs font-semibold text-gold-deep hover:underline dark:text-teal-glow">
                 نسيت كلمة السر؟
               </button>
             )}
           </div>
           <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-navy-soft">
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-navy-soft dark:text-ink-dim">
               <Lock className="size-4" />
             </span>
             <input
@@ -194,14 +194,14 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
               }
               autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
               className={cn(
-                'h-12 w-full rounded-xl border border-navy/15 bg-cream/60 pr-10 pl-11 text-sm font-medium text-navy outline-none transition-colors',
-                'placeholder:text-navy-soft/60 focus:border-gold focus:ring-4 focus:ring-gold/15',
+                'h-12 w-full rounded-xl border border-navy/15 bg-cream/60 pr-10 pl-11 text-sm font-medium text-navy outline-none transition-colors dark:border-ink-line dark:bg-ink-base/60 dark:text-ink-fg',
+                'placeholder:text-navy-soft/60 focus:border-gold focus:ring-4 focus:ring-gold/15 dark:placeholder:text-ink-dim/60 dark:focus:border-teal-glow dark:focus:ring-teal-glow/15',
               )}
             />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute inset-y-0 left-3 flex items-center text-navy-soft transition-colors hover:text-navy"
+              className="absolute inset-y-0 left-3 flex items-center text-navy-soft transition-colors hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg"
               aria-label={showPassword ? 'إخفاء كلمة السر' : 'إظهار كلمة السر'}
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -213,8 +213,8 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
           type="submit"
           disabled={submitting}
           className={cn(
-            'mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-cream transition-all',
-            'hover:bg-navy-deep active:translate-y-px disabled:opacity-70',
+            'mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-cream transition-all dark:bg-violet-glow dark:text-white',
+            'hover:bg-navy-deep active:translate-y-px disabled:opacity-70 dark:hover:bg-violet-deep',
           )}
         >
           {submitting && <Loader2 className="size-4 animate-spin" />}
@@ -223,14 +223,14 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
       </form>
 
       {/* Footer switch */}
-      <p className="mt-6 text-center text-sm text-navy-soft">
+      <p className="mt-6 text-center text-sm text-navy-soft dark:text-ink-dim">
         {tab === 'login' ? (
           <>
             لسه ماعندكش حساب؟{' '}
             <button
               type="button"
               onClick={() => switchTab('register')}
-              className="font-bold text-gold-deep hover:underline"
+              className="font-bold text-gold-deep hover:underline dark:text-teal-glow"
             >
               اعمل حساب جديد
             </button>
@@ -241,7 +241,7 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
             <button
               type="button"
               onClick={() => switchTab('login')}
-              className="font-bold text-gold-deep hover:underline"
+              className="font-bold text-gold-deep hover:underline dark:text-teal-glow"
             >
               سجّل دخولك
             </button>
@@ -249,13 +249,13 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
         )}
       </p>
 
-      <p className="mt-4 text-center text-xs text-navy-soft/70">
+      <p className="mt-4 text-center text-xs text-navy-soft/70 dark:text-ink-dim/70">
         بإنشائك حساب فإنك توافق على{' '}
-        <Link href="#" className="underline hover:text-navy">
+        <Link href="#" className="underline hover:text-navy dark:hover:text-ink-fg">
           الشروط والأحكام
         </Link>{' '}
         و
-        <Link href="#" className="underline hover:text-navy">
+        <Link href="#" className="underline hover:text-navy dark:hover:text-ink-fg">
           سياسة الخصوصية
         </Link>
         .
@@ -287,11 +287,11 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-semibold text-navy">
+      <label htmlFor={id} className="block text-sm font-semibold text-navy dark:text-ink-fg">
         {label}
       </label>
       <div className="relative">
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-navy-soft">
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-navy-soft dark:text-ink-dim">
           {icon}
         </span>
         <input
@@ -304,8 +304,8 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           autoComplete={autoComplete}
           className={cn(
-            'h-12 w-full rounded-xl border border-navy/15 bg-cream/60 pr-10 pl-4 text-sm font-medium text-navy outline-none transition-colors',
-            'placeholder:text-navy-soft/60 focus:border-gold focus:ring-4 focus:ring-gold/15',
+            'h-12 w-full rounded-xl border border-navy/15 bg-cream/60 pr-10 pl-4 text-sm font-medium text-navy outline-none transition-colors dark:border-ink-line dark:bg-ink-base/60 dark:text-ink-fg',
+            'placeholder:text-navy-soft/60 focus:border-gold focus:ring-4 focus:ring-gold/15 dark:placeholder:text-ink-dim/60 dark:focus:border-teal-glow dark:focus:ring-teal-glow/15',
             dir === 'ltr' && 'text-left placeholder:text-right',
           )}
         />
