@@ -139,7 +139,7 @@ export function HeroSection() {
               width={1083}
               height={1452}
               priority
-              className="h-auto w-full object-contain [mask-image:linear-gradient(to_bottom,black_62%,transparent_98%)] [-webkit-mask-image:linear-gradient(to_bottom,black_62%,transparent_98%)]"
+              className="h-auto w-full object-contain [mask-image:linear-gradient(to_bottom,black_88%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_88%,transparent_100%)]"
             />
           </div>
         </div>
