@@ -1,70 +1,18 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
 import { stats } from '@/lib/landing-data'
-
-function format(n: number) {
-  return n >= 1000 ? Math.round(n).toLocaleString('en-US') : Math.round(n).toString()
-}
+import { AnimatedNumber } from './animated-number'
 
 export function StatsSection() {
-  const root = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    const el = root.current
-    if (!el) return
-
-    const nums = Array.from(el.querySelectorAll<HTMLElement>('.stat-num'))
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-    const run = () => {
-      nums.forEach((node) => {
-        const target = Number(node.dataset.value)
-        const valueEl = node.firstChild as HTMLElement | null
-        if (!valueEl) return
-        if (reduce) {
-          valueEl.textContent = format(target)
-          return
-        }
-        const obj = { v: 0 }
-        gsap.to(obj, {
-          v: target,
-          duration: 2,
-          ease: 'power2.out',
-          onUpdate: () => {
-            valueEl.textContent = format(obj.v)
-          },
-        })
-      })
-    }
-
-    let done = false
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting && !done) {
-            done = true
-            run()
-            observer.disconnect()
-          }
-        }
-      },
-      { rootMargin: '0px 0px -10% 0px' },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
   return (
-    <section ref={root} id="stats" className="py-20 md:py-28">
+    <section id="stats" className="py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5 md:px-8">
         <div className="mx-auto mb-12 max-w-2xl text-center">
           <span className="text-sm font-semibold text-gold-deep dark:text-teal-glow">
             <span className="font-mono">{'// '}</span>
             أرقامنا
           </span>
-          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
+          <h2 className="font-thmanyah font-bold mt-3 text-balance text-3xl leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
             نتائج بتتكلم عن نفسها
           </h2>
           <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">
@@ -76,14 +24,11 @@ export function StatsSection() {
           {stats.map((s) => (
             <div key={s.label} className="bg-cream/80 p-8 backdrop-blur md:p-10 dark:bg-ink-raised/70">
               <div className="flex items-baseline gap-1 text-navy dark:text-ink-fg">
-                <span
-                  className="stat-num font-mono text-5xl font-black md:text-4xl lg:text-5xl xl:text-6xl"
-                  data-value={s.value}
-                >
-                  0
+                <span className="stat-num font-thmanyah text-5xl font-bold md:text-4xl lg:text-5xl xl:text-6xl">
+                  <AnimatedNumber value={s.value} duration={2.5} />
                 </span>
-                <span className="font-mono text-3xl font-black text-gold-deep md:text-2xl lg:text-3xl xl:text-4xl dark:text-teal-glow">
-                  {s.suffix}
+                <span className="font-thmanyah text-3xl font-bold text-gold-deep md:text-2xl lg:text-3xl xl:text-4xl dark:text-teal-glow">
+                  {s.suffix === '+' ? '+' : s.suffix === '%' ? '٪' : s.suffix === 'k' ? ' ألف' : s.suffix}
                 </span>
               </div>
               <p className="mt-3 text-pretty leading-relaxed text-ink-muted dark:text-ink-dim">{s.label}</p>

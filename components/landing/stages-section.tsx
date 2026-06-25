@@ -26,8 +26,8 @@ export function StagesSection() {
                 <span className="font-mono">{'// '}</span>
                 اختار مرحلتك
               </span>
-              <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-cream sm:text-4xl lg:text-5xl">
-                انت في أنهي سنة؟ اختار وادخل على المنهج بتاعك.
+              <h2 className="font-thmanyah font-bold mt-3 text-balance text-3xl leading-tight text-cream sm:text-4xl lg:text-5xl">
+                مرحلتك التعليمية
               </h2>
               <p className="mt-5 text-pretty text-lg leading-relaxed text-cream/65">
                 كل مرحلة فيها المواد مرتبة خطوة بخطوة. عدّي على السنة اللي انت فيها وشوف
@@ -45,7 +45,7 @@ export function StagesSection() {
                 >
                   <span
                     className={cn(
-                      'font-mono text-4xl font-black transition-colors xl:text-6xl',
+                      'font-thmanyah text-4xl font-bold transition-colors xl:text-6xl',
                       active === i ? 'text-gold dark:text-teal-glow' : 'text-white/15',
                     )}
                   >
@@ -54,7 +54,7 @@ export function StagesSection() {
                   <span>
                     <span
                       className={cn(
-                        'block text-2xl font-extrabold transition-colors xl:text-3xl',
+                        'block text-2xl font-bold font-thmanyah transition-colors xl:text-3xl',
                         active === i ? 'text-cream' : 'text-cream/70',
                       )}
                     >
@@ -85,8 +85,8 @@ export function StagesSection() {
             <span className="font-mono">{'// '}</span>
             اختار مرحلتك
           </span>
-          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-cream sm:text-4xl">
-            انت في أنهي سنة؟ اختار وادخل على المنهج بتاعك.
+          <h2 className="font-thmanyah font-bold mt-3 text-balance text-3xl leading-tight text-cream sm:text-4xl">
+            إيه اللي بيخلي المنصة مختلفة؟
           </h2>
           <p className="mt-5 text-pretty text-lg leading-relaxed text-cream/65">
             كل مرحلة فيها المواد مرتبة خطوة بخطوة. عدّي على السنة اللي انت فيها وشوف
@@ -157,7 +157,9 @@ function StagePreview({ stage }: { stage: Stage }) {
                   key={row}
                   className="flex items-center gap-3 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-3 text-cream/90"
                 >
-                  <span className="font-mono text-sm text-gold dark:text-teal-glow">{`0${idx + 1}`}</span>
+                  <span className="font-thmanyah text-sm text-gold dark:text-teal-glow">
+                    {(idx + 1).toLocaleString('ar-EG', { minimumIntegerDigits: 2 })}
+                  </span>
                   {row}
                 </li>
               ))}
@@ -196,7 +198,7 @@ function MobileStage({
       >
         <span
           className={cn(
-            'font-mono text-3xl font-black transition-colors',
+            'font-thmanyah text-3xl font-bold transition-colors',
             open ? 'text-gold dark:text-teal-glow' : 'text-white/20',
           )}
         >
@@ -228,7 +230,9 @@ function MobileStage({
                 key={row}
                 className="flex items-center gap-3 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-3 text-sm text-cream/90"
               >
-                <span className="font-mono text-gold dark:text-teal-glow">{`0${idx + 1}`}</span>
+                <span className="font-thmanyah text-gold dark:text-teal-glow">
+                  {(idx + 1).toLocaleString('ar-EG', { minimumIntegerDigits: 2 })}
+                </span>
                 {row}
               </li>
             ))}

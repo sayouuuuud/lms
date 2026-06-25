@@ -1,3 +1,6 @@
+'use client'
+
+import { motion } from 'framer-motion'
 import { LandingNavbar } from './landing-navbar'
 import { HeroSection } from './hero-section'
 import { FeaturesSection } from './features-section'
@@ -7,6 +10,11 @@ import { TestimonialsSection } from './testimonials-section'
 import { CtaSection } from './cta-section'
 import { SiteFooter } from './site-footer'
 import { ScrollRefresh } from './scroll-refresh'
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
+}
 
 export function LandingPage() {
   return (
@@ -30,11 +38,26 @@ export function LandingPage() {
         <LandingNavbar />
         <main>
           <HeroSection />
-          <FeaturesSection />
-          <StagesSection />
-          <StatsSection />
-          <TestimonialsSection />
-          <CtaSection />
+          
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>
+            <FeaturesSection />
+          </motion.div>
+          
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>
+            <StagesSection />
+          </motion.div>
+          
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>
+            <StatsSection />
+          </motion.div>
+          
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>
+            <TestimonialsSection />
+          </motion.div>
+          
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>
+            <CtaSection />
+          </motion.div>
         </main>
         <SiteFooter />
       </div>

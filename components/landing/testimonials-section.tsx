@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { ArrowLeft, Quote, TrendingUp } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Quote, TrendingUp } from 'lucide-react'
 import { testimonials } from '@/lib/landing-data'
 import { useReveal } from '@/lib/use-reveal'
 import { cn } from '@/lib/utils'
@@ -63,7 +63,7 @@ export function TestimonialsSection() {
               <span className="font-mono">{'// '}</span>
               قصص نجاح حقيقية
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
+            <h2 className="font-thmanyah font-bold mt-3 text-3xl leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
               كل طالب رحلة... وكل رحلة منحنى صاعد
             </h2>
             <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">
@@ -85,13 +85,13 @@ export function TestimonialsSection() {
                 <div className="inline-flex items-center gap-2 rounded-full bg-emerald-brand/15 px-3 py-1.5 text-emerald-300 dark:bg-teal-glow/15 dark:text-teal-glow">
                   <TrendingUp className="size-4" />
                   <span className="text-sm font-bold">
-                    <span className="font-mono">+{jump}</span> نقطة
+                    <span className="font-thmanyah text-xl font-bold">+{jump.toLocaleString('ar-EG')}</span> نقطة
                   </span>
                 </div>
               </div>
 
-              <div className="h-56 w-full sm:h-64 md:h-56 lg:h-64" dir="ltr">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-56 w-full min-w-0 sm:h-64 md:h-56 lg:h-64" dir="ltr">
+                <ResponsiveContainer width="99%" height="100%">
                   <ComposedChart
                     key={active}
                     data={student.journey}
@@ -153,16 +153,16 @@ export function TestimonialsSection() {
               </div>
 
               {/* before -> after result, written like a math statement */}
-              <div className="mt-6 flex items-center justify-center gap-4 font-mono">
+              <div className="mt-6 flex items-center justify-center gap-4 font-thmanyah">
                 <div className="text-center">
                   <span className="block text-xs text-cream/50 dark:text-ink-dim">قبل</span>
-                  <span className="text-2xl font-bold text-red-400 dark:text-red-400/90">{student.before}%</span>
+                  <span className="text-2xl font-bold text-red-400 dark:text-red-400/90">{student.before.toLocaleString('ar-EG')}٪</span>
                 </div>
-                <ArrowLeft className="size-6 text-gold dark:text-teal-glow/50" />
+                <ArrowRight className="size-5 text-cream/30 dark:text-ink-dim" />
                 <div className="text-center">
                   <span className="block text-xs text-cream/50 dark:text-ink-dim">بعد</span>
                   <span className="text-3xl font-extrabold text-emerald-300 dark:text-teal-glow">
-                    {student.after}%
+                    {student.after.toLocaleString('ar-EG')}٪
                   </span>
                 </div>
               </div>

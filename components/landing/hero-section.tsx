@@ -3,7 +3,10 @@
 import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
 import { ArrowLeft, Sparkles } from 'lucide-react'
+import { AnimatedNumber } from './animated-number'
+import { cn } from '@/lib/utils'
 
 // Floating math objects scattered across the hero for an energetic, on-theme
 // backdrop. Each carries a light-mode color and a dark-mode (neon) color.
@@ -23,53 +26,45 @@ const floatSymbols = [
 export function HeroSection() {
   const root = useRef<HTMLElement>(null)
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (reduce) {
-        gsap.set(['.hero-stagger', '.hero-axis'], { opacity: 1, y: 0, scaleX: 1 })
-        gsap.set('.hero-photo', { opacity: 1 })
-        return
-      }
+  useGSAP(() => {
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+    tl.from('.hero-stagger', { opacity: 0, y: 28, duration: 0.7, stagger: 0.1 })
+      .from('.hero-photo', { opacity: 0, y: 40, scale: 0.97, duration: 1, clearProps: 'transform' }, '-=0.7')
+      .from('.hero-axis', { opacity: 0, scaleX: 0, duration: 0.9, ease: 'power2.inOut' }, '-=0.8')
 
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
-      tl.from('.hero-stagger', { opacity: 0, y: 28, duration: 0.7, stagger: 0.1 })
-        .from('.hero-photo', { opacity: 0, y: 40, scale: 0.97, duration: 1, clearProps: 'transform' }, '-=0.7')
-        .from('.hero-axis', { opacity: 0, scaleX: 0, duration: 0.9, ease: 'power2.inOut' }, '-=0.8')
-
-      gsap.utils.toArray<HTMLElement>('.float-sym').forEach((el, i) => {
-        gsap.to(el, {
-          y: i % 2 === 0 ? -18 : 16,
-          duration: 3 + (i % 3),
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-          delay: i * 0.2,
-        })
+    gsap.utils.toArray<HTMLElement>('.float-sym').forEach((el, i) => {
+      gsap.to(el, {
+        y: i % 2 === 0 ? -45 : 45,
+        x: i % 3 === 0 ? 30 : -30,
+        rotate: i % 2 === 0 ? 25 : -25,
+        duration: 3 + (i % 3),
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+        delay: i * 0.2,
       })
+    })
 
-      gsap.utils.toArray<HTMLElement>('.float-obj').forEach((el, i) => {
-        gsap.to(el, {
-          y: i % 2 === 0 ? 20 : -20,
-          rotate: i % 2 === 0 ? 8 : -8,
-          duration: 5 + i,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-          delay: i * 0.35,
-        })
+    gsap.utils.toArray<HTMLElement>('.float-obj').forEach((el, i) => {
+      gsap.to(el, {
+        y: i % 2 === 0 ? 35 : -35,
+        x: i % 2 === 0 ? -25 : 25,
+        rotate: i % 2 === 0 ? 15 : -15,
+        duration: 5 + i,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+        delay: i * 0.35,
       })
-    }, root)
-
-    return () => ctx.revert()
-  }, [])
+    })
+  }, { scope: root })
 
   return (
     <section ref={root} id="hero" className="relative overflow-hidden pt-28 md:pt-36">
       {floatSymbols.map((s, i) => (
         <span
           key={i}
-          className={`float-sym pointer-events-none absolute hidden font-mono font-bold md:block ${s.size} ${s.color} ${s.dark}`}
+          className={`float-sym pointer-events-none absolute font-mono font-bold opacity-60 md:opacity-100 ${s.size} ${s.color} ${s.dark}`}
           style={{ top: s.top, bottom: s.bottom, left: s.left, right: s.right }}
           aria-hidden="true"
         >
@@ -126,15 +121,17 @@ export function HeroSection() {
             </a>
           </div>
 
-          <dl className="hero-stagger mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-navy/10 pt-6 dark:border-white/10">
+          <dl className="hero-stagger mt-12 flex flex-wrap items-start justify-between gap-6 sm:gap-8 border-t border-navy/10 pt-8 dark:border-white/10 max-w-lg">
             {[
-              { v: '+25', l: 'سنة خبرة' },
-              { v: '+48k', l: 'طالب' },
-              { v: '%98', l: 'نسبة رضا' },
+              { val: 25, pre: '+', suf: '', l: 'سنة خبرة' },
+              { val: 48, pre: '+', suf: ' ألف', l: 'طالب' },
+              { val: 98, pre: '٪', suf: '', l: 'نسبة رضا' },
             ].map((s) => (
-              <div key={s.l}>
-                <dt className="font-mono text-2xl font-extrabold text-navy dark:text-teal-glow">{s.v}</dt>
-                <dd className="mt-1 text-sm text-ink-muted dark:text-ink-dim">{s.l}</dd>
+              <div key={s.l} className="flex flex-col items-center md:items-start">
+                <dt className="font-thmanyah text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-navy dark:text-teal-glow whitespace-nowrap">
+                  <AnimatedNumber value={s.val} prefix={s.pre} suffix={s.suf} duration={2.5} />
+                </dt>
+                <dd className="mt-2 text-base sm:text-lg font-medium text-ink-muted dark:text-ink-dim">{s.l}</dd>
               </div>
             ))}
           </dl>
@@ -158,7 +155,7 @@ export function HeroSection() {
           />
           {/* negative margin-top raises the image above the section baseline while
               staying clipped by overflow-hidden on the section — never bleeds into navbar */}
-          <div className="hero-photo relative z-10 w-full max-w-[420px] md:-mt-16 md:max-w-[560px] lg:-mt-24 lg:max-w-[520px] xl:-mt-12">
+          <div className="hero-photo relative z-10 w-full max-w-[440px] -left-4 -top-3 md:-left-8 md:-mt-20 md:-top-4 md:max-w-[580px] lg:-mt-28 lg:max-w-[560px] xl:-mt-24 xl:max-w-[580px]">
             {/* light-mode portrait */}
             <Image
               src="/teacher-abdelsalam.webp"
@@ -175,20 +172,44 @@ export function HeroSection() {
               width={772}
               height={1024}
               priority
-              className="mx-auto hidden h-auto w-[96%] object-contain dark:block"
+              className="mx-auto hidden h-auto w-[96%] object-contain dark:block translate-y-6"
             />
-          </div>
 
-          {/* "x-axis" ground line directly under the teacher, on every screen size */}
-          <div className="absolute inset-x-0 bottom-0">
-            <div
-              className="hero-axis mx-auto h-px w-full origin-center bg-gradient-to-l from-transparent via-gold to-transparent dark:via-teal-glow"
-              aria-hidden="true"
-            />
-            <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex justify-between px-5 md:px-8">
-              {Array.from({ length: 11 }).map((_, i) => (
-                <span key={i} className="h-2 w-px bg-gold/40 dark:bg-teal-glow/40" aria-hidden="true" />
-              ))}
+            {/* Geometric Number Line stuck to the teacher's feet */}
+            <div 
+              className="absolute -bottom-7 left-1/2 w-[85%] h-12 -translate-x-1/2 pointer-events-none"
+              style={{ 
+                WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+                maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' 
+              }}
+            >
+              <div className="hero-axis relative w-full h-full flex items-center">
+                {/* Main Axis Line */}
+                <div className="absolute inset-x-0 top-1/2 h-[2px] -translate-y-1/2 bg-gold dark:bg-teal-glow opacity-80" />
+                
+                {/* Ticks */}
+                <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 justify-between px-2">
+                  {Array.from({ length: 41 }).map((_, i) => {
+                    const isCenter = i === 20;
+                    const isMajor = i % 10 === 0;
+                    const isMedium = i % 5 === 0;
+                    
+                    return (
+                      <div key={i} className="flex flex-col items-center relative">
+                        <div 
+                          className={cn(
+                            "w-[2px] bg-gold dark:bg-teal-glow", 
+                            isCenter ? "h-6 opacity-100" : isMajor ? "h-4 opacity-100" : isMedium ? "h-2.5 opacity-80" : "h-1.5 opacity-50"
+                          )} 
+                        />
+                        {isCenter && (
+                          <span className="absolute top-5 text-sm font-mono font-bold text-gold dark:text-teal-glow">0</span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -23,7 +23,7 @@ export function FeaturesSection() {
             <span className="font-mono">{'// '}</span>
             إزاي بنذاكر مع بعض
           </span>
-          <h2 className="mt-3 text-balance text-3xl font-extrabold leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
+          <h2 className="font-thmanyah font-bold mt-3 text-balance text-3xl leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
             نظام تعليمي متكامل، مبني على خطوات واضحة.
           </h2>
           <p className="mt-5 text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">
@@ -40,7 +40,7 @@ export function FeaturesSection() {
                 key={f.step}
                 className="feature-row group grid grid-cols-[auto_1fr] items-start gap-5 border-b border-navy/10 py-8 transition-colors hover:bg-cream-deep/40 md:grid-cols-[6rem_3rem_1fr] md:items-center md:gap-8 md:px-4 dark:border-white/10 dark:hover:bg-white/5"
               >
-                <span className="font-mono text-3xl font-black text-navy/15 transition-colors group-hover:text-gold md:text-5xl dark:text-white/15 dark:group-hover:text-teal-glow">
+                <span className="font-thmanyah text-3xl font-bold text-navy/15 transition-colors group-hover:text-gold md:text-5xl dark:text-white/15 dark:group-hover:text-teal-glow">
                   {f.step}
                 </span>
 

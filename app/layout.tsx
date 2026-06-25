@@ -4,6 +4,7 @@ import { Cairo, Geist_Mono, Aref_Ruqaa } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme-provider'
+import { MathLoader } from '@/components/landing/math-loader'
 import './globals.css'
 
 const cairo = Cairo({
@@ -61,7 +62,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`${cairo.className} font-sans antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <MathLoader />
+          {children}
+        </ThemeProvider>
         <Toaster position="top-center" richColors dir="rtl" theme="system" />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

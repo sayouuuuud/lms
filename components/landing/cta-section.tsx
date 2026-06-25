@@ -43,7 +43,7 @@ export function CtaSection() {
           ابدأ النهاردة
         </span>
 
-        <h2 className="mt-5 text-balance text-3xl font-extrabold leading-tight text-navy md:text-5xl dark:text-ink-fg">
+        <h2 className="mt-5 text-balance text-3xl font-thmanyah font-bold leading-tight text-navy md:text-5xl dark:text-ink-fg">
           جاهز تبدأ رحلة التفوق في الرياضيات؟
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">

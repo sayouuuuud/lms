@@ -3,6 +3,13 @@
 @import 'shadcn/tailwind.css';
 /* educational dashboard theme */
 
+@font-face {
+  font-family: 'Thmanyah Sans';
+  src: url('/Font/woff2/thmanyahserifdisplay-Bold.woff2') format('woff2');
+  font-weight: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Landing / brand palette (matches Mr. Abdelsalam hero artwork) */
@@ -181,6 +188,10 @@
   --sidebar-ring: oklch(0.45 0.08 264);
   /* faint grid lines so the graph-paper backdrop reads on near-black */
   --color-graph-line: oklch(0.24 0.014 264);
+}
+
+@utility font-thmanyah {
+  font-family: 'Thmanyah Sans', var(--font-cairo), sans-serif !important;
 }
 
 @utility scrollbar-hide {
