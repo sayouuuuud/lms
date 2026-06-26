@@ -13,9 +13,20 @@ import { UpcomingExams } from './upcoming-exams'
 import { WeeklyGoals } from './weekly-goals'
 import { MonthlyProgress } from './monthly-progress'
 
-export function StudentDashboardShell() {
+export function StudentDashboardShell({
+  enrolledCourses,
+  schedule,
+  grades,
+  announcements,
+  activity
+}: {
+  enrolledCourses: any[]
+  schedule: any[]
+  grades: any[]
+  announcements: any[]
+  activity: any[]
+}) {
   return (
-    <StudentLayout>
       <div className="flex flex-col gap-4">
         <StudentWelcome />
         <StudentStats />
@@ -23,26 +34,26 @@ export function StudentDashboardShell() {
         {/* Row 1: أكمل من حيث توقفت (wide) + الاختبارات القادمة */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="xl:col-span-2">
-            <ContinueLearning />
+            <ContinueLearning courses={enrolledCourses} />
           </div>
           <div className="xl:col-span-1">
-            <UpcomingExams />
+            <UpcomingExams schedule={schedule} />
           </div>
         </div>
 
         {/* Row 2: الجدول + نشاط التعلم (wide) */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="xl:col-span-1">
-            <UpcomingSchedule />
+            <UpcomingSchedule schedule={schedule} />
           </div>
           <div className="xl:col-span-2">
-            <LearningActivityChart />
+            <LearningActivityChart activity={activity} />
           </div>
         </div>
 
         {/* Row 3: أحدث الدرجات + الأهداف الأسبوعية + إنجازات الشهر */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <RecentGrades />
+          <RecentGrades grades={grades} />
           <WeeklyGoals />
           <MonthlyProgress />
         </div>
@@ -50,15 +61,14 @@ export function StudentDashboardShell() {
         {/* Row 4: إعلانات + كورساتي */}
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           <div className="xl:col-span-1">
-            <Announcements />
+            <Announcements announcements={announcements} />
           </div>
           <div className="xl:col-span-2">
-            <MyCourses />
+            <MyCourses courses={enrolledCourses} />
           </div>
         </div>
 
 
       </div>
-    </StudentLayout>
   )
 }

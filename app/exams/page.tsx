@@ -2,13 +2,16 @@ import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { ExamsPageHeader } from '@/components/exams/exams-page-header'
 import { ExamsStats } from '@/components/exams/exams-stats'
 import { ExamsTable } from '@/components/exams/exams-table'
+import { getExams } from './actions'
 
-export default function ExamsPage() {
+export default async function ExamsPage() {
+  const exams = await getExams()
+
   return (
     <DashboardLayout>
       <ExamsPageHeader />
-      <ExamsStats />
-      <ExamsTable />
+      <ExamsStats exams={exams} />
+      <ExamsTable initialExams={exams} />
     </DashboardLayout>
   )
 }

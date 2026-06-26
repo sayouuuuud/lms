@@ -8,11 +8,12 @@ import {
   type ReactNode,
 } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 import {
-  initialEvents,
   type CalendarEvent,
   type CalendarEventType,
 } from '@/lib/calendar-data'
+import { createEvent, updateEvent, deleteEvent } from '@/app/calendar/actions'
 
 export type EventFormValues = {
   title: string
@@ -52,7 +53,14 @@ export function useCalendar() {
   return ctx
 }
 
-export function CalendarProvider({ children }: { children: ReactNode }) {
+export function CalendarProvider({ 
+  children,
+  initialEvents 
+}: { 
+  children: ReactNode
+  initialEvents: CalendarEvent[] 
+}) {
+  const router = useRouter()
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents)
   const [current, setCurrent] = useState(() => {
     const d = new Date()
@@ -95,35 +103,55 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
         setEditing(null)
         setPresetDate(null)
       },
-      submitForm: (values) => {
+      submitForm: async (values) => {
         if (editing) {
+          const original = [...events]
           setEvents((prev) =>
             prev.map((e) => (e.id === editing.id ? { ...e, ...values } : e)),
           )
-          toast.success('تم تحديث الحدث بنجاح')
-        } else {
-          const newEvent: CalendarEvent = {
-            id: `EVT-${String(events.length + 1).padStart(2, '0')}-${Date.now()
-              .toString()
-              .slice(-4)}`,
-            custom: true,
-            ...values,
+          setFormOpen(false)
+          setEditing(null)
+          setPresetDate(null)
+          
+          const res = await updateEvent(editing.id, values)
+          if (res.error) {
+            toast.error(res.error)
+            setEvents(original)
+          } else {
+            toast.success('تم تحديث الحدث بنجاح')
+            router.refresh()
           }
-          setEvents((prev) => [...prev, newEvent])
-          toast.success('تمت إضافة الحدث إلى التقويم')
+        } else {
+          setFormOpen(false)
+          const res = await createEvent(values)
+          if (res.error) {
+            toast.error(res.error)
+          } else {
+            toast.success('تمت إضافة الحدث إلى التقويم')
+            router.refresh()
+          }
         }
-        setFormOpen(false)
-        setEditing(null)
-        setPresetDate(null)
       },
       deleting,
       closeDelete: () => setDeleting(null),
-      confirmDelete: () => {
+      confirmDelete: async () => {
         if (deleting) {
+          const original = [...events]
           setEvents((prev) => prev.filter((e) => e.id !== deleting.id))
-          toast.success('تم حذف الحدث')
+          const id = deleting.id
+          setDeleting(null)
+          
+          const res = await deleteEvent(id)
+          if (res.error) {
+            toast.error(res.error)
+            setEvents(original)
+          } else {
+            toast.success('تم حذف الحدث')
+            router.refresh()
+          }
+        } else {
+          setDeleting(null)
         }
-        setDeleting(null)
       },
     }),
     [events, current, selectedDate, formOpen, editing, presetDate, deleting],

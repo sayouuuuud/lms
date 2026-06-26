@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { updatePaymentStatus } from '@/app/payments/actions'
 import {
   Search,
   Clock,
@@ -27,7 +30,6 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/get-initials'
 import {
-  paymentRecords,
   paymentStatusFilters,
   getPaymentStats,
   type PaymentRecord,
@@ -92,8 +94,9 @@ function DetailRow({
   )
 }
 
-export function PaymentsTable() {
-  const [records, setRecords] = useState<PaymentRecord[]>(paymentRecords)
+export function PaymentsTable({ initialPayments }: { initialPayments: PaymentRecord[] }) {
+  const router = useRouter()
+  const [records, setRecords] = useState<PaymentRecord[]>(initialPayments)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<PaymentStatus | 'الكل'>('الكل')
   const [preview, setPreview] = useState<PaymentRecord | null>(null)
@@ -144,11 +147,22 @@ export function PaymentsTable() {
     })
   }, [records, query, status])
 
-  function updateStatus(id: string, next: PaymentStatus) {
+  async function updateStatus(id: string, next: PaymentStatus) {
+    const original = [...records]
     setRecords((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: next } : r)),
     )
     setPreview((p) => (p && p.id === id ? { ...p, status: next } : p))
+    
+    const res = await updatePaymentStatus(id, next)
+    if (res.error) {
+      toast.error(res.error)
+      setRecords(original)
+      setPreview((p) => (p && p.id === id ? original.find(o => o.id === id) || p : p))
+    } else {
+      toast.success('تم تحديث حالة الطلب بنجاح')
+      router.refresh()
+    }
   }
 
   return (

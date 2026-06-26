@@ -1,18 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Send, Phone, Video, MoreVertical, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { getInitials } from '@/lib/get-initials'
-import { conversations, type Conversation, type ChatMessage } from '@/lib/messages-data'
+import { type Conversation, type ChatMessage } from '@/lib/messages-data'
+import { markAsRead, replyToConversation } from '@/app/messages/actions'
 
-export function MessagesInbox() {
-  const [chats, setChats] = useState<Conversation[]>(conversations)
-  const [activeId, setActiveId] = useState<string>(conversations[0]?.id ?? '')
+export function MessagesInbox({ initialConversations }: { initialConversations: Conversation[] }) {
+  const router = useRouter()
+  const [chats, setChats] = useState<Conversation[]>(initialConversations)
+  const [activeId, setActiveId] = useState<string>(initialConversations[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
   const [showChat, setShowChat] = useState(false)
@@ -26,23 +30,34 @@ export function MessagesInbox() {
       c.preview.includes(query),
   )
 
-  function selectChat(id: string) {
+  async function selectChat(id: string) {
     setActiveId(id)
     setShowChat(true)
-    setChats((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)),
-    )
+    
+    const chat = chats.find((c) => c.id === id)
+    if (chat && chat.unread > 0) {
+      setChats((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)),
+      )
+      await markAsRead(id)
+      router.refresh()
+    }
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = draft.trim()
     if (!text || !active) return
+    
+    const tempId = `temp-${Date.now()}`
     const newMsg: ChatMessage = {
-      id: `m${Date.now()}`,
+      id: tempId,
       fromMe: true,
       text,
       time: 'الآن',
     }
+    
+    const originalChats = [...chats]
+    
     setChats((prev) =>
       prev.map((c) =>
         c.id === active.id
@@ -51,6 +66,14 @@ export function MessagesInbox() {
       ),
     )
     setDraft('')
+    
+    const res = await replyToConversation(active.id, text)
+    if (res.error) {
+      toast.error(res.error)
+      setChats(originalChats)
+    } else {
+      router.refresh()
+    }
   }
 
   return (

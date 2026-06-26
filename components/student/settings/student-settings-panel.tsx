@@ -103,9 +103,11 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function StudentSettingsPanel() {
+export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }) {
   const [activeTab, setActiveTab] = useState<TabId>('profile')
-
+  const { profile: contextProfile } = useStudent()
+  const profile = initProfile || contextProfile || studentProfile
+  
   // notification preferences
   const [emailNotif, setEmailNotif] = useState(true)
   const [pushNotif, setPushNotif] = useState(true)

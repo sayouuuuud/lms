@@ -32,6 +32,8 @@ import {
   type InvoiceStatus,
   type PaymentMethod,
 } from '@/lib/student-billing-data'
+import { UploadDropzone } from '@/lib/uploadthing'
+import '@uploadthing/react/styles.css'
 
 const statusStyles: Record<InvoiceStatus, string> = {
   'غير مدفوعة':
@@ -448,26 +450,24 @@ function PaymentModal({
           <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
             صورة إيصال التحويل
           </label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')}
+          <UploadDropzone
+            endpoint="receiptUploader"
+            onClientUploadComplete={(res) => {
+              if (res && res[0]) {
+                setFileName(res[0].url)
+              }
+            }}
+            onUploadError={(error: Error) => {
+              alert(`فشل الرفع: ${error.message}`)
+            }}
+            config={{ mode: "auto" }}
+            className="w-full ut-label:text-primary ut-button:bg-primary ut-button:ut-readying:bg-primary/80"
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className={cn(
-              'flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-4 text-sm font-medium transition-colors',
-              fileName
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400'
-                : 'border-border bg-background text-muted-foreground hover:border-primary hover:text-foreground',
-            )}
-          >
-            {fileName ? <FileText className="size-4" /> : <Upload className="size-4" />}
-            {fileName || 'اضغط لرفع صورة الإيصال'}
-          </button>
+          {fileName && (
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-600">
+              <Check className="size-4" /> تم رفع الصورة بنجاح
+            </p>
+          )}
         </div>
 
         <Button

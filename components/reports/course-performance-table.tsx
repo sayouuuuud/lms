@@ -1,6 +1,6 @@
 import { Star } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { coursePerformance } from '@/lib/reports-data'
+import { coursePerformance as initialData } from '@/lib/reports-data'
 
 function CompletionBar({ value }: { value: number }) {
   return (
@@ -13,7 +13,8 @@ function CompletionBar({ value }: { value: number }) {
   )
 }
 
-export function CoursePerformanceTable() {
+export function CoursePerformanceTable({ courses: inputCourses }: { courses?: any[] }) {
+  const coursePerformance = inputCourses || initialData
   return (
     <Card className="gap-0 overflow-hidden p-0">
       <div className="flex items-center justify-between border-b border-border p-5">

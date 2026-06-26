@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+import { markAsRead, markAllAsRead, deleteNotification } from '@/app/notifications/actions'
 import {
   Bell,
   BellRing,
@@ -19,7 +21,6 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { NotificationsPageHeader } from './notifications-page-header'
 import {
-  notificationRecords,
   notificationTypeFilters,
   type NotificationRecord,
   type NotificationType,
@@ -57,8 +58,13 @@ const typeStyles: Record<
   },
 }
 
-export function NotificationsFeed() {
-  const [items, setItems] = useState<NotificationRecord[]>(notificationRecords)
+export function NotificationsFeed({
+  initialNotifications
+}: {
+  initialNotifications: NotificationRecord[]
+}) {
+  const router = useRouter()
+  const [items, setItems] = useState<NotificationRecord[]>(initialNotifications)
   const [filter, setFilter] = useState<NotificationType | 'الكل'>('الكل')
   const [onlyUnread, setOnlyUnread] = useState(false)
 
@@ -75,21 +81,50 @@ export function NotificationsFeed() {
     })
   }, [items, filter, onlyUnread])
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
     if (unreadCount === 0) return
+    const original = [...items]
     setItems((prev) => prev.map((n) => ({ ...n, read: true })))
-    toast.success('تم تعليم جميع الإشعارات كمقروءة')
+    const res = await markAllAsRead()
+    if (res.error) {
+      toast.error(res.error)
+      setItems(original)
+    } else {
+      toast.success('تم تعليم جميع الإشعارات كمقروءة')
+      router.refresh()
+    }
   }
 
-  const toggleRead = (id: string) => {
-    setItems((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n)),
-    )
+  const toggleRead = async (id: string) => {
+    const original = [...items]
+    const notification = items.find(n => n.id === id)
+    if (!notification) return
+
+    if (!notification.read) {
+      setItems((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      )
+      const res = await markAsRead(id)
+      if (res.error) {
+        toast.error(res.error)
+        setItems(original)
+      } else {
+        router.refresh()
+      }
+    }
   }
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
+    const original = [...items]
     setItems((prev) => prev.filter((n) => n.id !== id))
-    toast.success('تم حذف الإشعار')
+    const res = await deleteNotification(id)
+    if (res.error) {
+      toast.error(res.error)
+      setItems(original)
+    } else {
+      toast.success('تم حذف الإشعار')
+      router.refresh()
+    }
   }
 
   return (

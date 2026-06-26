@@ -184,7 +184,7 @@ function AssignmentCard({ assignment }: { assignment: Assignment }) {
   )
 }
 
-export function StudentAssignmentsPage() {
+export function StudentAssignmentsPage({ assignments = [] }: { assignments?: any[] }) {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
 

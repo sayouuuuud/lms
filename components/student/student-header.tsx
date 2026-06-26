@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { studentProfile } from '@/lib/student-data'
+import { useStudent } from '@/components/student/student-context'
 import { getStudentAvatar } from '@/lib/students-data'
 import { useLogout } from '@/lib/use-logout'
 
@@ -146,6 +146,7 @@ function ProfileDropdown() {
   const ref = useRef<HTMLDivElement>(null)
   const logout = useLogout()
   useOutsideClick(ref, () => setOpen(false))
+  const { profile } = useStudent()
 
   return (
     <div ref={ref} className="relative">
@@ -157,16 +158,16 @@ function ProfileDropdown() {
       >
         <Avatar className="size-10 ring-2 ring-primary/20">
           <AvatarImage
-            src={getStudentAvatar(studentProfile)}
-            alt={studentProfile.name}
+            src={getStudentAvatar(profile as any)}
+            alt={profile.name}
           />
           <AvatarFallback className="bg-primary/10 font-semibold text-primary">
-            {studentProfile.initials}
+            {profile.initials}
           </AvatarFallback>
         </Avatar>
         <div className="hidden leading-tight sm:block">
-          <p className="text-sm font-bold text-foreground">{studentProfile.name}</p>
-          <p className="text-xs text-muted-foreground">{studentProfile.level}</p>
+          <p className="text-sm font-bold text-foreground">{profile.name}</p>
+          <p className="text-xs text-muted-foreground">{profile.level}</p>
         </div>
         <ChevronDown
           className={cn(
@@ -179,8 +180,8 @@ function ProfileDropdown() {
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
           <div className="border-b border-border px-4 py-3">
-            <p className="text-sm font-bold text-foreground">{studentProfile.name}</p>
-            <p className="text-xs text-muted-foreground">{studentProfile.email}</p>
+            <p className="text-sm font-bold text-foreground">{profile.name}</p>
+            <p className="text-xs text-muted-foreground">{profile.email}</p>
           </div>
 
           <div className="py-1.5">

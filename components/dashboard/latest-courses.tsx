@@ -1,9 +1,10 @@
 import Image from 'next/image'
 import { PanelCard } from './panel-card'
-import { recentCourses } from '@/lib/dashboard-data'
+import { recentCourses as initialData } from '@/lib/dashboard-data'
 import { cn } from '@/lib/utils'
 
-export function LatestCourses() {
+export function LatestCourses({ courses: inputCourses }: { courses?: any[] }) {
+  const recentCourses = inputCourses || initialData
   return (
     <PanelCard title="آخر الكورسات المضافة" action="عرض الكل">
       <ul className="divide-y divide-border">

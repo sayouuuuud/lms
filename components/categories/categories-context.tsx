@@ -9,11 +9,12 @@ import {
 } from 'react'
 import { Layers } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 import {
-  categoryRecords,
   type CategoryRecord,
   type CategoryStatus,
 } from '@/lib/categories-data'
+import { createCategory, updateCategory, deleteCategory } from '@/app/categories/actions'
 
 type CategoryFormValues = {
   name: string
@@ -44,8 +45,15 @@ export function useCategories() {
   return ctx
 }
 
-export function CategoriesProvider({ children }: { children: ReactNode }) {
-  const [categories, setCategories] = useState<CategoryRecord[]>(categoryRecords)
+export function CategoriesProvider({ 
+  children,
+  initialCategories 
+}: { 
+  children: ReactNode
+  initialCategories: CategoryRecord[]
+}) {
+  const router = useRouter()
+  const [categories, setCategories] = useState<CategoryRecord[]>(initialCategories)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<CategoryRecord | null>(null)
   const [deleting, setDeleting] = useState<CategoryRecord | null>(null)
@@ -65,38 +73,54 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       formOpen,
       editing,
       closeForm: () => setFormOpen(false),
-      submitForm: (values) => {
+      submitForm: async (values) => {
         if (editing) {
+          const original = [...categories]
           setCategories((prev) =>
             prev.map((c) => (c.id === editing.id ? { ...c, ...values } : c)),
           )
-          toast.success('تم تحديث التصنيف بنجاح')
-        } else {
-          const newCategory: CategoryRecord = {
-            id: `CAT-${String(categories.length + 1).padStart(2, '0')}`,
-            name: values.name,
-            description: values.description,
-            status: values.status,
-            courses: 0,
-            students: 0,
-            icon: Layers,
-            color: 'text-primary',
-            bg: 'bg-primary/10',
+          setFormOpen(false)
+          setEditing(null)
+          
+          const res = await updateCategory(editing.id, values)
+          if (res.error) {
+            toast.error(res.error)
+            setCategories(original)
+          } else {
+            toast.success('تم تحديث التصنيف بنجاح')
+            router.refresh()
           }
-          setCategories((prev) => [newCategory, ...prev])
-          toast.success('تم إضافة التصنيف بنجاح')
+        } else {
+          setFormOpen(false)
+          const res = await createCategory(values)
+          if (res.error) {
+            toast.error(res.error)
+          } else {
+            toast.success('تم إضافة التصنيف بنجاح')
+            router.refresh()
+          }
         }
-        setFormOpen(false)
-        setEditing(null)
       },
       deleting,
       closeDelete: () => setDeleting(null),
-      confirmDelete: () => {
+      confirmDelete: async () => {
         if (deleting) {
+          const original = [...categories]
           setCategories((prev) => prev.filter((c) => c.id !== deleting.id))
-          toast.success('تم حذف التصنيف')
+          const id = deleting.id
+          setDeleting(null)
+          
+          const res = await deleteCategory(id)
+          if (res.error) {
+            toast.error(res.error)
+            setCategories(original)
+          } else {
+            toast.success('تم حذف التصنيف')
+            router.refresh()
+          }
+        } else {
+          setDeleting(null)
         }
-        setDeleting(null)
       },
     }),
     [categories, formOpen, editing, deleting],

@@ -7,7 +7,7 @@ import { BookOpen, CheckCircle2, Clock, Play, Star } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { courseDetails } from '@/lib/student-courses-data'
+import { useStudent } from '@/components/student/student-context'
 
 type Filter = 'all' | 'in-progress' | 'completed'
 
@@ -19,10 +19,13 @@ const filters: { key: Filter; label: string }[] = [
 
 export function StudentCoursesPage() {
   const [filter, setFilter] = useState<Filter>('all')
+  const { enrolledCourses = [] } = useStudent()
 
-  const withPercent = courseDetails.map((c) => ({
+  const withPercent = enrolledCourses.map((c: any) => ({
     ...c,
-    percent: Math.round((c.completedLessons / c.totalLessons) * 100),
+    percent: c.totalLessons ? Math.round((c.completedLessons / c.totalLessons) * 100) : 0,
+    rating: c.rating || 4.5,
+    durationHours: c.durationHours || 12,
   }))
 
   const filtered = withPercent.filter((c) => {

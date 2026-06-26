@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { updateSettings } from '@/app/settings/actions'
 import {
   User,
   Bell,
@@ -102,22 +105,52 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function SettingsPanel() {
+export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState<TabId>('profile')
 
-  // notification preferences
-  const [emailNotif, setEmailNotif] = useState(true)
-  const [pushNotif, setPushNotif] = useState(true)
-  const [smsNotif, setSmsNotif] = useState(false)
-  const [marketingNotif, setMarketingNotif] = useState(false)
-  const [weeklyReport, setWeeklyReport] = useState(true)
+  const settings = initialSettings || {
+    profile: { firstName: 'محمد', lastName: 'أحمد', email: 'mohamed@platform.com', phone: '+20 100 123 4567', bio: 'مدير منصة تعليمية متخصصة في الدورات التقنية.' },
+    notifications: { emailNotif: true, pushNotif: true, smsNotif: false, marketingNotif: false, weeklyReport: true },
+    security: { twoFactor: true },
+    preferences: { darkMode: false, autoPublish: false, activeColor: 'navy' as PresetId, language: 'العربية', timezone: '(GMT+2) القاهرة', currency: 'جنيه مصري (EGP)' }
+  }
 
-  // preferences
-  const [darkMode, setDarkMode] = useState(false)
-  const [autoPublish, setAutoPublish] = useState(false)
-  const [activeColor, setActiveColor] = useState<PresetId>(
-    () => (typeof window !== 'undefined' ? (localStorage.getItem('color-preset') as PresetId) : null) ?? 'navy',
-  )
+  const [firstName, setFirstName] = useState(settings.profile.firstName)
+  const [lastName, setLastName] = useState(settings.profile.lastName)
+  const [email, setEmail] = useState(settings.profile.email)
+  const [phone, setPhone] = useState(settings.profile.phone)
+  const [bio, setBio] = useState(settings.profile.bio)
+
+  const [emailNotif, setEmailNotif] = useState(settings.notifications.emailNotif)
+  const [pushNotif, setPushNotif] = useState(settings.notifications.pushNotif)
+  const [smsNotif, setSmsNotif] = useState(settings.notifications.smsNotif)
+  const [marketingNotif, setMarketingNotif] = useState(settings.notifications.marketingNotif)
+  const [weeklyReport, setWeeklyReport] = useState(settings.notifications.weeklyReport)
+
+  const [darkMode, setDarkMode] = useState(settings.preferences.darkMode)
+  const [autoPublish, setAutoPublish] = useState(settings.preferences.autoPublish)
+  const [activeColor, setActiveColor] = useState<PresetId>(settings.preferences.activeColor as PresetId)
+
+  async function handleSave() {
+    startTransition(async () => {
+      const newSettings = {
+        profile: { firstName, lastName, email, phone, bio },
+        notifications: { emailNotif, pushNotif, smsNotif, marketingNotif, weeklyReport },
+        security: { twoFactor: true },
+        preferences: { darkMode, autoPublish, activeColor, language: settings.preferences.language, timezone: settings.preferences.timezone, currency: settings.preferences.currency }
+      }
+      
+      const res = await updateSettings(newSettings)
+      if (res.error) {
+        toast.error(res.error)
+      } else {
+        toast.success('تم حفظ التفضيلات بنجاح')
+        router.refresh()
+      }
+    })
+  }
 
   function handleColorChange(id: PresetId) {
     setActiveColor(id)
@@ -188,17 +221,18 @@ export function SettingsPanel() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <FieldLabel>الاسم الأول</FieldLabel>
-                <Input defaultValue="محمد" className="text-right" />
+                <Input value={firstName} onChange={e => setFirstName(e.target.value)} className="text-right" />
               </div>
               <div>
                 <FieldLabel>الاسم الأخير</FieldLabel>
-                <Input defaultValue="أحمد" className="text-right" />
+                <Input value={lastName} onChange={e => setLastName(e.target.value)} className="text-right" />
               </div>
               <div>
                 <FieldLabel>البريد الإلكتروني</FieldLabel>
                 <Input
                   type="email"
-                  defaultValue="mohamed@platform.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                   className="text-right"
                   dir="ltr"
                 />
@@ -207,7 +241,8 @@ export function SettingsPanel() {
                 <FieldLabel>رقم الهاتف</FieldLabel>
                 <Input
                   type="tel"
-                  defaultValue="+20 100 123 4567"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
                   className="text-right"
                   dir="ltr"
                 />
@@ -216,14 +251,15 @@ export function SettingsPanel() {
                 <FieldLabel>نبذة تعريفية</FieldLabel>
                 <textarea
                   rows={3}
-                  defaultValue="مدير منصة تعليمية متخصصة في الدورات التقنية."
+                  value={bio}
+                  onChange={e => setBio(e.target.value)}
                   className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </div>
             </div>
 
             <div className="flex justify-start gap-3">
-              <Button>حفظ التغييرات</Button>
+              <Button onClick={handleSave} disabled={isPending}>حفظ التغييرات</Button>
               <Button variant="outline">إلغاء</Button>
             </div>
           </div>
@@ -271,7 +307,7 @@ export function SettingsPanel() {
               />
             </div>
             <div className="flex justify-start pt-4">
-              <Button>حفظ التفضيلات</Button>
+              <Button onClick={handleSave} disabled={isPending}>حفظ التفضيلات</Button>
             </div>
           </div>
         )}
@@ -400,7 +436,7 @@ export function SettingsPanel() {
               </div>
             </div>
             <div className="flex justify-start pt-4">
-              <Button>حفظ التفضيلات</Button>
+              <Button onClick={handleSave} disabled={isPending}>حفظ التفضيلات</Button>
             </div>
           </div>
         )}

@@ -8,13 +8,14 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { PanelCard } from './panel-card'
-import { studentsData } from '@/lib/dashboard-data'
+import { studentsData as initialData } from '@/lib/dashboard-data'
 
 const config = {
   students: { label: 'الطلاب', color: 'var(--chart-2)' },
 } satisfies ChartConfig
 
-export function StudentsChart() {
+export function StudentsChart({ data: inputData }: { data?: any[] }) {
+  const studentsData = inputData || initialData
   return (
     <PanelCard title="نمو الطلاب" filter="آخر 6 أشهر">
       <ChartContainer config={config} className="h-full min-h-[240px] w-full">

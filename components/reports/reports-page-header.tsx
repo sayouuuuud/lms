@@ -1,7 +1,25 @@
-import { Download, Calendar } from 'lucide-react'
+'use client'
+
+import { Download, Calendar, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { generateReport } from '@/app/reports/actions'
+import { toast } from 'sonner'
+import { useState } from 'react'
 
 export function ReportsPageHeader() {
+  const [loading, setLoading] = useState(false)
+
+  async function handleGenerate() {
+    setLoading(true)
+    const res = await generateReport()
+    setLoading(false)
+    if (res.error) {
+      toast.error(res.error)
+    } else {
+      toast.success('تم طلب إنشاء التقرير بنجاح')
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="text-right">
@@ -16,8 +34,8 @@ export function ReportsPageHeader() {
           <Calendar className="size-4" />
           آخر 6 أشهر
         </Button>
-        <Button>
-          <Download className="size-4" />
+        <Button onClick={handleGenerate} disabled={loading}>
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
           تصدير التقرير
         </Button>
       </div>
