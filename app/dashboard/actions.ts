@@ -23,7 +23,7 @@ export async function getDashboardData() {
 
   const { count: coursesCount, data: latestCoursesData } = await supabase
     .from('courses')
-    .select('id, title, status, created_at, students, revenue, image_url', { count: 'exact' })
+    .select('id, title, status, created_at, students, price, image', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   const { count: lessonsCount } = await supabase
@@ -78,8 +78,8 @@ export async function getDashboardData() {
     .map((c) => ({
       title: c.title,
       students: `${c.students} طالب`,
-      revenue: `${c.revenue || 0} ج.م`,
-      image: c.image_url || '/courses/python.png',
+      revenue: `${Number(c.price?.replace(/\D/g, '') || 0) * (c.students || 0)} ج.م`,
+      image: c.image || '/courses/python.png',
     }))
 
   // Latest Payments
@@ -103,7 +103,7 @@ export async function getDashboardData() {
     title: c.title,
     status: c.status,
     time: 'مؤخراً',
-    image: c.image_url || '/courses/javascript.png',
+    image: c.image || '/courses/javascript.png',
   }))
 
   // Latest Messages (mocked lightly if db isn't populated with messages yet, or fetch real)

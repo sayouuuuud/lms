@@ -81,8 +81,7 @@ export async function getReportsData() {
   const { data: coursesData } = await supabase
     .from('courses')
     .select(`
-      id, title, students, revenue,
-      categories ( name )
+      id, title, students, price, category
     `)
 
   const approvedPayments = payments?.filter((p) => p.status === 'مقبول') || []
@@ -131,7 +130,7 @@ export async function getReportsData() {
   // Category Distribution
   const categoryCount: Record<string, number> = {}
   coursesData?.forEach((c) => {
-    const catName = c.categories?.name || 'عام'
+    const catName = c.category || 'عام'
     categoryCount[catName] = (categoryCount[catName] || 0) + (c.students || 0)
   })
 
@@ -146,13 +145,13 @@ export async function getReportsData() {
 
   // Course Performance
   const coursePerformance = (coursesData || [])
-    .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+    .sort((a, b) => (Number(b.price?.replace(/\D/g, '') || 0) * (b.students || 0)) - (Number(a.price?.replace(/\D/g, '') || 0) * (a.students || 0)))
     .slice(0, 10)
     .map((c) => ({
       title: c.title,
-      category: c.categories?.name || 'عام',
+      category: c.category || 'عام',
       students: c.students || 0,
-      revenue: c.revenue || 0,
+      revenue: Number(c.price?.replace(/\D/g, '') || 0) * (c.students || 0),
       completion: Math.floor(Math.random() * 40) + 50, // Mocked for now until we aggregate lesson_progress
       rating: Number((Math.random() * 1 + 4).toFixed(1)), // Mocked 4.0 - 5.0
     }))
