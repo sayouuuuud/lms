@@ -2,11 +2,21 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 export function MathLoader() {
-  const [loading, setLoading] = useState(true)
+  const pathname = usePathname()
+  // The intro splash is a marketing flourish for the public landing/stages
+  // pages only — it should never delay the student or admin portals.
+  const isMarketing =
+    pathname === '/' || pathname.startsWith('/stages')
+  const [loading, setLoading] = useState(isMarketing)
 
   useEffect(() => {
+    if (!isMarketing) {
+      setLoading(false)
+      return
+    }
     // Check if it's the first time loading in this session
     const hasLoaded = sessionStorage.getItem('mathLoaded')
     if (hasLoaded) {
@@ -17,10 +27,10 @@ export function MathLoader() {
     const timer = setTimeout(() => {
       setLoading(false)
       sessionStorage.setItem('mathLoaded', 'true')
-    }, 2800)
-    
+    }, 1500)
+
     return () => clearTimeout(timer)
-  }, [])
+  }, [isMarketing])
 
   return (
     <AnimatePresence>

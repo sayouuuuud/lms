@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { CourseOverview } from '@/components/student/courses/course-overview'
-import { getCourseDetail } from '@/lib/student-courses-data'
+import { getPurchasedCourseDetail } from '@/lib/student-lectures-data'
 
 export default async function Page({
   params,
@@ -8,7 +8,7 @@ export default async function Page({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const course = getCourseDetail(id)
+  const course = await getPurchasedCourseDetail(id)
   if (!course) notFound()
 
   return (

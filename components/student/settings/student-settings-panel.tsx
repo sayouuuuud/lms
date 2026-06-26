@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -19,6 +19,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ToggleSwitch } from '@/components/settings/toggle-switch'
 import { useStudent } from '@/components/student/student-context'
+import { useTheme } from '@/components/theme-provider'
+import { createClient } from '@/lib/supabase/client'
 import { updateStudentProfile } from '@/app/student/actions'
 
 // ── Color presets ──────────────────────────────────────────────
@@ -109,32 +111,56 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState<TabId>('profile')
   const { profile: contextProfile } = useStudent()
   const studentProfile = initProfile || contextProfile || {}
   const nameParts = (studentProfile.name || '').trim().split(/\s+/).filter(Boolean)
-  const firstName = nameParts[0] ?? ''
-  const lastName = nameParts.slice(1).join(' ')
 
-  // profile form (controlled so we can save)
-  const [profFirst, setProfFirst] = useState(firstName)
-  const [profLast, setProfLast] = useState(lastName)
-  const [profPhone, setProfPhone] = useState(studentProfile.phone ?? '')
-  const [savingProfile, setSavingProfile] = useState(false)
+  // editable profile fields
+  const [firstName, setFirstName] = useState(nameParts[0] ?? '')
+  const [lastName, setLastName] = useState(nameParts.slice(1).join(' '))
+  const [phone, setPhone] = useState(
+    studentProfile.profile?.phone || studentProfile.phone || '',
+  )
 
-  async function handleSaveProfile() {
-    setSavingProfile(true)
-    const res = await updateStudentProfile({
-      fullName: `${profFirst} ${profLast}`.trim(),
-      phone: profPhone,
+  // password fields
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  function handleProfileSave() {
+    const fullName = `${firstName} ${lastName}`.trim()
+    startTransition(async () => {
+      const res = await updateStudentProfile({ fullName, phone })
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success('تم حفظ التغييرات بنجاح')
+        router.refresh()
+      }
     })
-    setSavingProfile(false)
-    if (res?.error) {
-      toast.error(res.error)
+  }
+
+  function handlePasswordUpdate() {
+    if (newPassword.length < 6) {
+      toast.error('كلمة المرور لازم تكون 6 أحرف على الأقل.')
       return
     }
-    toast.success('تم حفظ بياناتك بنجاح')
-    router.refresh()
+    if (newPassword !== confirmPassword) {
+      toast.error('كلمتا المرور غير متطابقتين.')
+      return
+    }
+    startTransition(async () => {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) {
+        toast.error('تعذّر تحديث كلمة المرور. حاول تاني.')
+      } else {
+        toast.success('تم تحديث كلمة المرور بنجاح')
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+    })
   }
 
   // notification preferences
@@ -145,8 +171,11 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
   const [gradeAlerts, setGradeAlerts] = useState(true)
   const [marketingNotif, setMarketingNotif] = useState(false)
 
-  // preferences
-  const [darkMode, setDarkMode] = useState(false)
+  // preferences — dark mode is driven by the shared theme provider so toggling
+  // it here actually flips the whole UI (and persists across reloads).
+  const { isDark, toggleTheme } = useTheme()
+  const darkMode = isDark
+  const setDarkMode = (_v: boolean) => toggleTheme()
   const [activeColor, setActiveColor] = useState<PresetId>(
     () =>
       (typeof window !== 'undefined'
@@ -157,6 +186,21 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
   function handleColorChange(id: PresetId) {
     setActiveColor(id)
     applyColorPreset(id)
+  }
+
+  // No per-student preferences table yet; persist locally so the choices stick
+  // in the browser and give the user clear feedback.
+  function handlePrefsSave() {
+    try {
+      localStorage.setItem(
+        'student-notif-prefs',
+        JSON.stringify({ emailNotif, pushNotif, lessonReminders, gradeAlerts, smsNotif, marketingNotif }),
+      )
+      localStorage.setItem('student-dark-mode', String(darkMode))
+    } catch {
+      // ignore storage errors (private mode, etc.)
+    }
+    toast.success('تم حفظ تفضيلاتك')
   }
 
   return (
@@ -228,16 +272,16 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
               <div>
                 <FieldLabel>الاسم الأول</FieldLabel>
                 <Input
-                  value={profFirst}
-                  onChange={(e) => setProfFirst(e.target.value)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className="text-right"
                 />
               </div>
               <div>
                 <FieldLabel>الاسم الأخير</FieldLabel>
                 <Input
-                  value={profLast}
-                  onChange={(e) => setProfLast(e.target.value)}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="text-right"
                 />
               </div>
@@ -255,8 +299,8 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
                 <FieldLabel>رقم الهاتف</FieldLabel>
                 <Input
                   type="tel"
-                  value={profPhone}
-                  onChange={(e) => setProfPhone(e.target.value)}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   placeholder="01xxxxxxxxx"
                   className="text-right"
                   dir="ltr"
@@ -265,20 +309,9 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
             </div>
 
             <div className="flex justify-start gap-3">
-              <Button onClick={handleSaveProfile} disabled={savingProfile}>
-                {savingProfile && <Loader2 className="size-4 animate-spin" />}
+              <Button onClick={handleProfileSave} disabled={isPending}>
+                {isPending && <Loader2 className="size-4 animate-spin" />}
                 حفظ التغييرات
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => {
-                  setProfFirst(firstName)
-                  setProfLast(lastName)
-                  setProfPhone(studentProfile.phone ?? '')
-                }}
-              >
-                إلغاء
               </Button>
             </div>
           </div>
@@ -332,7 +365,7 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
               />
             </div>
             <div className="flex justify-start pt-4">
-              <Button>حفظ التفضيلات</Button>
+              <Button onClick={handlePrefsSave} disabled={isPending}>حفظ التفضيلات</Button>
             </div>
           </div>
         )}
@@ -348,29 +381,28 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
             <Separator />
             <div className="grid gap-4 sm:max-w-md">
               <div>
-                <FieldLabel>كلمة المرور الحالية</FieldLabel>
-                <Input type="password" defaultValue="password" dir="ltr" />
-              </div>
-              <div>
                 <FieldLabel>كلمة المرور الجديدة</FieldLabel>
-                <Input type="password" dir="ltr" />
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  dir="ltr"
+                />
               </div>
               <div>
                 <FieldLabel>تأكيد كلمة المرور</FieldLabel>
-                <Input type="password" dir="ltr" />
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  dir="ltr"
+                />
               </div>
             </div>
-            <Separator />
-            <div className="rounded-xl border border-border bg-muted/40 p-4">
-              <ToggleSwitch
-                checked={true}
-                onChange={() => {}}
-                label="المصادقة الثنائية"
-                description="طبقة حماية إضافية عند تسجيل الدخول"
-              />
-            </div>
             <div className="flex justify-start gap-3">
-              <Button>تحديث كلمة المرور</Button>
+              <Button onClick={handlePasswordUpdate} disabled={isPending}>
+                تحديث كلمة المرور
+              </Button>
             </div>
           </div>
         )}
@@ -448,7 +480,7 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
               </div>
             </div>
             <div className="flex justify-start pt-4">
-              <Button>حفظ التفضيلات</Button>
+              <Button onClick={handlePrefsSave} disabled={isPending}>حفظ التفضيلات</Button>
             </div>
           </div>
         )}

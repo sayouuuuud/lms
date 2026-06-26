@@ -101,6 +101,24 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
           setError(result.error ?? 'حصلت مشكلة أثناء إنشاء الحساب. حاول تاني.')
           return
         }
+        // When the admin turned off email verification, the account is created
+        // already-confirmed — sign in directly and skip the activation step.
+        if (result.verified) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          })
+          if (signInError) {
+            // Account was created; just send them to login to finish.
+            switchTab('login')
+            setLoginEmail(email.trim())
+            setError('تم إنشاء حسابك. سجّل دخولك للمتابعة.')
+            return
+          }
+          router.push('/student')
+          router.refresh()
+          return
+        }
         // Code emailed -> show the activation-code step.
         setDoneMessage(
           'بعتنالك كود تفعيل على بريدك الإلكتروني. اكتبه تحت عشان تفعّل حسابك.',

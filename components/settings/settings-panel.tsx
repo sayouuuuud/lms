@@ -4,6 +4,8 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { updateSettings } from '@/app/(admin)/settings/actions'
+import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/components/theme-provider'
 import {
   User,
   Bell,
@@ -129,16 +131,53 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
   const [marketingNotif, setMarketingNotif] = useState(settings.notifications.marketingNotif)
   const [weeklyReport, setWeeklyReport] = useState(settings.notifications.weeklyReport)
 
-  const [darkMode, setDarkMode] = useState(settings.preferences.darkMode)
+  // Dark mode is driven by the shared theme provider so the toggle flips the
+  // whole UI immediately and persists across reloads.
+  const { isDark, toggleTheme } = useTheme()
+  const darkMode = isDark
+  const setDarkMode = (_v: boolean) => toggleTheme()
   const [autoPublish, setAutoPublish] = useState(settings.preferences.autoPublish)
   const [activeColor, setActiveColor] = useState<PresetId>(settings.preferences.activeColor as PresetId)
+
+  // Email verification on signup (defaults to ON when not previously saved).
+  const [requireEmailVerification, setRequireEmailVerification] = useState(
+    settings.security?.requireEmailVerification !== false,
+  )
+
+  // Password change fields.
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  async function handlePasswordUpdate() {
+    if (newPassword.length < 6) {
+      toast.error('كلمة المرور لازم تكون 6 أحرف على الأقل.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('كلمتا المرور غير متطابقتين.')
+      return
+    }
+    startTransition(async () => {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) {
+        toast.error('تعذّر تحديث كلمة المرور. حاول تاني.')
+      } else {
+        toast.success('تم تحديث كلمة المرور بنجاح')
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+    })
+  }
 
   async function handleSave() {
     startTransition(async () => {
       const newSettings = {
         profile: { firstName, lastName, email, phone, bio },
         notifications: { emailNotif, pushNotif, smsNotif, marketingNotif, weeklyReport },
-        security: { twoFactor: true },
+        security: { twoFactor: true, requireEmailVerification },
         preferences: { darkMode, autoPublish, activeColor, language: settings.preferences.language, timezone: settings.preferences.timezone, currency: settings.preferences.currency }
       }
       
@@ -324,28 +363,60 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
             <div className="grid gap-4 sm:max-w-md">
               <div>
                 <FieldLabel>كلمة المرور الحالية</FieldLabel>
-                <Input type="password" defaultValue="password" dir="ltr" />
+                <Input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  dir="ltr"
+                />
               </div>
               <div>
                 <FieldLabel>كلمة المرور الجديدة</FieldLabel>
-                <Input type="password" dir="ltr" />
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  dir="ltr"
+                />
               </div>
               <div>
                 <FieldLabel>تأكيد كلمة المرور</FieldLabel>
-                <Input type="password" dir="ltr" />
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  dir="ltr"
+                />
               </div>
             </div>
-            <Separator />
-            <div className="rounded-xl border border-border bg-muted/40 p-4">
-              <ToggleSwitch
-                checked={true}
-                onChange={() => {}}
-                label="المصادقة الثنائية"
-                description="طبقة حماية إضافية عند تسجيل الدخول"
-              />
-            </div>
             <div className="flex justify-start gap-3">
-              <Button>تحديث كلمة المرور</Button>
+              <Button onClick={handlePasswordUpdate} disabled={isPending}>
+                تحديث كلمة المرور
+              </Button>
+            </div>
+            <Separator />
+            <div className="space-y-3">
+              <div className="rounded-xl border border-border bg-muted/40 p-4">
+                <ToggleSwitch
+                  checked={requireEmailVerification}
+                  onChange={setRequireEmailVerification}
+                  label="التحقق من البريد الإلكتروني عند التسجيل"
+                  description="لما يكون مفعّل، الطالب الجديد بيستلم كود تفعيل على إيميله. قفله يخلّي الحساب يتفعّل على طول من غير تأكيد البريد."
+                />
+              </div>
+              <div className="rounded-xl border border-border bg-muted/40 p-4">
+                <ToggleSwitch
+                  checked={true}
+                  onChange={() => {}}
+                  label="المصادقة الثنائية"
+                  description="طبقة حماية إضافية عند تسجيل الدخول"
+                />
+              </div>
+              <div className="flex justify-start gap-3 pt-1">
+                <Button onClick={handleSave} disabled={isPending}>
+                  حفظ إعدادات الأمان
+                </Button>
+              </div>
             </div>
           </div>
         )}

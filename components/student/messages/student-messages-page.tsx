@@ -97,13 +97,13 @@ export function StudentMessagesPage({
             تواصل مع فريق الدعم والإدارة بخصوص طلباتك واشتراكاتك.
           </p>
         </div>
-        <Card className="flex min-h-[420px] flex-col items-center justify-center gap-3 p-8 text-center">
+        <Card className="flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
             <MessageSquare className="size-7" />
           </div>
-          <h2 className="text-lg font-bold text-foreground">لا توجد رسائل بعد</h2>
+          <h2 className="text-lg font-bold text-foreground">ابدأ محادثة مع المدرّس</h2>
           <p className="max-w-sm text-sm text-muted-foreground">
-            ابدأ محادثة مع فريق الدعم والإدارة بخصوص اشتراكاتك أو أي استفسار.
+            ابدأ محادثة مع الأستاذ عبد السلام وفريق الدعم بخصوص اشتراكاتك أو أي استفسار.
           </p>
           <Button onClick={() => setNewOpen(true)} className="mt-2">
             <Plus className="size-4" />
