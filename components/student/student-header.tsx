@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { studentProfile } from '@/lib/student-data'
+import { useStudentProfile } from '@/components/student/student-profile-context'
 import { getStudentAvatar } from '@/lib/students-data'
 import { useLogout } from '@/lib/use-logout'
 
@@ -145,6 +145,7 @@ function ProfileDropdown() {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const logout = useLogout()
+  const studentProfile = useStudentProfile()
   useOutsideClick(ref, () => setOpen(false))
 
   return (

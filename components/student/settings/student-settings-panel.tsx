@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ToggleSwitch } from '@/components/settings/toggle-switch'
-import { studentProfile } from '@/lib/student-data'
+import { useStudentProfile } from '@/components/student/student-profile-context'
 
 // ── Color presets ──────────────────────────────────────────────
 const colorPresets = [
@@ -104,6 +104,10 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function StudentSettingsPanel() {
+  const studentProfile = useStudentProfile()
+  const nameParts = studentProfile.name.trim().split(/\s+/)
+  const firstName = nameParts[0] ?? ''
+  const lastName = nameParts.slice(1).join(' ')
   const [activeTab, setActiveTab] = useState<TabId>('profile')
 
   // notification preferences
@@ -196,15 +200,24 @@ export function StudentSettingsPanel() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <FieldLabel>الاسم الأول</FieldLabel>
-                <Input defaultValue="مريم" className="text-right" />
+                <Input
+                  key={firstName}
+                  defaultValue={firstName}
+                  className="text-right"
+                />
               </div>
               <div>
                 <FieldLabel>الاسم الأخير</FieldLabel>
-                <Input defaultValue="خالد" className="text-right" />
+                <Input
+                  key={lastName}
+                  defaultValue={lastName}
+                  className="text-right"
+                />
               </div>
               <div>
                 <FieldLabel>البريد الإلكتروني</FieldLabel>
                 <Input
+                  key={studentProfile.email}
                   type="email"
                   defaultValue={studentProfile.email}
                   className="text-right"

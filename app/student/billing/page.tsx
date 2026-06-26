@@ -1,10 +1,12 @@
 import { StudentLayout } from '@/components/student/student-layout'
 import { StudentBillingPage } from '@/components/student/billing/student-billing-page'
+import { getStudentInvoices } from '@/app/student/actions'
 
-export default function Page() {
+export default async function Page() {
+  const invoices = await getStudentInvoices()
   return (
     <StudentLayout>
-      <StudentBillingPage />
+      <StudentBillingPage initialInvoices={invoices} />
     </StudentLayout>
   )
 }

@@ -24,7 +24,6 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  studentInvoices,
   invoiceStatusFilters,
   paymentAccounts,
   getBillingStats,
@@ -32,6 +31,7 @@ import {
   type InvoiceStatus,
   type PaymentMethod,
 } from '@/lib/student-billing-data'
+import { resubmitPayment } from '@/app/student/actions'
 
 const statusStyles: Record<InvoiceStatus, string> = {
   'غير مدفوعة':
@@ -61,8 +61,12 @@ function MethodBadge({ method }: { method: PaymentMethod }) {
   )
 }
 
-export function StudentBillingPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>(studentInvoices)
+export function StudentBillingPage({
+  initialInvoices = [],
+}: {
+  initialInvoices?: Invoice[]
+}) {
+  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<InvoiceStatus | 'الكل'>('الكل')
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null)
@@ -120,6 +124,7 @@ export function StudentBillingPage() {
     reference: string,
     senderInfo: string,
   ) {
+    // Optimistically reflect the submission, then persist via server action.
     setInvoices((prev) =>
       prev.map((i) =>
         i.id === id
@@ -136,6 +141,7 @@ export function StudentBillingPage() {
       ),
     )
     setPayingInvoice(null)
+    void resubmitPayment(id, method, reference)
   }
 
   return (
