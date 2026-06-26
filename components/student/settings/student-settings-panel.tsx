@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   User,
   Bell,
@@ -8,6 +10,7 @@ import {
   SlidersHorizontal,
   Camera,
   Check,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -16,6 +19,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ToggleSwitch } from '@/components/settings/toggle-switch'
 import { useStudent } from '@/components/student/student-context'
+import { updateStudentProfile } from '@/app/student/actions'
 
 // ── Color presets ──────────────────────────────────────────────
 const colorPresets = [
@@ -104,13 +108,35 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabId>('profile')
   const { profile: contextProfile } = useStudent()
   const studentProfile = initProfile || contextProfile || {}
   const nameParts = (studentProfile.name || '').trim().split(/\s+/).filter(Boolean)
   const firstName = nameParts[0] ?? ''
   const lastName = nameParts.slice(1).join(' ')
-  
+
+  // profile form (controlled so we can save)
+  const [profFirst, setProfFirst] = useState(firstName)
+  const [profLast, setProfLast] = useState(lastName)
+  const [profPhone, setProfPhone] = useState(studentProfile.phone ?? '')
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  async function handleSaveProfile() {
+    setSavingProfile(true)
+    const res = await updateStudentProfile({
+      fullName: `${profFirst} ${profLast}`.trim(),
+      phone: profPhone,
+    })
+    setSavingProfile(false)
+    if (res?.error) {
+      toast.error(res.error)
+      return
+    }
+    toast.success('تم حفظ بياناتك بنجاح')
+    router.refresh()
+  }
+
   // notification preferences
   const [emailNotif, setEmailNotif] = useState(true)
   const [pushNotif, setPushNotif] = useState(true)
@@ -202,26 +228,26 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
               <div>
                 <FieldLabel>الاسم الأول</FieldLabel>
                 <Input
-                  key={firstName}
-                  defaultValue={firstName}
+                  value={profFirst}
+                  onChange={(e) => setProfFirst(e.target.value)}
                   className="text-right"
                 />
               </div>
               <div>
                 <FieldLabel>الاسم الأخير</FieldLabel>
                 <Input
-                  key={lastName}
-                  defaultValue={lastName}
+                  value={profLast}
+                  onChange={(e) => setProfLast(e.target.value)}
                   className="text-right"
                 />
               </div>
               <div>
                 <FieldLabel>البريد الإلكتروني</FieldLabel>
                 <Input
-                  key={studentProfile.email}
                   type="email"
-                  defaultValue={studentProfile.email}
-                  className="text-right"
+                  value={studentProfile.email ?? ''}
+                  readOnly
+                  className="text-right opacity-70"
                   dir="ltr"
                 />
               </div>
@@ -229,24 +255,31 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
                 <FieldLabel>رقم الهاتف</FieldLabel>
                 <Input
                   type="tel"
-                  defaultValue="+20 100 765 4321"
+                  value={profPhone}
+                  onChange={(e) => setProfPhone(e.target.value)}
+                  placeholder="01xxxxxxxxx"
                   className="text-right"
                   dir="ltr"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <FieldLabel>نبذة تعريفية</FieldLabel>
-                <textarea
-                  rows={3}
-                  defaultValue="طالبة شغوفة بالبرمجة وتصميم واجهات المستخدم، أسعى للتعلّم المستمر."
-                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </div>
             </div>
 
             <div className="flex justify-start gap-3">
-              <Button>حفظ التغييرات</Button>
-              <Button variant="outline">إلغاء</Button>
+              <Button onClick={handleSaveProfile} disabled={savingProfile}>
+                {savingProfile && <Loader2 className="size-4 animate-spin" />}
+                حفظ التغييرات
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setProfFirst(firstName)
+                  setProfLast(lastName)
+                  setProfPhone(studentProfile.phone ?? '')
+                }}
+              >
+                إلغاء
+              </Button>
             </div>
           </div>
         )}
