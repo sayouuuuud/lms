@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import {
   ArrowRight,
   Check,
   CheckCheck,
+  MessageSquare,
   Paperclip,
   Search,
   Send,
@@ -14,14 +15,20 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { conversations as initialConversations, type Conversation } from '@/lib/student-messages-data'
+import { type Conversation } from '@/lib/student-messages-data'
+import { sendStudentMessage } from '@/app/student/messages/actions'
 
-export function StudentMessagesPage() {
+export function StudentMessagesPage({
+  initialConversations,
+}: {
+  initialConversations: Conversation[]
+}) {
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations)
-  const [activeId, setActiveId] = useState<string>(initialConversations[0].id)
+  const [activeId, setActiveId] = useState<string>(initialConversations[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
   const [showChatMobile, setShowChatMobile] = useState(false)
+  const [, startTransition] = useTransition()
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -33,7 +40,7 @@ export function StudentMessagesPage() {
     )
   }, [conversations, query])
 
-  const active = conversations.find((c) => c.id === activeId)!
+  const active = conversations.find((c) => c.id === activeId) ?? conversations[0]
 
   const selectConversation = (id: string) => {
     setActiveId(id)
@@ -45,10 +52,11 @@ export function StudentMessagesPage() {
 
   const sendMessage = () => {
     const text = draft.trim()
-    if (!text) return
+    if (!text || !active) return
+    const convoId = active.id
     setConversations((prev) =>
       prev.map((c) =>
-        c.id === activeId
+        c.id === convoId
           ? {
               ...c,
               lastTime: 'الآن',
@@ -66,9 +74,34 @@ export function StudentMessagesPage() {
       ),
     )
     setDraft('')
+    startTransition(async () => {
+      await sendStudentMessage(convoId, text)
+    })
   }
 
   const totalUnread = conversations.reduce((a, c) => a + c.unread, 0)
+
+  if (conversations.length === 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-foreground">الرسائل</h1>
+          <p className="text-sm text-muted-foreground">
+            تواصل مع فريق الدعم والإدارة بخصوص طلباتك واشتراكاتك.
+          </p>
+        </div>
+        <Card className="flex min-h-[420px] flex-col items-center justify-center gap-3 p-8 text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <MessageSquare className="size-7" />
+          </div>
+          <h2 className="text-lg font-bold text-foreground">لا توجد رسائل بعد</h2>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            لما تبعت طلب اشتراك، فريق الإدارة هيقدر يتواصل معاك من هنا وهتلاقي رسايلك في المكان ده.
+          </p>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">
