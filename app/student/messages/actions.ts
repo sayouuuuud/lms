@@ -45,6 +45,40 @@ export async function getStudentConversations(): Promise<Conversation[]> {
   }))
 }
 
+// Starts a new conversation with the support/admin team.
+export async function startConversation(subject: string, text: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'لازم تسجّل دخول.' }
+
+  const trimmedSubject = subject.trim() || 'استفسار'
+  const trimmedText = text.trim()
+  if (!trimmedText) return { error: 'اكتب رسالتك الأول.' }
+
+  const code = `MSG-${Date.now()}`
+  // Student message stored as fromMe:false (admin-relative convention).
+  const firstMsg = { id: `m${Date.now()}`, fromMe: false, text: trimmedText, time: 'الآن' }
+
+  const { error } = await supabase.from('messages').insert({
+    code,
+    student_id: user.id,
+    sender_name: user.user_metadata?.full_name ?? 'طالب',
+    sender_role: 'طالب',
+    subject: trimmedSubject,
+    content: trimmedText,
+    time_label: 'الآن',
+    is_read: false,
+    unread_count: 1,
+    chat_history: [firstMsg],
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/student/messages')
+  return { success: true, code }
+}
+
 export async function sendStudentMessage(code: string, text: string) {
   const message = text.trim()
   if (!message) return { error: 'الرسالة فاضية.' }

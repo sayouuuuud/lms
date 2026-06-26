@@ -458,3 +458,36 @@ export async function getStudentAssignments() {
     }
   })
 }
+
+// ── Profile update (student settings) ────────────────────────────
+export async function updateStudentProfile(input: {
+  fullName: string
+  phone: string
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'لازم تسجّل دخول.' }
+
+  const fullName = input.fullName.trim()
+  const phone = input.phone.trim()
+  if (!fullName) return { error: 'الاسم مطلوب.' }
+
+  // Update the profile row (source of truth for name/phone).
+  const { error: profileErr } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName, phone })
+    .eq('id', user.id)
+  if (profileErr) return { error: profileErr.message }
+
+  // Keep the students row in sync when it exists.
+  await supabase
+    .from('students')
+    .update({ name: fullName, phone })
+    .eq('user_id', user.id)
+
+  revalidatePath('/student/settings')
+  revalidatePath('/student', 'layout')
+  return { success: true }
+}
