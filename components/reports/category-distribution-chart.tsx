@@ -8,10 +8,9 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { PanelCard } from '@/components/dashboard/panel-card'
-import { categoryDistribution } from '@/lib/reports-data'
+import { categoryDistribution as initialData } from '@/lib/reports-data'
 
 const config = {
-  value: { label: 'الطلاب' },
   البرمجة: { label: 'البرمجة', color: 'var(--chart-1)' },
   التصميم: { label: 'التصميم', color: 'var(--chart-2)' },
   التسويق: { label: 'التسويق', color: 'var(--chart-3)' },
@@ -19,7 +18,8 @@ const config = {
   الأعمال: { label: 'الأعمال', color: 'var(--chart-5)' },
 } satisfies ChartConfig
 
-export function CategoryDistributionChart() {
+export function CategoryDistributionChart({ data: inputData }: { data?: any[] }) {
+  const categoryDistribution = inputData || initialData
   const total = categoryDistribution.reduce((sum, c) => sum + c.value, 0)
 
   return (

@@ -182,7 +182,7 @@ function ExamCard({ exam }: { exam: Exam }) {
   )
 }
 
-export function StudentExamsPage() {
+export function StudentExamsPage({ exams = [] }: { exams?: any[] }) {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
 

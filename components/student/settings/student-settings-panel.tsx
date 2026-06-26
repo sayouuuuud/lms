@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ToggleSwitch } from '@/components/settings/toggle-switch'
-import { useStudentProfile } from '@/components/student/student-profile-context'
+import { useStudent } from '@/components/student/student-context'
 
 // ── Color presets ──────────────────────────────────────────────
 const colorPresets = [
@@ -103,13 +103,14 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function StudentSettingsPanel() {
-  const studentProfile = useStudentProfile()
-  const nameParts = studentProfile.name.trim().split(/\s+/)
+export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }) {
+  const [activeTab, setActiveTab] = useState<TabId>('profile')
+  const { profile: contextProfile } = useStudent()
+  const studentProfile = initProfile || contextProfile || {}
+  const nameParts = (studentProfile.name || '').trim().split(/\s+/).filter(Boolean)
   const firstName = nameParts[0] ?? ''
   const lastName = nameParts.slice(1).join(' ')
-  const [activeTab, setActiveTab] = useState<TabId>('profile')
-
+  
   // notification preferences
   const [emailNotif, setEmailNotif] = useState(true)
   const [pushNotif, setPushNotif] = useState(true)

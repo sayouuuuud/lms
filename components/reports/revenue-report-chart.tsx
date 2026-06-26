@@ -10,14 +10,15 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { PanelCard } from '@/components/dashboard/panel-card'
-import { monthlyRevenue } from '@/lib/reports-data'
+import { monthlyRevenue as initialData } from '@/lib/reports-data'
 
 const config = {
-  revenue: { label: 'الإيرادات', color: 'var(--chart-1)' },
+  revenue: { label: 'الإيرادات الفعلية', color: 'var(--chart-1)' },
   target: { label: 'المستهدف', color: 'var(--chart-2)' },
 } satisfies ChartConfig
 
-export function RevenueReportChart() {
+export function RevenueReportChart({ data: inputData }: { data?: any[] }) {
+  const monthlyRevenue = inputData || initialData
   return (
     <PanelCard title="الإيرادات مقابل المستهدف" filter="آخر 6 أشهر">
       <ChartContainer config={config} className="h-[260px] w-full">

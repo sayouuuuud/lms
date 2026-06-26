@@ -8,12 +8,13 @@ import {
   type ReactNode,
 } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 import {
-  couponRecords,
   type CouponRecord,
   type CouponStatus,
   type CouponType,
 } from '@/lib/coupons-data'
+import { createCoupon, updateCoupon, deleteCoupon } from '@/app/coupons/actions'
 
 export type CouponFormValues = {
   code: string
@@ -48,8 +49,15 @@ export function useCoupons() {
   return ctx
 }
 
-export function CouponsProvider({ children }: { children: ReactNode }) {
-  const [coupons, setCoupons] = useState<CouponRecord[]>(couponRecords)
+export function CouponsProvider({ 
+  children,
+  initialCoupons
+}: { 
+  children: ReactNode
+  initialCoupons: CouponRecord[]
+}) {
+  const router = useRouter()
+  const [coupons, setCoupons] = useState<CouponRecord[]>(initialCoupons)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<CouponRecord | null>(null)
   const [deleting, setDeleting] = useState<CouponRecord | null>(null)
@@ -69,32 +77,54 @@ export function CouponsProvider({ children }: { children: ReactNode }) {
       formOpen,
       editing,
       closeForm: () => setFormOpen(false),
-      submitForm: (values) => {
+      submitForm: async (values) => {
         if (editing) {
+          const original = [...coupons]
           setCoupons((prev) =>
             prev.map((c) => (c.id === editing.id ? { ...c, ...values } : c)),
           )
-          toast.success('تم تحديث الكوبون بنجاح')
-        } else {
-          const newCoupon: CouponRecord = {
-            id: `CPN-${String(coupons.length + 1).padStart(2, '0')}`,
-            used: 0,
-            ...values,
+          setFormOpen(false)
+          setEditing(null)
+          
+          const res = await updateCoupon(editing.id, values)
+          if (res.error) {
+            toast.error(res.error)
+            setCoupons(original)
+          } else {
+            toast.success('تم تحديث الكوبون بنجاح')
+            router.refresh()
           }
-          setCoupons((prev) => [newCoupon, ...prev])
-          toast.success('تم إنشاء الكوبون بنجاح')
+        } else {
+          setFormOpen(false)
+          const res = await createCoupon(values)
+          if (res.error) {
+            toast.error(res.error)
+          } else {
+            toast.success('تم إنشاء الكوبون بنجاح')
+            router.refresh()
+          }
         }
-        setFormOpen(false)
-        setEditing(null)
       },
       deleting,
       closeDelete: () => setDeleting(null),
-      confirmDelete: () => {
+      confirmDelete: async () => {
         if (deleting) {
+          const original = [...coupons]
           setCoupons((prev) => prev.filter((c) => c.id !== deleting.id))
-          toast.success('تم حذف الكوبون')
+          const id = deleting.id
+          setDeleting(null)
+          
+          const res = await deleteCoupon(id)
+          if (res.error) {
+            toast.error(res.error)
+            setCoupons(original)
+          } else {
+            toast.success('تم حذف الكوبون')
+            router.refresh()
+          }
+        } else {
+          setDeleting(null)
         }
-        setDeleting(null)
       },
     }),
     [coupons, formOpen, editing, deleting],

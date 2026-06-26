@@ -1,10 +1,10 @@
-import { StudentLayout } from '@/components/student/student-layout'
 import { StudentNotificationsPage } from '@/components/student/notifications/student-notifications-page'
+import { getStudentAnnouncements } from '../actions'
 
-export default function Page() {
+export default async function Page() {
+  const notifications = await getStudentAnnouncements()
+  
   return (
-    <StudentLayout>
-      <StudentNotificationsPage />
-    </StudentLayout>
+    <StudentNotificationsPage notifications={notifications} />
   )
 }

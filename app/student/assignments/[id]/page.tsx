@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { StudentLayout } from '@/components/student/student-layout'
 import { AssignmentDetail } from '@/components/student/assignments/assignment-detail'
 import { getAssignment, getCourseDetail } from '@/lib/student-courses-data'
 
@@ -14,8 +13,6 @@ export default async function Page({
   const course = getCourseDetail(assignment.courseId)
 
   return (
-    <StudentLayout>
-      <AssignmentDetail assignment={assignment} course={course} />
-    </StudentLayout>
+    <AssignmentDetail assignment={assignment} course={course} />
   )
 }

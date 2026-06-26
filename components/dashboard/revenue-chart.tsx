@@ -8,13 +8,14 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { PanelCard } from './panel-card'
-import { revenueData } from '@/lib/dashboard-data'
+import { revenueData as initialData } from '@/lib/dashboard-data'
 
 const config = {
   revenue: { label: 'الإيرادات', color: 'var(--chart-1)' },
 } satisfies ChartConfig
 
-export function RevenueChart() {
+export function RevenueChart({ data: inputData }: { data?: any[] }) {
+  const revenueData = inputData || initialData
   return (
     <PanelCard title="الإيرادات الشهرية" filter="آخر 6 أشهر">
       <ChartContainer config={config} className="h-full min-h-[240px] w-full">

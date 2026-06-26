@@ -1,8 +1,9 @@
 import Image from 'next/image'
 import { PanelCard } from './panel-card'
-import { topCourses } from '@/lib/dashboard-data'
+import { topCourses as initialData } from '@/lib/dashboard-data'
 
-export function TopCourses() {
+export function TopCourses({ courses: inputCourses }: { courses?: any[] }) {
+  const topCourses = inputCourses || initialData
   return (
     <PanelCard title="أكثر الكورسات مبيعاً" filter="هذا الشهر">
       <ul className="space-y-1">

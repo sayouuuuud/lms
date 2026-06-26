@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { StudentLayout } from '@/components/student/student-layout'
 import { LessonPlayer } from '@/components/student/courses/lesson-player'
 import { getLesson } from '@/lib/student-courses-data'
 
@@ -13,13 +12,11 @@ export default async function Page({
   if (!data) notFound()
 
   return (
-    <StudentLayout>
-      <LessonPlayer
+    <LessonPlayer
         course={data.course}
         lesson={data.lesson}
         index={data.index}
         all={data.all}
       />
-    </StudentLayout>
   )
 }

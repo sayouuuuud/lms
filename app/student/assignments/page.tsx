@@ -1,10 +1,10 @@
-import { StudentLayout } from '@/components/student/student-layout'
 import { StudentAssignmentsPage } from '@/components/student/assignments/student-assignments-page'
+import { getStudentAssignments } from '../actions'
 
-export default function Page() {
+export default async function Page() {
+  const assignments = await getStudentAssignments()
+  
   return (
-    <StudentLayout>
-      <StudentAssignmentsPage />
-    </StudentLayout>
+      <StudentAssignmentsPage assignments={assignments} />
   )
 }

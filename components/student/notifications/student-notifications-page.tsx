@@ -19,10 +19,17 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
-  notifications as initialNotifications,
-  type Notification,
   type NotificationType,
 } from '@/lib/student-notifications-data'
+
+type Notification = {
+  id: string
+  title: string
+  text: string
+  type: NotificationType
+  read: boolean
+  time: string
+}
 
 const typeConfig: Record<
   NotificationType,
@@ -74,8 +81,8 @@ const typeConfig: Record<
 
 type Filter = 'all' | 'unread' | NotificationType
 
-export function StudentNotificationsPage() {
-  const [items, setItems] = useState<Notification[]>(initialNotifications)
+export function StudentNotificationsPage({ notifications: initNotifications = [] }: { notifications?: Notification[] }) {
+  const [items, setItems] = useState<Notification[]>(initNotifications)
   const [filter, setFilter] = useState<Filter>('all')
 
   const unreadCount = items.filter((n) => !n.read).length

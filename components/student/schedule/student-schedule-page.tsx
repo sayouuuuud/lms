@@ -20,7 +20,6 @@ import { cn } from '@/lib/utils'
 import {
   weekDays,
   monthNames,
-  scheduleEvents,
   scheduleTypeStyles,
   type ScheduleEvent,
   type ScheduleEventType,
@@ -43,7 +42,7 @@ const typeIcons: Record<ScheduleEventType, typeof Video> = {
   مباشر: Video,
 }
 
-export function StudentSchedulePage() {
+export function StudentSchedulePage({ scheduleEvents = [] }: { scheduleEvents?: ScheduleEvent[] }) {
   const [current, setCurrent] = useState(() => {
     const d = new Date()
     return new Date(d.getFullYear(), d.getMonth(), 1)

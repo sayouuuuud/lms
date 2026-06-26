@@ -1,14 +1,16 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Mail, CheckCircle2 } from 'lucide-react'
 import { PanelCard } from './panel-card'
-import { messages } from '@/lib/dashboard-data'
+import { messages as initialData } from '@/lib/dashboard-data'
 import { getInitials } from '@/lib/get-initials'
 
-export function LatestMessages() {
+export function LatestMessages({ messages: inputMessages }: { messages?: any[] }) {
+  const messages = inputMessages || initialData
   return (
     <PanelCard title="آخر الرسائل" action="عرض الكل">
-      <ul className="divide-y divide-border">
-        {messages.map((msg) => (
-          <li key={msg.name} className="flex items-start gap-3 py-3 first:pt-0">
+      <ul className="space-y-3">
+        {messages.slice(0, 3).map((msg, i) => (
+          <li key={i} className="flex items-start gap-3 py-3 first:pt-0">
             <Avatar className="size-10">
               <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                 {getInitials(msg.name)}

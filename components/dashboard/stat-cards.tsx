@@ -2,57 +2,57 @@ import { Wallet, Video, BookOpen, Users, ShoppingCart, TrendingUp } from 'lucide
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
-const stats = [
-  {
-    label: 'إجمالي الإيرادات',
-    value: '125,430',
-    unit: 'ج.م',
-    change: '+18.6%',
-    sub: 'من الشهر الماضي',
-    icon: Wallet,
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50 dark:bg-emerald-500/10',
-  },
-  {
-    label: 'عدد الدروس',
-    value: '1,250',
-    change: '+12',
-    sub: 'من الأسبوع الماضي',
-    icon: Video,
-    color: 'text-rose-600',
-    bg: 'bg-rose-50 dark:bg-rose-500/10',
-  },
-  {
-    label: 'عدد الكورسات',
-    value: '84',
-    change: '+6',
-    sub: 'من الشهر الماضي',
-    icon: BookOpen,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50 dark:bg-blue-500/10',
-  },
-  {
-    label: 'إجمالي الطلاب',
-    value: '12,560',
-    change: '+24.5%',
-    sub: 'من الشهر الماضي',
-    icon: Users,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-  },
-  {
-    label: 'المبيعات اليوم',
-    value: '7,540',
-    unit: 'ج.م',
-    change: '+14.3%',
-    sub: 'من أمس',
-    icon: ShoppingCart,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50 dark:bg-amber-500/10',
-  },
-]
+export function StatCards({ stats: inputStats }: { stats?: any }) {
+  const stats = [
+    {
+      label: 'إجمالي الإيرادات',
+      value: (inputStats?.totalRevenue || 0).toLocaleString(),
+      unit: 'ج.م',
+      change: '+0%',
+      sub: 'حقيقي',
+      icon: Wallet,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50 dark:bg-emerald-500/10',
+    },
+    {
+      label: 'عدد الدروس',
+      value: (inputStats?.totalLessons || 0).toLocaleString(),
+      change: '+0',
+      sub: 'حقيقي',
+      icon: Video,
+      color: 'text-rose-600',
+      bg: 'bg-rose-50 dark:bg-rose-500/10',
+    },
+    {
+      label: 'عدد الكورسات',
+      value: (inputStats?.totalCourses || 0).toLocaleString(),
+      change: '+0',
+      sub: 'حقيقي',
+      icon: BookOpen,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50 dark:bg-blue-500/10',
+    },
+    {
+      label: 'إجمالي الطلاب',
+      value: (inputStats?.totalStudents || 0).toLocaleString(),
+      change: '+0%',
+      sub: 'حقيقي',
+      icon: Users,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+    },
+    {
+      label: 'المبيعات اليوم',
+      value: (inputStats?.salesToday || 0).toLocaleString(),
+      unit: 'ج.م',
+      change: '+0%',
+      sub: 'حقيقي',
+      icon: ShoppingCart,
+      color: 'text-amber-600',
+      bg: 'bg-amber-50 dark:bg-amber-500/10',
+    },
+  ]
 
-export function StatCards() {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
       {stats.map((stat) => (

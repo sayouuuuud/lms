@@ -1,10 +1,9 @@
-import { StudentLayout } from '@/components/student/student-layout'
 import { StudentSchedulePage } from '@/components/student/schedule/student-schedule-page'
+import { getStudentFullSchedule } from '../actions'
 
-export default function Page() {
+export default async function Page() {
+  const schedule = await getStudentFullSchedule()
   return (
-    <StudentLayout>
-      <StudentSchedulePage />
-    </StudentLayout>
+    <StudentSchedulePage scheduleEvents={schedule} />
   )
 }

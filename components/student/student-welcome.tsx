@@ -2,17 +2,18 @@
 
 import { Flame, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useStudentProfile } from '@/components/student/student-profile-context'
+import { useStudent } from '@/components/student/student-context'
 
 export function StudentWelcome() {
-  const studentProfile = useStudentProfile()
+  const { profile } = useStudent()
+
   return (
     <div className="flex flex-col gap-4 overflow-hidden rounded-2xl bg-sidebar p-6 text-white sm:flex-row sm:items-center sm:justify-between">
       <div className="text-right">
         <p className="text-sm text-white/70">
           أهلاً بعودتك <span aria-hidden="true">👋</span>
         </p>
-        <h2 className="mt-1 text-2xl font-bold">{studentProfile.name}</h2>
+        <h2 className="mt-1 text-2xl font-bold">{profile.name}</h2>
         <p className="mt-2 max-w-md text-sm leading-relaxed text-white/70">
           لديك 3 دروس و اختبار واحد هذا الأسبوع. استمري في التقدّم لتحافظي على
           سلسلة إنجازاتك!

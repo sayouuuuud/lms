@@ -10,20 +10,22 @@ import { LatestPayments } from './latest-payments'
 import { LatestStudents } from './latest-students'
 import { LatestCourses } from './latest-courses'
 
-export function DashboardShell() {
+export function DashboardShell({ data }: { data?: any }) {
+  if (!data) return <DashboardLayout><PageHeader /></DashboardLayout>
+
   return (
     <DashboardLayout>
       <PageHeader />
 
-      <StatCards />
+      <StatCards stats={data.stats} />
 
       {/* Row 1: الإيرادات الشهرية (wide) + أكثر الكورسات + نشاط المنصة */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         <div className="xl:col-span-2">
-          <RevenueChart />
+          <RevenueChart data={data.revenueData} />
         </div>
         <div className="xl:col-span-1">
-          <TopCourses />
+          <TopCourses courses={data.topCourses} />
         </div>
         <div className="xl:col-span-1">
           <ActivityChart />
@@ -33,20 +35,20 @@ export function DashboardShell() {
       {/* Row 2: آخر الرسائل + آخر الطلاب المسجلين + نمو الطلاب (wide) */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
         <div className="xl:col-span-1">
-          <LatestMessages />
+          <LatestMessages messages={data.latestMessages} />
         </div>
         <div className="xl:col-span-1">
-          <LatestStudents />
+          <LatestStudents students={data.latestStudents} />
         </div>
         <div className="xl:col-span-2">
-          <StudentsChart />
+          <StudentsChart data={data.studentsData} />
         </div>
       </div>
 
       {/* Row 3: آخر المدفوعات + آخر الكورسات */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <LatestPayments />
-        <LatestCourses />
+        <LatestPayments payments={data.latestPayments} />
+        <LatestCourses courses={data.latestCourses} />
       </div>
     </DashboardLayout>
   )

@@ -1,5 +1,7 @@
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
+import { getDashboardData } from './actions'
 
-export default function Page() {
-  return <DashboardShell />
+export default async function Page() {
+  const data = await getDashboardData()
+  return <DashboardShell data={data} />
 }

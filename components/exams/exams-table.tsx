@@ -6,7 +6,7 @@ import { Search, Clock, ListChecks, Users } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { examRecords, examStatusFilters, type ExamStatus } from '@/lib/exams-data'
+import { examStatusFilters, type ExamStatus, type ExamRecord } from '@/lib/exams-data'
 
 const statusStyles: Record<ExamStatus, string> = {
   منشور: 'bg-success/10 text-success',
@@ -21,13 +21,13 @@ function scoreColor(score: number) {
   return 'text-rose-600'
 }
 
-export function ExamsTable() {
+export function ExamsTable({ initialExams }: { initialExams: ExamRecord[] }) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<ExamStatus | 'الكل'>('الكل')
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return examRecords.filter((exam) => {
+    return initialExams.filter((exam) => {
       const matchesStatus = filter === 'الكل' || exam.status === filter
       const matchesQuery =
         q === '' ||
@@ -187,7 +187,7 @@ export function ExamsTable() {
       <div className="mt-5 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground">
         <span>
           عرض <strong className="text-foreground">{filtered.length}</strong> من أصل{' '}
-          <strong className="text-foreground">{examRecords.length}</strong> اختبار
+          <strong className="text-foreground">{initialExams.length}</strong> اختبار
         </span>
         <div className="flex gap-2">
           <Button

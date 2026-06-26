@@ -1,6 +1,7 @@
 import { FileText, CheckCircle2, Users, Target, TrendingUp } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import type { ExamRecord } from '@/lib/exams-data'
 
 const stats = [
   {
@@ -41,7 +42,9 @@ const stats = [
   },
 ]
 
-export function ExamsStats() {
+export function ExamsStats({ exams }: { exams?: ExamRecord[] }) {
+  // If we want to use the actual exams data, we can calculate stats here.
+  // For now, we keep the UI same but accept the prop.
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {stats.map((stat) => (
