@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ToggleSwitch } from '@/components/settings/toggle-switch'
-import { studentProfile } from '@/lib/student-data'
+import { useStudent } from '@/components/student/student-context'
 
 // ── Color presets ──────────────────────────────────────────────
 const colorPresets = [
@@ -106,7 +106,10 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }) {
   const [activeTab, setActiveTab] = useState<TabId>('profile')
   const { profile: contextProfile } = useStudent()
-  const profile = initProfile || contextProfile || studentProfile
+  const studentProfile = initProfile || contextProfile || {}
+  const nameParts = (studentProfile.name || '').trim().split(/\s+/).filter(Boolean)
+  const firstName = nameParts[0] ?? ''
+  const lastName = nameParts.slice(1).join(' ')
   
   // notification preferences
   const [emailNotif, setEmailNotif] = useState(true)
@@ -198,15 +201,24 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <FieldLabel>الاسم الأول</FieldLabel>
-                <Input defaultValue="مريم" className="text-right" />
+                <Input
+                  key={firstName}
+                  defaultValue={firstName}
+                  className="text-right"
+                />
               </div>
               <div>
                 <FieldLabel>الاسم الأخير</FieldLabel>
-                <Input defaultValue="خالد" className="text-right" />
+                <Input
+                  key={lastName}
+                  defaultValue={lastName}
+                  className="text-right"
+                />
               </div>
               <div>
                 <FieldLabel>البريد الإلكتروني</FieldLabel>
                 <Input
+                  key={studentProfile.email}
                   type="email"
                   defaultValue={studentProfile.email}
                   className="text-right"

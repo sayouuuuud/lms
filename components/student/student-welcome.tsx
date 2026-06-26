@@ -1,10 +1,12 @@
+'use client'
+
 import { Flame, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useStudent } from '@/components/student/student-context'
 
 export function StudentWelcome() {
   const { profile } = useStudent()
-  
+
   return (
     <div className="flex flex-col gap-4 overflow-hidden rounded-2xl bg-sidebar p-6 text-white sm:flex-row sm:items-center sm:justify-between">
       <div className="text-right">
