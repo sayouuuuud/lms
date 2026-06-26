@@ -13,8 +13,11 @@ import {
   type CouponRecord,
   type CouponStatus,
   type CouponType,
+  type CouponScope,
 } from '@/lib/coupons-data'
 import { createCoupon, updateCoupon, deleteCoupon } from '@/app/(admin)/coupons/actions'
+
+export type LectureOption = { id: string; title: string; branch: string }
 
 export type CouponFormValues = {
   code: string
@@ -25,10 +28,13 @@ export type CouponFormValues = {
   startDate: string
   endDate: string
   status: CouponStatus
+  scope: CouponScope
+  lectureIds: string[]
 }
 
 type CouponsContextValue = {
   coupons: CouponRecord[]
+  lectures: LectureOption[]
   openCreate: () => void
   openEdit: (coupon: CouponRecord) => void
   requestDelete: (coupon: CouponRecord) => void
@@ -49,12 +55,14 @@ export function useCoupons() {
   return ctx
 }
 
-export function CouponsProvider({ 
+export function CouponsProvider({
   children,
-  initialCoupons
-}: { 
+  initialCoupons,
+  lectures = [],
+}: {
   children: ReactNode
   initialCoupons: CouponRecord[]
+  lectures?: LectureOption[]
 }) {
   const router = useRouter()
   const [coupons, setCoupons] = useState<CouponRecord[]>(initialCoupons)
@@ -65,6 +73,7 @@ export function CouponsProvider({
   const value = useMemo<CouponsContextValue>(
     () => ({
       coupons,
+      lectures,
       openCreate: () => {
         setEditing(null)
         setFormOpen(true)
@@ -127,7 +136,7 @@ export function CouponsProvider({
         }
       },
     }),
-    [coupons, formOpen, editing, deleting],
+    [coupons, lectures, formOpen, editing, deleting],
   )
 
   return <CouponsContext.Provider value={value}>{children}</CouponsContext.Provider>

@@ -16,11 +16,12 @@ import {
   removeFromCart as removeFromCartAction,
   type CartItem,
 } from '@/app/cart-actions'
+import { applyCoupon as applyCouponAction, type AppliedCoupon } from '@/app/coupon-actions'
 
 type CartContextValue = {
   items: CartItem[]
   count: number
-  total: number
+  total: number // subtotal before discount
   loggedIn: boolean
   open: boolean
   setOpen: (open: boolean) => void
@@ -28,6 +29,13 @@ type CartContextValue = {
   add: (lectureId: string, title?: string) => Promise<void>
   remove: (lectureId: string) => Promise<void>
   refresh: () => Promise<void>
+  // coupon
+  coupon: AppliedCoupon | null
+  couponLoading: boolean
+  applyCoupon: (code: string) => Promise<void>
+  clearCoupon: () => void
+  discount: number
+  grandTotal: number // total after discount
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -37,6 +45,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [loggedIn, setLoggedIn] = useState(false)
   const [open, setOpen] = useState(false)
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null)
+  const [couponLoading, setCouponLoading] = useState(false)
 
   const refresh = useCallback(async () => {
     const data = await getCartItems()
@@ -89,7 +99,41 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [refresh],
   )
 
+  const applyCoupon = useCallback(async (code: string) => {
+    setCouponLoading(true)
+    const res = await applyCouponAction(code)
+    setCouponLoading(false)
+    if ('error' in res) {
+      setCoupon(null)
+      toast.error(res.error)
+      return
+    }
+    setCoupon(res.applied)
+    toast.success('تم تطبيق الكوبون')
+  }, [])
+
+  const clearCoupon = useCallback(() => setCoupon(null), [])
+
   const total = items.reduce((sum, i) => sum + i.price, 0)
+
+  // Re-validate the coupon whenever cart contents change (e.g. an item was
+  // removed). If it no longer applies, drop it silently.
+  useEffect(() => {
+    if (!coupon) return
+    let cancelled = false
+    applyCouponAction(coupon.code).then((res) => {
+      if (cancelled) return
+      if ('error' in res) setCoupon(null)
+      else setCoupon(res.applied)
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total, items.length])
+
+  const discount = coupon?.discount ?? 0
+  const grandTotal = Math.max(0, total - discount)
 
   return (
     <CartContext.Provider
@@ -104,6 +148,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         add,
         remove,
         refresh,
+        coupon,
+        couponLoading,
+        applyCoupon,
+        clearCoupon,
+        discount,
+        grandTotal,
       }}
     >
       {children}

@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   Loader2,
   CreditCard,
+  Tag,
+  Tags,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCart } from './cart-provider'
@@ -30,11 +32,25 @@ const PAYMENT_METHODS = [
 type View = 'cart' | 'checkout' | 'done'
 
 export function CartModal() {
-  const { open, setOpen, items, total, count, remove } = useCart()
+  const {
+    open,
+    setOpen,
+    items,
+    total,
+    count,
+    remove,
+    coupon,
+    couponLoading,
+    applyCoupon,
+    clearCoupon,
+    discount,
+    grandTotal,
+  } = useCart()
   const [mounted, setMounted] = useState(false)
   const [view, setView] = useState<View>('cart')
   const [submitting, setSubmitting] = useState(false)
   const [orderCode, setOrderCode] = useState('')
+  const [couponInput, setCouponInput] = useState('')
 
   // form state
   const [name, setName] = useState('')
@@ -82,7 +98,14 @@ export function CartModal() {
       return
     }
     setSubmitting(true)
-    const res = await createOrder({ name, phone, method, reference, note })
+    const res = await createOrder({
+      name,
+      phone,
+      method,
+      reference,
+      note,
+      couponCode: coupon?.code,
+    })
     setSubmitting(false)
     if (res?.error) {
       toast.error(typeof res.error === 'string' ? res.error : 'تعذّر إرسال الطلب')
@@ -192,10 +215,31 @@ export function CartModal() {
                   <span className="text-muted-foreground">عدد المحاضرات</span>
                   <span className="font-bold text-foreground">{count}</span>
                 </div>
+                {discount > 0 && (
+                  <>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-muted-foreground">المجموع</span>
+                      <span className="text-muted-foreground">{formatEGP(total)} ج.م</span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-muted-foreground">
+                        خصم{coupon ? ` (${coupon.code})` : ''}
+                      </span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        - {formatEGP(discount)} ج.م
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-muted-foreground">الإجمالي</span>
-                  <span className="font-bold text-primary">{formatEGP(total)} ج.م</span>
+                  <span className="font-bold text-primary">{formatEGP(grandTotal)} ج.م</span>
                 </div>
+                {coupon && coupon.scope === 'lectures' && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    الكوبون اتطبق على {coupon.coveredCount} من {coupon.itemsCount} محاضرة.
+                  </p>
+                )}
               </div>
 
               <Field label="الاسم بالكامل" required>
@@ -270,12 +314,38 @@ export function CartModal() {
         {/* footer */}
         {view === 'cart' && count > 0 && (
           <div className="shrink-0 border-t border-border px-6 py-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">الإجمالي</span>
-              <span className="text-xl font-extrabold text-foreground">
-                {formatEGP(total)} <span className="text-sm font-bold text-primary">ج.م</span>
-              </span>
+            <CouponBox
+              coupon={coupon}
+              loading={couponLoading}
+              value={couponInput}
+              onChange={setCouponInput}
+              onApply={() => applyCoupon(couponInput)}
+              onClear={() => {
+                clearCoupon()
+                setCouponInput('')
+              }}
+            />
+
+            <div className="mb-3 mt-3 space-y-1.5">
+              {discount > 0 && (
+                <>
+                  <Row label="المجموع" value={`${formatEGP(total)} ج.م`} muted />
+                  <Row
+                    label={`خصم${coupon ? ` (${coupon.code})` : ''}`}
+                    value={`- ${formatEGP(discount)} ج.م`}
+                    discount
+                  />
+                </>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">الإجمالي</span>
+                <span className="text-xl font-extrabold text-foreground">
+                  {formatEGP(grandTotal)}{' '}
+                  <span className="text-sm font-bold text-primary">ج.م</span>
+                </span>
+              </div>
             </div>
+
             <button
               type="button"
               onClick={() => setView('checkout')}
@@ -301,7 +371,7 @@ export function CartModal() {
                   جارٍ الإرسال...
                 </>
               ) : (
-                <>إرسال الطلب ({formatEGP(total)} ج.م)</>
+                <>إرسال الطلب ({formatEGP(grandTotal)} ج.م)</>
               )}
             </button>
           </div>
@@ -321,6 +391,97 @@ export function CartModal() {
       </div>
     </div>,
     document.body,
+  )
+}
+
+function Row({
+  label,
+  value,
+  muted,
+  discount,
+}: {
+  label: string
+  value: string
+  muted?: boolean
+  discount?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={
+          discount
+            ? 'font-semibold text-emerald-600 dark:text-emerald-400'
+            : muted
+              ? 'text-muted-foreground'
+              : 'font-bold text-foreground'
+        }
+      >
+        {value}
+      </span>
+    </div>
+  )
+}
+
+function CouponBox({
+  coupon,
+  loading,
+  value,
+  onChange,
+  onApply,
+  onClear,
+}: {
+  coupon: { code: string } | null
+  loading: boolean
+  value: string
+  onChange: (v: string) => void
+  onApply: () => void
+  onClear: () => void
+}) {
+  if (coupon) {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5">
+        <span className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+          <Tags className="size-4" />
+          كوبون <span className="font-mono">{coupon.code}</span> مفعّل
+        </span>
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-xs font-semibold text-muted-foreground hover:text-destructive"
+        >
+          إزالة
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="relative flex-1">
+        <Tag className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              if (value.trim()) onApply()
+            }
+          }}
+          placeholder="كود الخصم"
+          className="h-11 w-full rounded-xl border border-border bg-secondary/50 pr-9 pl-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={onApply}
+        disabled={loading || !value.trim()}
+        className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 text-sm font-bold text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
+      >
+        {loading ? <Loader2 className="size-4 animate-spin" /> : 'تطبيق'}
+      </button>
+    </div>
   )
 }
 

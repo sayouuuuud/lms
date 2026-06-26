@@ -25,7 +25,57 @@ export async function getCoupons(): Promise<CouponRecord[]> {
     startDate: row.start_date,
     endDate: row.end_date,
     status: row.status as CouponStatus,
+    scope: (row.scope ?? 'all') as 'all' | 'lectures',
   }))
+}
+
+// All lectures (id + title + branch) for the coupon scope picker.
+export async function getAllLectures(): Promise<
+  { id: string; title: string; branch: string }[]
+> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('lectures')
+    .select('id, title, branches:branch_id ( title )')
+    .order('sort_order', { ascending: true })
+
+  if (error || !data) return []
+  return data.map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    branch: row.branches?.title ?? '',
+  }))
+}
+
+// The lecture ids a 'lectures'-scoped coupon currently covers (by display_code).
+export async function getCouponLectureIds(displayCode: string): Promise<string[]> {
+  const supabase = await createClient()
+  const { data: coupon } = await supabase
+    .from('coupons')
+    .select('id')
+    .eq('display_code', displayCode)
+    .single()
+  if (!coupon) return []
+  const { data } = await supabase
+    .from('coupon_lectures')
+    .select('lecture_id')
+    .eq('coupon_id', coupon.id)
+  return (data ?? []).map((r: any) => r.lecture_id)
+}
+
+// Replaces the coupon_lectures rows for a coupon to match `lectureIds`.
+async function syncCouponLectures(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  couponId: string,
+  scope: string,
+  lectureIds: string[],
+) {
+  await supabase.from('coupon_lectures').delete().eq('coupon_id', couponId)
+  if (scope === 'lectures' && lectureIds.length > 0) {
+    await supabase
+      .from('coupon_lectures')
+      .insert(lectureIds.map((lecture_id) => ({ coupon_id: couponId, lecture_id })))
+  }
 }
 
 export async function createCoupon(values: {
@@ -37,6 +87,8 @@ export async function createCoupon(values: {
   startDate: string
   endDate: string
   status: string
+  scope?: 'all' | 'lectures'
+  lectureIds?: string[]
 }) {
   const supabase = await createClient()
   if (!(await requireAdmin(supabase))) {
@@ -60,27 +112,35 @@ export async function createCoupon(values: {
   }
   const nextNum = maxNum + 1
   const displayCode = `CPN-${String(nextNum).padStart(2, '0')}`
+  const scope = values.scope ?? 'all'
 
-  const { error } = await supabase.from('coupons').insert({
-    code: values.code,
-    display_code: displayCode,
-    description: values.description,
-    type: values.type,
-    value: values.value,
-    "limit": values.limit,
-    start_date: values.startDate,
-    end_date: values.endDate,
-    status: values.status,
-    used: 0,
-  })
+  const { data: created, error } = await supabase
+    .from('coupons')
+    .insert({
+      code: values.code,
+      display_code: displayCode,
+      description: values.description,
+      type: values.type,
+      value: values.value,
+      "limit": values.limit,
+      start_date: values.startDate,
+      end_date: values.endDate,
+      status: values.status,
+      scope,
+      used: 0,
+    })
+    .select('id')
+    .single()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (error || !created) {
+    if (error?.code === '23505') {
       return { error: 'كود الكوبون موجود مسبقاً.' }
     }
-    return { error: error.message }
+    return { error: error?.message ?? 'تعذّر إنشاء الكوبون.' }
   }
-  
+
+  await syncCouponLectures(supabase, created.id, scope, values.lectureIds ?? [])
+
   revalidatePath('/coupons')
   return { success: true }
 }
@@ -96,6 +156,8 @@ export async function updateCoupon(
     startDate: string
     endDate: string
     status: string
+    scope?: 'all' | 'lectures'
+    lectureIds?: string[]
   },
 ) {
   const supabase = await createClient()
@@ -103,7 +165,9 @@ export async function updateCoupon(
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
-  const { error } = await supabase
+  const scope = values.scope ?? 'all'
+
+  const { data: updated, error } = await supabase
     .from('coupons')
     .update({
       code: values.code,
@@ -114,16 +178,21 @@ export async function updateCoupon(
       start_date: values.startDate,
       end_date: values.endDate,
       status: values.status,
+      scope,
     })
     .eq('display_code', id)
+    .select('id')
+    .single()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (error || !updated) {
+    if (error?.code === '23505') {
       return { error: 'كود الكوبون موجود مسبقاً.' }
     }
-    return { error: error.message }
+    return { error: error?.message ?? 'تعذّر تحديث الكوبون.' }
   }
-  
+
+  await syncCouponLectures(supabase, updated.id, scope, values.lectureIds ?? [])
+
   revalidatePath('/coupons')
   return { success: true }
 }
