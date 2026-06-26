@@ -5,6 +5,8 @@ import localFont from 'next/font/local'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { MathLoader } from '@/components/landing/math-loader'
+import { CartProvider } from '@/components/cart/cart-provider'
+import { CartModal } from '@/components/cart/cart-modal'
 import './globals.css'
 
 const cairo = Cairo({
@@ -63,8 +65,11 @@ export default function RootLayout({
       </head>
       <body className={`${cairo.className} font-sans antialiased`}>
         <ThemeProvider>
-          <MathLoader />
-          {children}
+          <CartProvider>
+            <MathLoader />
+            {children}
+            <CartModal />
+          </CartProvider>
         </ThemeProvider>
         <Toaster position="top-center" richColors dir="rtl" theme="system" />
         {process.env.NODE_ENV === 'production' && <Analytics />}

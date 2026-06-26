@@ -10,13 +10,14 @@ import { TestimonialsSection } from './testimonials-section'
 import { CtaSection } from './cta-section'
 import { SiteFooter } from './site-footer'
 import { ScrollRefresh } from './scroll-refresh'
+import type { Stage } from '@/lib/landing-data'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
 }
 
-export function LandingPage() {
+export function LandingPage({ stages = [] }: { stages?: Stage[] }) {
   return (
     <div className="relative min-h-screen bg-cream dark:bg-ink-base">
       <ScrollRefresh />
@@ -44,7 +45,7 @@ export function LandingPage() {
           </motion.div>
           
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>
-            <StagesSection />
+            <StagesSection stages={stages} />
           </motion.div>
           
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>

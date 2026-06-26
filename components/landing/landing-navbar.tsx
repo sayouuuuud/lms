@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Menu, X, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
+import { CartButton } from '@/components/cart/cart-button'
 
 const links = [
   { label: 'المنهج', href: '#features' },
@@ -75,6 +76,7 @@ export function LandingNavbar() {
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
+          <CartButton className="text-navy dark:text-ink-fg" />
           <ThemeToggle />
           <Link
             href="/auth"
@@ -91,6 +93,7 @@ export function LandingNavbar() {
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
+          <CartButton className="text-navy dark:text-ink-fg" />
           <ThemeToggle />
           <button
             type="button"

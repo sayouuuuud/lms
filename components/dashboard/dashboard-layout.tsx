@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { useTheme } from '@/components/theme-provider'
+import { PageTransition } from '@/components/page-transition'
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -27,7 +28,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         />
 
         <main className="flex-1 space-y-6 p-4 sm:p-6">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
     </div>

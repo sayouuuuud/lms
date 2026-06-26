@@ -1,40 +1,50 @@
-import { Layers, BookOpen, Users, CheckCircle2 } from 'lucide-react'
+'use client'
+
+import { Layers, GitBranch, BookOpen, Coins } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { categoryRecords } from '@/lib/categories-data'
+import { useCurriculum } from './curriculum-context'
 
-export function CategoriesStats() {
-  const totalCategories = categoryRecords.length
-  const activeCategories = categoryRecords.filter((c) => c.status === 'مفعّل').length
-  const totalCourses = categoryRecords.reduce((sum, c) => sum + c.courses, 0)
-  const totalStudents = categoryRecords.reduce((sum, c) => sum + c.students, 0)
+export function CurriculumStats() {
+  const { stages } = useCurriculum()
+
+  const totalStages = stages.length
+  const totalBranches = stages.reduce((sum, s) => sum + s.branches.length, 0)
+  const totalLectures = stages.reduce(
+    (sum, s) => sum + s.branches.reduce((b, br) => b + br.lectureCount, 0),
+    0,
+  )
+  const avgTermPrice =
+    totalStages > 0
+      ? Math.round(stages.reduce((sum, s) => sum + s.termPrice, 0) / totalStages)
+      : 0
 
   const stats = [
     {
-      label: 'إجمالي التصنيفات',
-      value: totalCategories.toLocaleString('en-US'),
+      label: 'المراحل الدراسية',
+      value: totalStages.toLocaleString('en-US'),
       icon: Layers,
       color: 'text-primary',
       bg: 'bg-primary/10',
     },
     {
-      label: 'تصنيفات مفعّلة',
-      value: activeCategories.toLocaleString('en-US'),
-      icon: CheckCircle2,
+      label: 'إجمالي الفروع',
+      value: totalBranches.toLocaleString('en-US'),
+      icon: GitBranch,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50 dark:bg-emerald-500/10',
     },
     {
-      label: 'إجمالي الكورسات',
-      value: totalCourses.toLocaleString('en-US'),
+      label: 'إجمالي المحاضرات',
+      value: totalLectures.toLocaleString('en-US'),
       icon: BookOpen,
       color: 'text-amber-600',
       bg: 'bg-amber-50 dark:bg-amber-500/10',
     },
     {
-      label: 'إجمالي الطلاب',
-      value: totalStudents.toLocaleString('en-US'),
-      icon: Users,
+      label: 'متوسط سعر الترم',
+      value: `${avgTermPrice.toLocaleString('en-US')} ج`,
+      icon: Coins,
       color: 'text-blue-600',
       bg: 'bg-blue-50 dark:bg-blue-500/10',
     },
