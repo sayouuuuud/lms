@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { computeCoupon } from '@/app/coupon-actions'
 
 export type CartItem = {
   lectureId: string
@@ -110,6 +111,7 @@ export async function createOrder(input: {
   method: string
   reference?: string
   note?: string
+  couponCode?: string
 }) {
   const supabase = await createClient()
   const {
@@ -120,7 +122,19 @@ export async function createOrder(input: {
   const items = await getCartItems()
   if (!items || items.length === 0) return { error: 'السلة فارغة.' }
 
-  const total = items.reduce((sum, i) => sum + i.price, 0)
+  const subtotal = items.reduce((sum, i) => sum + i.price, 0)
+
+  // Re-validate the coupon server-side (never trust a client-sent discount).
+  let discount = 0
+  let appliedCouponCode: string | null = null
+  if (input.couponCode?.trim()) {
+    const result = await computeCoupon(supabase, input.couponCode, items)
+    if ('error' in result) return { error: result.error }
+    discount = result.applied.discount
+    appliedCouponCode = result.applied.code
+  }
+
+  const total = Math.max(0, subtotal - discount)
   const code = generateOrderCode()
 
   const { data: order, error: orderErr } = await supabase
@@ -134,6 +148,9 @@ export async function createOrder(input: {
       method: input.method,
       reference: input.reference ?? '',
       note: input.note ?? '',
+      subtotal,
+      discount,
+      coupon_code: appliedCouponCode,
       total,
       status: 'pending',
     })
@@ -141,6 +158,12 @@ export async function createOrder(input: {
     .single()
 
   if (orderErr || !order) return { error: orderErr?.message ?? 'تعذّر إنشاء الطلب.' }
+
+  // Increment coupon usage (best-effort; doesn't fail the order). Uses a
+  // SECURITY DEFINER RPC because coupons are admin-only for writes under RLS.
+  if (appliedCouponCode) {
+    await supabase.rpc('increment_coupon_used', { p_code: appliedCouponCode })
+  }
 
   const { error: itemsErr } = await supabase.from('order_items').insert(
     items.map((i) => ({

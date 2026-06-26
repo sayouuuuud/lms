@@ -1,5 +1,6 @@
 export type CouponStatus = 'نشط' | 'منتهي' | 'متوقف'
 export type CouponType = 'نسبة مئوية' | 'مبلغ ثابت'
+export type CouponScope = 'all' | 'lectures'
 
 export type CouponRecord = {
   id: string
@@ -13,6 +14,8 @@ export type CouponRecord = {
   startDate: string
   endDate: string
   status: CouponStatus
+  // 'all' = whole cart; 'lectures' = only the linked lectures
+  scope?: CouponScope
 }
 
 export const couponRecords: CouponRecord[] = [
