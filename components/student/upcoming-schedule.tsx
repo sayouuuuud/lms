@@ -18,7 +18,7 @@ export function UpcomingSchedule() {
     <PanelCard title="جدولي القادم" action="عرض الكل">
       <ul className="space-y-0.5">
         {upcomingSchedule.map((item) => {
-          const config = typeConfig[item.type]
+          const config = typeConfig[item.type] ?? typeConfig['محاضرة']
           return (
             <li
               key={item.id}

@@ -58,7 +58,7 @@ const statusConfig: Record<
 }
 
 function ExamCard({ exam }: { exam: Exam }) {
-  const cfg = statusConfig[exam.status]
+  const cfg = statusConfig[exam.status] ?? statusConfig['قادم']
   const StatusIcon = cfg.icon
   const percent =
     exam.score != null ? Math.round((exam.score / exam.totalPoints) * 100) : null

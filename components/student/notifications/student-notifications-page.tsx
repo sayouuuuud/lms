@@ -157,7 +157,7 @@ export function StudentNotificationsPage({ notifications: initNotifications = []
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((n) => {
-            const cfg = typeConfig[n.type]
+            const cfg = typeConfig[n.type] ?? typeConfig.system
             const Icon = cfg.icon
             return (
               <Card

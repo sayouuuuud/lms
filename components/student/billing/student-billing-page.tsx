@@ -219,7 +219,7 @@ export function StudentBillingPage({
                       <p className="font-semibold text-foreground">{inv.course}</p>
                       <Badge
                         variant="outline"
-                        className={cn('font-medium', statusStyles[inv.status])}
+                        className={cn('font-medium', statusStyles[inv.status] ?? statusStyles['غير مدفوعة'])}
                       >
                         {inv.status}
                       </Badge>

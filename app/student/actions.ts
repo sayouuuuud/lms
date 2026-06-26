@@ -319,16 +319,41 @@ export async function getStudentAnnouncements() {
 }
 
 export async function getStudentLearningActivity() {
-  // Mock logic since we don't have time tracking per day.
-  return [
-    { day: 'السبت', hours: 2.5 },
-    { day: 'الأحد', hours: 1.8 },
-    { day: 'الإثنين', hours: 3.2 },
-    { day: 'الثلاثاء', hours: 2.1 },
-    { day: 'الأربعاء', hours: 4 },
-    { day: 'الخميس', hours: 1.5 },
-    { day: 'الجمعة', hours: 2.8 },
+  // Weekly activity derived from lessons the student completed in the last 7
+  // days (proxy: ~0.5h per completed lesson). Falls back to zeros when there's
+  // no data so the chart still renders.
+  const week = [
+    { key: 6, day: 'السبت', hours: 0 },
+    { key: 0, day: 'الأحد', hours: 0 },
+    { key: 1, day: 'الإثنين', hours: 0 },
+    { key: 2, day: 'الثلاثاء', hours: 0 },
+    { key: 3, day: 'الأربعاء', hours: 0 },
+    { key: 4, day: 'الخميس', hours: 0 },
+    { key: 5, day: 'الجمعة', hours: 0 },
   ]
+
+  const supabase = await createClient()
+  const student = await getCurrentStudent(supabase)
+  if (!student) return week.map(({ day, hours }) => ({ day, hours }))
+
+  const since = new Date()
+  since.setDate(since.getDate() - 7)
+
+  const { data: progress } = await supabase
+    .from('lesson_progress')
+    .select('completed_at, enrollments!inner(student_id)')
+    .eq('completed', true)
+    .eq('enrollments.student_id', student.id)
+    .gte('completed_at', since.toISOString())
+
+  for (const row of progress ?? []) {
+    if (!row.completed_at) continue
+    const dow = new Date(row.completed_at).getDay() // 0=Sun..6=Sat
+    const bucket = week.find((w) => w.key === dow)
+    if (bucket) bucket.hours += 0.5
+  }
+
+  return week.map(({ day, hours }) => ({ day, hours }))
 }
 
 export async function getStudentExams() {
