@@ -2,122 +2,290 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type {
-  CourseLevel,
-  CourseRecord,
-  CourseStatus,
-} from '@/lib/courses-data'
+import { requireAdmin } from '@/lib/auth-guard'
 
-export type CourseInput = {
-  title: string
-  instructor: string
-  category: string
-  level: CourseLevel
-  price: string
-  status: CourseStatus
-  image?: string
-}
-
-type CourseRow = {
+// ── Types ─────────────────────────────────────────────────────────
+export type AdminLesson = {
   id: string
-  code: string
   title: string
-  instructor: string | null
-  category: string | null
-  level: CourseLevel
-  students: number
-  lessons: number
-  duration_hours: number
-  rating: number
-  price: string
-  status: CourseStatus
-  image: string | null
+  duration: string
+  isFree: boolean
+  sortOrder: number
 }
 
-function mapRow(row: CourseRow): CourseRecord {
-  return {
-    id: row.code,
-    title: row.title,
-    instructor: row.instructor ?? '',
-    category: row.category ?? '',
-    level: row.level,
-    students: row.students,
-    lessons: row.lessons,
-    durationHours: Number(row.duration_hours),
-    rating: Number(row.rating),
-    price: row.price,
-    status: row.status,
-    image: row.image ?? '/placeholder.svg',
-  }
+export type AdminLecture = {
+  id: string
+  slug: string
+  title: string
+  description: string
+  price: number
+  oldPrice: number | null
+  badge: string | null
+  sortOrder: number
+  branchId: string
+  branchTitle: string
+  stageId: string
+  stageTitle: string
+  lessons: AdminLesson[]
 }
 
-export async function getCourses(): Promise<CourseRecord[]> {
+export type BranchOption = {
+  id: string
+  title: string
+  stageId: string
+  stageTitle: string
+}
+
+export type LectureInput = {
+  branchId: string
+  title: string
+  description: string
+  price: number
+  oldPrice: number | null
+  badge: string | null
+}
+
+export type LessonInput = {
+  title: string
+  duration: string
+  isFree: boolean
+}
+
+function slugify(input: string) {
+  const base = input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  const suffix = Math.random().toString(36).slice(2, 7)
+  return `${base ? base.slice(0, 24) : 'item'}-${suffix}`
+}
+
+// ── Read ──────────────────────────────────────────────────────────
+export async function getLecturesAdmin(): Promise<AdminLecture[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('courses')
-    .select(
-      'id, code, title, instructor, category, level, students, lessons, duration_hours, rating, price, status, image',
-    )
-    .order('created_at', { ascending: false })
 
-  if (error) {
-    console.log('[v0] getCourses error:', error.message)
+  const [stagesRes, branchesRes, lecturesRes, lessonsRes] = await Promise.all([
+    supabase.from('stages').select('id, title, sort_order'),
+    supabase.from('branches').select('id, stage_id, title, sort_order'),
+    supabase
+      .from('lectures')
+      .select('id, branch_id, slug, title, description, price, old_price, badge, sort_order')
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('lessons')
+      .select('id, lecture_id, title, duration, is_free, sort_order')
+      .order('sort_order', { ascending: true }),
+  ])
+
+  if (lecturesRes.error) {
+    console.log('[v0] getLecturesAdmin error:', lecturesRes.error.message)
     return []
   }
-  return (data as CourseRow[]).map(mapRow)
-}
 
-async function generateCourseCode(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<string> {
-  const { data } = await supabase
-    .from('courses')
-    .select('code')
-    .order('code', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const stageById = new Map<string, { title: string }>()
+  for (const s of stagesRes.data ?? []) stageById.set(s.id, { title: s.title })
 
-  let next = 201
-  if (data?.code) {
-    const parsed = parseInt(String(data.code).replace(/[^0-9]/g, ''), 10)
-    if (!Number.isNaN(parsed)) next = parsed + 1
+  const branchById = new Map<
+    string,
+    { title: string; stageId: string; stageTitle: string }
+  >()
+  for (const b of branchesRes.data ?? []) {
+    branchById.set(b.id, {
+      title: b.title,
+      stageId: b.stage_id,
+      stageTitle: stageById.get(b.stage_id)?.title ?? '',
+    })
   }
-  return `CRS-${next}`
+
+  const lessonsByLecture = new Map<string, AdminLesson[]>()
+  for (const row of lessonsRes.data ?? []) {
+    const list = lessonsByLecture.get(row.lecture_id) ?? []
+    list.push({
+      id: row.id,
+      title: row.title,
+      duration: row.duration,
+      isFree: row.is_free,
+      sortOrder: row.sort_order,
+    })
+    lessonsByLecture.set(row.lecture_id, list)
+  }
+
+  return (lecturesRes.data ?? []).map((row) => {
+    const branch = branchById.get(row.branch_id)
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      price: Number(row.price),
+      oldPrice: row.old_price != null ? Number(row.old_price) : null,
+      badge: row.badge,
+      sortOrder: row.sort_order,
+      branchId: row.branch_id,
+      branchTitle: branch?.title ?? '',
+      stageId: branch?.stageId ?? '',
+      stageTitle: branch?.stageTitle ?? '',
+      lessons: lessonsByLecture.get(row.id) ?? [],
+    }
+  })
 }
 
-export async function createCourse(input: CourseInput) {
+export async function getBranchOptions(): Promise<BranchOption[]> {
   const supabase = await createClient()
+  const [stagesRes, branchesRes] = await Promise.all([
+    supabase.from('stages').select('id, title, sort_order').order('sort_order'),
+    supabase
+      .from('branches')
+      .select('id, stage_id, title, sort_order')
+      .order('sort_order'),
+  ])
 
-  const code = await generateCourseCode(supabase)
-  const { error } = await supabase.from('courses').insert({
-    code,
+  const stageById = new Map<string, { title: string; order: number }>()
+  for (const s of stagesRes.data ?? [])
+    stageById.set(s.id, { title: s.title, order: s.sort_order })
+
+  return (branchesRes.data ?? [])
+    .map((b) => ({
+      id: b.id,
+      title: b.title,
+      stageId: b.stage_id,
+      stageTitle: stageById.get(b.stage_id)?.title ?? '',
+      _stageOrder: stageById.get(b.stage_id)?.order ?? 0,
+    }))
+    .sort((a, b) => a._stageOrder - b._stageOrder)
+    .map(({ _stageOrder, ...rest }) => rest)
+}
+
+// ── Lecture CRUD ──────────────────────────────────────────────────
+export async function createLecture(input: LectureInput) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  const { count } = await supabase
+    .from('lectures')
+    .select('id', { count: 'exact', head: true })
+    .eq('branch_id', input.branchId)
+
+  const { error } = await supabase.from('lectures').insert({
+    branch_id: input.branchId,
+    slug: slugify(input.title),
     title: input.title,
-    instructor: input.instructor || null,
-    category: input.category || null,
-    level: input.level,
+    description: input.description,
     price: input.price,
-    status: input.status,
-    image: input.image || null,
+    old_price: input.oldPrice,
+    badge: input.badge,
+    sort_order: (count ?? 0) + 1,
   })
 
   if (error) {
-    console.log('[v0] createCourse error:', error.message)
-    return { error: 'تعذّر إضافة الكورس. تأكد من صلاحياتك وحاول تاني.' }
+    console.log('[v0] createLecture error:', error.message)
+    return { error: 'تعذّر إضافة المحاضرة.' }
   }
-
   revalidatePath('/courses')
+  revalidatePath('/')
   return { success: true }
 }
 
-export async function deleteCourse(code: string) {
+export async function updateLecture(id: string, input: LectureInput) {
   const supabase = await createClient()
-  const { error } = await supabase.from('courses').delete().eq('code', code)
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  const { error } = await supabase
+    .from('lectures')
+    .update({
+      branch_id: input.branchId,
+      title: input.title,
+      description: input.description,
+      price: input.price,
+      old_price: input.oldPrice,
+      badge: input.badge,
+    })
+    .eq('id', id)
 
   if (error) {
-    console.log('[v0] deleteCourse error:', error.message)
-    return { error: 'تعذّر حذف الكورس.' }
+    console.log('[v0] updateLecture error:', error.message)
+    return { error: 'تعذّر تحديث المحاضرة.' }
   }
-
   revalidatePath('/courses')
+  revalidatePath('/')
+  return { success: true }
+}
+
+export async function deleteLecture(id: string) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  const { error } = await supabase.from('lectures').delete().eq('id', id)
+  if (error) {
+    console.log('[v0] deleteLecture error:', error.message)
+    return { error: 'تعذّر حذف المحاضرة.' }
+  }
+  revalidatePath('/courses')
+  revalidatePath('/')
+  return { success: true }
+}
+
+// ── Lesson CRUD ───────────────────────────────────────────────────
+export async function createLesson(lectureId: string, input: LessonInput) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  const { count } = await supabase
+    .from('lessons')
+    .select('id', { count: 'exact', head: true })
+    .eq('lecture_id', lectureId)
+
+  const { error } = await supabase.from('lessons').insert({
+    lecture_id: lectureId,
+    slug: slugify(input.title),
+    title: input.title,
+    duration: input.duration,
+    is_free: input.isFree,
+    sort_order: (count ?? 0) + 1,
+  })
+
+  if (error) {
+    console.log('[v0] createLesson error:', error.message)
+    return { error: 'تعذّر إضافة الدرس.' }
+  }
+  revalidatePath('/courses')
+  revalidatePath('/')
+  return { success: true }
+}
+
+export async function updateLesson(id: string, input: LessonInput) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  const { error } = await supabase
+    .from('lessons')
+    .update({
+      title: input.title,
+      duration: input.duration,
+      is_free: input.isFree,
+    })
+    .eq('id', id)
+
+  if (error) {
+    console.log('[v0] updateLesson error:', error.message)
+    return { error: 'تعذّر تحديث الدرس.' }
+  }
+  revalidatePath('/courses')
+  revalidatePath('/')
+  return { success: true }
+}
+
+export async function deleteLesson(id: string) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  const { error } = await supabase.from('lessons').delete().eq('id', id)
+  if (error) {
+    console.log('[v0] deleteLesson error:', error.message)
+    return { error: 'تعذّر حذف الدرس.' }
+  }
+  revalidatePath('/courses')
+  revalidatePath('/')
   return { success: true }
 }

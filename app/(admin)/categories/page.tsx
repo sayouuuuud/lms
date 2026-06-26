@@ -1,21 +1,21 @@
-import { CategoriesProvider } from '@/components/categories/categories-context'
-import { CategoriesPageHeader } from '@/components/categories/categories-page-header'
-import { CategoriesStats } from '@/components/categories/categories-stats'
-import { CategoriesGrid } from '@/components/categories/categories-grid'
-import { CategoryFormModal } from '@/components/categories/category-form-modal'
-import { getCategories } from './actions'
+import { CurriculumProvider } from '@/components/categories/curriculum-context'
+import { CurriculumPageHeader } from '@/components/categories/curriculum-page-header'
+import { CurriculumStats } from '@/components/categories/curriculum-stats'
+import { CurriculumGrid } from '@/components/categories/curriculum-grid'
+import { CurriculumFormModals } from '@/components/categories/curriculum-form-modals'
+import { getCurriculumAdmin } from './actions'
 
 export default async function CategoriesPage() {
-  const categories = await getCategories()
+  const stages = await getCurriculumAdmin()
 
   return (
-    <CategoriesProvider initialCategories={categories}>
+    <CurriculumProvider initialStages={stages}>
       <div className="space-y-6">
-        <CategoriesPageHeader />
-        <CategoriesStats />
-        <CategoriesGrid />
+        <CurriculumPageHeader />
+        <CurriculumStats />
+        <CurriculumGrid />
       </div>
-      <CategoryFormModal />
-    </CategoriesProvider>
+      <CurriculumFormModals />
+    </CurriculumProvider>
   )
 }
