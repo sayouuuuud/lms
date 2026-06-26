@@ -96,6 +96,7 @@ export async function getCurriculum(): Promise<Stage[]> {
     const list = lecturesByBranch.get(row.branch_id) ?? []
     list.push({
       id: row.slug,
+      dbId: row.id,
       title: row.title,
       description: row.description,
       price: Number(row.price),

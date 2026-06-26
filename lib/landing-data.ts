@@ -10,6 +10,8 @@ export type Lesson = {
 // A lecture belongs to a branch. The PRICE lives here (not on the branch).
 export type Lecture = {
   id: string
+  // real database UUID (present when loaded from the DB; used by the cart)
+  dbId?: string
   title: string
   description: string
   price: number

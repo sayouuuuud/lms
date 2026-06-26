@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { useStudent } from '@/components/student/student-context'
 import { getStudentAvatar } from '@/lib/students-data'
 import { useLogout } from '@/lib/use-logout'
+import { CartButton } from '@/components/cart/cart-button'
 
 const mockNotifications = [
   { id: 1, text: 'تم رفع درس جديد في كورس React', time: 'منذ 10 د', read: false },
@@ -235,6 +236,7 @@ export function StudentHeader({
         <ProfileDropdown />
 
         <div className="flex items-center gap-1">
+          <CartButton className="text-muted-foreground hover:text-foreground" />
           <NotificationsDropdown />
           <Button
             variant="ghost"

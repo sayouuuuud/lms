@@ -13,6 +13,8 @@ import {
   X,
 } from 'lucide-react'
 import { countLessons, type Stage, type Branch, type Lecture } from '@/lib/landing-data'
+import { Check } from 'lucide-react'
+import { useCart } from '@/components/cart/cart-provider'
 
 function formatEGP(value: number) {
   return new Intl.NumberFormat('ar-EG').format(value)
@@ -20,6 +22,12 @@ function formatEGP(value: number) {
 
 function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
   const [open, setOpen] = useState(false)
+  const { add, inCart } = useCart()
+  const added = lecture.dbId ? inCart(lecture.dbId) : false
+
+  function handleAdd() {
+    if (lecture.dbId) add(lecture.dbId, lecture.title)
+  }
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-navy/10 bg-white shadow-sm ring-1 ring-transparent transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-navy/10 hover:ring-emerald-brand/30 dark:border-ink-line dark:bg-ink-raised dark:hover:ring-teal-glow/40">
@@ -80,13 +88,27 @@ function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
         </button>
 
         {/* subscribe CTA pinned to bottom */}
-        <Link
-          href="/auth?mode=register"
-          className="mt-4 flex items-center justify-center gap-2 rounded-full bg-navy px-6 py-3.5 text-sm font-bold text-cream transition-colors hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
+        <button
+          type="button"
+          onClick={handleAdd}
+          className={`mt-4 flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold transition-colors ${
+            added
+              ? 'bg-emerald-brand/15 text-emerald-deep dark:bg-teal-glow/15 dark:text-teal-glow'
+              : 'bg-navy text-cream hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep'
+          }`}
         >
-          <span>{'اشترك في المحاضرة'}</span>
-          <ArrowRight className="size-4 -rotate-180" />
-        </Link>
+          {added ? (
+            <>
+              <Check className="size-4" />
+              <span>{'في السلة'}</span>
+            </>
+          ) : (
+            <>
+              <span>{'أضف للسلة'}</span>
+              <ArrowRight className="size-4 -rotate-180" />
+            </>
+          )}
+        </button>
       </div>
 
       {/* lessons panel — overlays the card itself (not a centered modal) */}
@@ -146,13 +168,27 @@ function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
 
           {/* panel footer CTA */}
           <div className="shrink-0 border-t border-navy/10 p-3 dark:border-ink-line">
-            <Link
-              href="/auth?mode=register"
-              className="flex items-center justify-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-bold text-cream transition-colors hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
+            <button
+              type="button"
+              onClick={handleAdd}
+              className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-colors ${
+                added
+                  ? 'bg-emerald-brand/15 text-emerald-deep dark:bg-teal-glow/15 dark:text-teal-glow'
+                  : 'bg-navy text-cream hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep'
+              }`}
             >
-              <span>{`اشترك بـ ${formatEGP(lecture.price)} ج.م`}</span>
-              <ArrowRight className="size-4 -rotate-180" />
-            </Link>
+              {added ? (
+                <>
+                  <Check className="size-4" />
+                  <span>{'في السلة'}</span>
+                </>
+              ) : (
+                <>
+                  <span>{`أضف للسلة بـ ${formatEGP(lecture.price)} ج.م`}</span>
+                  <ArrowRight className="size-4 -rotate-180" />
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}
