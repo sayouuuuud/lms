@@ -1,4 +1,3 @@
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { CalendarProvider } from '@/components/calendar/calendar-context'
 import { CalendarPageHeader } from '@/components/calendar/calendar-page-header'
 import { CalendarStats } from '@/components/calendar/calendar-stats'
@@ -10,7 +9,7 @@ export default async function CalendarPage() {
   const events = await getEvents()
 
   return (
-    <DashboardLayout>
+    <>
       <CalendarProvider initialEvents={events}>
         <div className="space-y-6">
           <CalendarPageHeader />
@@ -19,6 +18,6 @@ export default async function CalendarPage() {
         </div>
         <EventFormModal />
       </CalendarProvider>
-    </DashboardLayout>
+    </>
   )
 }

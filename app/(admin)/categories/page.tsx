@@ -1,4 +1,3 @@
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { CategoriesProvider } from '@/components/categories/categories-context'
 import { CategoriesPageHeader } from '@/components/categories/categories-page-header'
 import { CategoriesStats } from '@/components/categories/categories-stats'
@@ -10,7 +9,7 @@ export default async function CategoriesPage() {
   const categories = await getCategories()
 
   return (
-    <DashboardLayout>
+    <>
       <CategoriesProvider initialCategories={categories}>
         <div className="space-y-6">
           <CategoriesPageHeader />
@@ -19,6 +18,6 @@ export default async function CategoriesPage() {
         </div>
         <CategoryFormModal />
       </CategoriesProvider>
-    </DashboardLayout>
+    </>
   )
 }

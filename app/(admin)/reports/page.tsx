@@ -1,4 +1,3 @@
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { ReportsPageHeader } from '@/components/reports/reports-page-header'
 import { ReportsStats } from '@/components/reports/reports-stats'
 import { RevenueReportChart } from '@/components/reports/revenue-report-chart'
@@ -15,7 +14,7 @@ export default async function ReportsPage() {
   if ('error' in data) return <div>{data.error}</div>
   
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <ReportsPageHeader />
         <ReportsStats stats={data.reportStats} />
@@ -33,6 +32,6 @@ export default async function ReportsPage() {
         </div>
         <ReportsHistoryTable reports={reports} />
       </div>
-    </DashboardLayout>
+    </>
   )
 }

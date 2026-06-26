@@ -1,4 +1,3 @@
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { StudentsProvider } from '@/components/students/students-context'
 import { StudentsPageHeader } from '@/components/students/students-page-header'
 import { StudentsStats } from '@/components/students/students-stats'
@@ -10,13 +9,13 @@ export default async function StudentsPage() {
   const students = await getStudents()
 
   return (
-    <DashboardLayout>
+    <>
       <StudentsProvider initialStudents={students}>
         <StudentsPageHeader />
         <StudentsStats />
         <StudentsTable />
         <StudentFormModal />
       </StudentsProvider>
-    </DashboardLayout>
+    </>
   )
 }

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { updatePaymentStatus } from '@/app/payments/actions'
+import { updatePaymentStatus } from '@/app/(admin)/payments/actions'
 import {
   Search,
   Clock,

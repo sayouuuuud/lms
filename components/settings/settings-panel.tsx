@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { updateSettings } from '@/app/settings/actions'
+import { updateSettings } from '@/app/(admin)/settings/actions'
 import {
   User,
   Bell,

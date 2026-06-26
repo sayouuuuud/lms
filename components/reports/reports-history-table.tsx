@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Download, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { ReportItem } from '@/app/reports/actions'
+import type { ReportItem } from '@/app/(admin)/reports/actions'
 import { cn } from '@/lib/utils'
 
 const statusStyles: Record<string, string> = {

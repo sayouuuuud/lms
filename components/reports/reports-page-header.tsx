@@ -2,7 +2,7 @@
 
 import { Download, Calendar, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { generateReport } from '@/app/reports/actions'
+import { generateReport } from '@/app/(admin)/reports/actions'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
