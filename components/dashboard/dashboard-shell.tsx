@@ -11,10 +11,10 @@ import { LatestStudents } from './latest-students'
 import { LatestCourses } from './latest-courses'
 
 export function DashboardShell({ data }: { data?: any }) {
-  if (!data) return <DashboardLayout><PageHeader /></DashboardLayout>
+  if (!data) return <PageHeader />
 
   return (
-    <DashboardLayout>
+    <div className="flex flex-col gap-6">
       <PageHeader />
 
       <StatCards stats={data.stats} />
@@ -50,6 +50,6 @@ export function DashboardShell({ data }: { data?: any }) {
         <LatestPayments payments={data.latestPayments} />
         <LatestCourses courses={data.latestCourses} />
       </div>
-    </DashboardLayout>
+    </div>
   )
 }
