@@ -16,19 +16,42 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { type Conversation } from '@/lib/student-messages-data'
-import { sendStudentMessage } from '@/app/student/messages/actions'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import {
+  sendStudentMessage,
+  startStudentConversation,
+} from '@/app/student/messages/actions'
 
 export function StudentMessagesPage({
   initialConversations,
 }: {
   initialConversations: Conversation[]
 }) {
+  const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations)
   const [activeId, setActiveId] = useState<string>(initialConversations[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
+  const [newDraft, setNewDraft] = useState('')
   const [showChatMobile, setShowChatMobile] = useState(false)
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
+
+  // Starts a fresh conversation with the teacher (used by the empty state).
+  const startConversation = () => {
+    const text = newDraft.trim()
+    if (!text) return
+    startTransition(async () => {
+      const res = await startStudentConversation(text)
+      if (res?.error) {
+        toast.error(res.error)
+        return
+      }
+      setNewDraft('')
+      toast.success('تم إرسال رسالتك للمدرّس')
+      router.refresh()
+    })
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -90,14 +113,38 @@ export function StudentMessagesPage({
             تواصل مع فريق الدعم والإدارة بخصوص طلباتك واشتراكاتك.
           </p>
         </div>
-        <Card className="flex min-h-[420px] flex-col items-center justify-center gap-3 p-8 text-center">
+        <Card className="flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
             <MessageSquare className="size-7" />
           </div>
-          <h2 className="text-lg font-bold text-foreground">لا توجد رسائل بعد</h2>
+          <h2 className="text-lg font-bold text-foreground">ابدأ محادثة مع المدرّس</h2>
           <p className="max-w-sm text-sm text-muted-foreground">
-            لما تبعت طلب اشتراك، فريق الإدارة هيقدر يتواصل معاك من هنا وهتلاقي رسايلك في المكان ده.
+            اكتب رسالتك للأستاذ عبد السلام أو فريق الدعم وهيتم الرد عليك من هنا.
           </p>
+          <div className="flex w-full max-w-md items-end gap-2">
+            <textarea
+              value={newDraft}
+              onChange={(e) => setNewDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  startConversation()
+                }
+              }}
+              rows={2}
+              placeholder="اكتب رسالتك للمدرّس..."
+              className="max-h-32 min-h-[48px] flex-1 resize-none rounded-xl border border-border bg-secondary/60 px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card"
+            />
+            <Button
+              size="icon"
+              className="size-11 shrink-0"
+              onClick={startConversation}
+              disabled={!newDraft.trim() || isPending}
+              aria-label="إرسال"
+            >
+              <Send className="size-5" />
+            </Button>
+          </div>
         </Card>
       </div>
     )

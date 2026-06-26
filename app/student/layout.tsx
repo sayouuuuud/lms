@@ -11,12 +11,16 @@ import {
 } from './actions'
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
-  const profile = await getStudentProfile()
-  const enrolledCourses = await getStudentEnrolledCourses()
-  const schedule = await getStudentUpcomingSchedule()
-  const grades = await getStudentRecentGrades()
-  const announcements = await getStudentAnnouncements()
-  const activity = await getStudentLearningActivity()
+  // Fetch the portal data in parallel instead of a slow sequential waterfall.
+  const [profile, enrolledCourses, schedule, grades, announcements, activity] =
+    await Promise.all([
+      getStudentProfile(),
+      getStudentEnrolledCourses(),
+      getStudentUpcomingSchedule(),
+      getStudentRecentGrades(),
+      getStudentAnnouncements(),
+      getStudentLearningActivity(),
+    ])
 
   // Fallback profile if not found
   const defaultProfile = {

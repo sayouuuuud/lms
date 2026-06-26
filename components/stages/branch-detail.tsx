@@ -22,11 +22,18 @@ function formatEGP(value: number) {
 
 function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
   const [open, setOpen] = useState(false)
-  const { add, inCart } = useCart()
+  const { add, inCart, setOpen: setCartOpen } = useCart()
   const added = lecture.dbId ? inCart(lecture.dbId) : false
 
-  function handleAdd() {
-    if (lecture.dbId) add(lecture.dbId, lecture.title)
+  async function handleAdd() {
+    if (lecture.dbId) await add(lecture.dbId, lecture.title)
+  }
+
+  // Add (if needed) then open the cart so the student can checkout & pay.
+  async function handleBuy() {
+    if (!lecture.dbId) return
+    if (!added) await add(lecture.dbId, lecture.title)
+    setCartOpen(true)
   }
 
   return (
@@ -50,8 +57,13 @@ function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
             {lecture.badge}
           </span>
         )}
-        {/* price tag */}
-        <span className="absolute bottom-4 left-4 inline-flex items-baseline gap-1.5 rounded-2xl bg-navy px-4 py-2 shadow-lg shadow-navy/30 dark:bg-ink-base">
+        {/* price tag — clickable: jumps straight to checkout */}
+        <button
+          type="button"
+          onClick={handleBuy}
+          title="اشترك واتمم الدفع"
+          className="absolute bottom-4 left-4 inline-flex items-baseline gap-1.5 rounded-2xl bg-navy px-4 py-2 shadow-lg shadow-navy/30 transition-transform hover:scale-105 hover:bg-navy-deep dark:bg-ink-base dark:hover:bg-ink-raised"
+        >
           {lecture.oldPrice && (
             <span className="text-xs text-cream/50 line-through">
               {formatEGP(lecture.oldPrice)}
@@ -61,7 +73,7 @@ function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
             {formatEGP(lecture.price)}
           </span>
           <span className="text-xs font-bold text-gold dark:text-teal-glow">ج.م</span>
-        </span>
+        </button>
       </div>
 
       {/* body */}
@@ -87,28 +99,36 @@ function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
           </span>
         </button>
 
-        {/* subscribe CTA pinned to bottom */}
-        <button
-          type="button"
-          onClick={handleAdd}
-          className={`mt-4 flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold transition-colors ${
-            added
-              ? 'bg-emerald-brand/15 text-emerald-deep dark:bg-teal-glow/15 dark:text-teal-glow'
-              : 'bg-navy text-cream hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep'
-          }`}
-        >
-          {added ? (
-            <>
-              <Check className="size-4" />
-              <span>{'في السلة'}</span>
-            </>
-          ) : (
-            <>
+        {/* CTAs pinned to bottom: primary "اشترك" goes straight to checkout,
+            secondary toggles the cart. */}
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={handleBuy}
+            className="flex items-center justify-center gap-2 rounded-full bg-navy px-6 py-3.5 text-sm font-bold text-cream transition-colors hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
+          >
+            <span>{`اشترك الآن — ${formatEGP(lecture.price)} ج.م`}</span>
+            <ArrowRight className="size-4 -rotate-180" />
+          </button>
+          <button
+            type="button"
+            onClick={handleAdd}
+            className={`flex items-center justify-center gap-2 rounded-full border px-6 py-2.5 text-sm font-bold transition-colors ${
+              added
+                ? 'border-emerald-brand/30 bg-emerald-brand/15 text-emerald-deep dark:border-teal-glow/30 dark:bg-teal-glow/15 dark:text-teal-glow'
+                : 'border-navy/15 text-navy hover:bg-navy/5 dark:border-ink-line dark:text-ink-fg dark:hover:bg-ink-base'
+            }`}
+          >
+            {added ? (
+              <>
+                <Check className="size-4" />
+                <span>{'في السلة'}</span>
+              </>
+            ) : (
               <span>{'أضف للسلة'}</span>
-              <ArrowRight className="size-4 -rotate-180" />
-            </>
-          )}
-        </button>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* lessons panel — overlays the card itself (not a centered modal) */}
@@ -166,28 +186,15 @@ function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
             ))}
           </ul>
 
-          {/* panel footer CTA */}
+          {/* panel footer CTA — go straight to checkout */}
           <div className="shrink-0 border-t border-navy/10 p-3 dark:border-ink-line">
             <button
               type="button"
-              onClick={handleAdd}
-              className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-colors ${
-                added
-                  ? 'bg-emerald-brand/15 text-emerald-deep dark:bg-teal-glow/15 dark:text-teal-glow'
-                  : 'bg-navy text-cream hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep'
-              }`}
+              onClick={handleBuy}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-bold text-cream transition-colors hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
             >
-              {added ? (
-                <>
-                  <Check className="size-4" />
-                  <span>{'في السلة'}</span>
-                </>
-              ) : (
-                <>
-                  <span>{`أضف للسلة بـ ${formatEGP(lecture.price)} ج.م`}</span>
-                  <ArrowRight className="size-4 -rotate-180" />
-                </>
-              )}
+              <span>{`اشترك الآن بـ ${formatEGP(lecture.price)} ج.م`}</span>
+              <ArrowRight className="size-4 -rotate-180" />
             </button>
           </div>
         </div>

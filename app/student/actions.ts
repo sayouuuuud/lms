@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentStudent } from '@/lib/auth-guard'
+import { getPurchasedCourses } from '@/lib/student-lectures-data'
 import type { Invoice, InvoiceStatus, PaymentMethod } from '@/lib/student-billing-data'
 
 // ── Billing ──────────────────────────────────────────────────────
@@ -103,6 +104,43 @@ export async function resubmitPayment(
 
 // ── Portal data ──────────────────────────────────────────────────
 
+// Persists the student's editable profile fields (name + phone) to both the
+// profiles row (auth-linked) and the students row (portal record).
+export async function updateStudentProfile(input: {
+  fullName: string
+  phone: string
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'لازم تسجّل دخول.' }
+
+  const fullName = input.fullName.trim()
+  const phone = input.phone.trim()
+  if (!fullName) return { error: 'الاسم مطلوب.' }
+
+  const { error: profileErr } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName, phone })
+    .eq('id', user.id)
+
+  if (profileErr) {
+    console.log('[v0] updateStudentProfile error:', profileErr.message)
+    return { error: 'تعذّر حفظ التغييرات. حاول تاني.' }
+  }
+
+  // Keep the portal students record in sync (best-effort).
+  await supabase
+    .from('students')
+    .update({ name: fullName, phone })
+    .eq('user_id', user.id)
+
+  revalidatePath('/student', 'layout')
+  revalidatePath('/student/settings')
+  return { success: true }
+}
+
 export async function getStudentProfile() {
   const supabase = await createClient()
   const student = await getCurrentStudent(supabase)
@@ -125,57 +163,23 @@ export async function getStudentProfile() {
   }
 }
 
+// The student's courses are the lectures they purchased (approved orders),
+// drawn from the same public catalog shown on the landing page. This keeps the
+// "كورساتي" view in sync with what's actually for sale and bought.
 export async function getStudentEnrolledCourses() {
-  const supabase = await createClient()
-  const student = await getCurrentStudent(supabase)
-  if (!student) return []
-
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select(`
-      id,
-      courses (
-        id,
-        code,
-        title,
-        instructor,
-        image_url,
-        category,
-        course_sections (
-          id,
-          course_lessons (id)
-        )
-      ),
-      lesson_progress (
-        id,
-        completed
-      )
-    `)
-    .eq('student_id', student.id)
-
-  if (!enrollments) return []
-
-  return enrollments.map((e: any) => {
-    const course = e.courses
-    let totalLessons = 0
-    course.course_sections?.forEach((sec: any) => {
-      totalLessons += sec.course_lessons?.length || 0
-    })
-    
-    const completedLessons = e.lesson_progress?.filter((p: any) => p.completed)?.length || 0
-
-    return {
-      id: course.id,
-      code: course.code,
-      title: course.title,
-      instructor: course.instructor || 'أستاذ',
-      image: course.image_url || '/react-course.png',
-      category: course.category || 'عام',
-      completedLessons,
-      totalLessons,
-      nextLesson: 'متابعة الدرس القادم', // Simplified
-    }
-  })
+  const courses = await getPurchasedCourses()
+  return courses.map((c) => ({
+    id: c.id,
+    title: c.title,
+    instructor: c.instructor,
+    image: c.image,
+    category: c.category,
+    completedLessons: c.completedLessons,
+    totalLessons: c.totalLessons,
+    nextLesson: c.nextLesson,
+    rating: c.rating,
+    durationHours: c.durationHours,
+  }))
 }
 
 export async function getStudentUpcomingSchedule() {

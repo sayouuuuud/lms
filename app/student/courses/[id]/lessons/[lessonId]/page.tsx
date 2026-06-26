@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { LessonPlayer } from '@/components/student/courses/lesson-player'
-import { getLesson } from '@/lib/student-courses-data'
+import { getPurchasedLesson } from '@/lib/student-lectures-data'
 
 export default async function Page({
   params,
@@ -8,7 +8,7 @@ export default async function Page({
   params: Promise<{ id: string; lessonId: string }>
 }) {
   const { id, lessonId } = await params
-  const data = getLesson(id, lessonId)
+  const data = await getPurchasedLesson(id, lessonId)
   if (!data) notFound()
 
   return (

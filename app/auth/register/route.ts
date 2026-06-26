@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendActivationCode } from '@/lib/email'
+import { isEmailVerificationRequired } from '@/lib/settings-data'
 import { NextRequest, NextResponse } from 'next/server'
 
 type Body = {
@@ -35,6 +36,44 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
+  const userMetadata = {
+    full_name: body.full_name?.trim() ?? '',
+    phone: body.phone?.trim() ?? '',
+    grade: body.grade ?? '',
+    role: 'student',
+  }
+
+  // The admin can turn off email verification from the dashboard. When it's
+  // off we create an already-confirmed user (no activation code needed); the
+  // client logs in straight away.
+  const verificationRequired = await isEmailVerificationRequired()
+
+  if (!verificationRequired) {
+    const { error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: userMetadata,
+    })
+
+    if (error) {
+      const already =
+        error.message.toLowerCase().includes('already') ||
+        error.message.toLowerCase().includes('registered')
+      return NextResponse.json(
+        {
+          error: already
+            ? 'البريد الإلكتروني مستخدم بالفعل.'
+            : 'حصلت مشكلة أثناء إنشاء الحساب. حاول تاني.',
+        },
+        { status: already ? 409 : 400 },
+      )
+    }
+
+    // No verification step — the client can sign in immediately.
+    return NextResponse.json({ ok: true, verified: true })
+  }
+
   // generateLink with type 'signup' creates the (unconfirmed) user and returns
   // the email OTP we can deliver ourselves. The handle_new_user() trigger
   // populates the profile from user_metadata.
@@ -43,12 +82,7 @@ export async function POST(request: NextRequest) {
     email,
     password,
     options: {
-      data: {
-        full_name: body.full_name?.trim() ?? '',
-        phone: body.phone?.trim() ?? '',
-        grade: body.grade ?? '',
-        role: 'student',
-      },
+      data: userMetadata,
     },
   })
 
@@ -84,5 +118,5 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, verified: false })
 }
