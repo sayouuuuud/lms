@@ -14,7 +14,7 @@ import {
   type CouponStatus,
   type CouponType,
 } from '@/lib/coupons-data'
-import { createCoupon, updateCoupon, deleteCoupon } from '@/app/coupons/actions'
+import { createCoupon, updateCoupon, deleteCoupon } from '@/app/(admin)/coupons/actions'
 
 export type CouponFormValues = {
   code: string

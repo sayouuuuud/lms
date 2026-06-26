@@ -1,4 +1,3 @@
-import { DashboardLayout } from './dashboard-layout'
 import { PageHeader } from './page-header'
 import { StatCards } from './stat-cards'
 import { RevenueChart } from './revenue-chart'
@@ -11,10 +10,10 @@ import { LatestStudents } from './latest-students'
 import { LatestCourses } from './latest-courses'
 
 export function DashboardShell({ data }: { data?: any }) {
-  if (!data) return <DashboardLayout><PageHeader /></DashboardLayout>
+  if (!data) return <PageHeader />
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader />
 
       <StatCards stats={data.stats} />
@@ -50,6 +49,6 @@ export function DashboardShell({ data }: { data?: any }) {
         <LatestPayments payments={data.latestPayments} />
         <LatestCourses courses={data.latestCourses} />
       </div>
-    </DashboardLayout>
+    </>
   )
 }

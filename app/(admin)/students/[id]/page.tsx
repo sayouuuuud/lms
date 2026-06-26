@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { StudentProfileView } from '@/components/students/profile/student-profile'
 import { getStudentProfile, getAllStudentIds } from '@/lib/student-profile-data'
 
@@ -19,9 +18,5 @@ export default async function StudentProfilePage({
     notFound()
   }
 
-  return (
-    <DashboardLayout>
-      <StudentProfileView profile={profile} />
-    </DashboardLayout>
-  )
+  return <StudentProfileView profile={profile} />
 }

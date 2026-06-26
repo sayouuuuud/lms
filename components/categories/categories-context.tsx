@@ -14,7 +14,7 @@ import {
   type CategoryRecord,
   type CategoryStatus,
 } from '@/lib/categories-data'
-import { createCategory, updateCategory, deleteCategory } from '@/app/categories/actions'
+import { createCategory, updateCategory, deleteCategory } from '@/app/(admin)/categories/actions'
 
 type CategoryFormValues = {
   name: string

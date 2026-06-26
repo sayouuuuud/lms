@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { getInitials } from '@/lib/get-initials'
 import { type Conversation, type ChatMessage } from '@/lib/messages-data'
-import { markAsRead, replyToConversation } from '@/app/messages/actions'
+import { markAsRead, replyToConversation } from '@/app/(admin)/messages/actions'
 
 export function MessagesInbox({ initialConversations }: { initialConversations: Conversation[] }) {
   const router = useRouter()

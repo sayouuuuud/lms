@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { updatePaymentStatus } from '@/app/payments/actions'
+import { updatePaymentStatus } from '@/app/(admin)/payments/actions'
 import {
   Search,
   Clock,
@@ -389,7 +389,7 @@ export function PaymentsTable({ initialPayments }: { initialPayments: PaymentRec
             <div className="mt-4 space-y-1">
               <p className="mb-2 text-xs font-semibold text-muted-foreground">بيانات الطالب</p>
               <DetailRow icon={Mail} label="البريد الإلكتروني" value={preview.studentEmail} dir="ltr" />
-              <DetailRow icon={Phone} label="رقم الهاتف" value={preview.studentPhone} dir="ltr" />
+              <DetailRow icon={Phone} label="��قم الهاتف" value={preview.studentPhone} dir="ltr" />
               <DetailRow icon={BookOpen} label="الكورس" value={preview.course} />
             </div>
 

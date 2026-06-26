@@ -15,7 +15,7 @@ import {
   type StudentRecord,
   type StudentStatus,
 } from '@/lib/students-data'
-import { createStudent, deleteStudent } from '@/app/students/actions'
+import { createStudent, deleteStudent } from '@/app/(admin)/students/actions'
 
 export type StudentFormValues = {
   name: string

@@ -1,4 +1,3 @@
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { CouponsProvider } from '@/components/coupons/coupons-context'
 import { CouponsPageHeader } from '@/components/coupons/coupons-page-header'
 import { CouponsStats } from '@/components/coupons/coupons-stats'
@@ -10,15 +9,13 @@ export default async function CouponsPage() {
   const coupons = await getCoupons()
 
   return (
-    <DashboardLayout>
-      <CouponsProvider initialCoupons={coupons}>
-        <div className="space-y-6">
-          <CouponsPageHeader />
-          <CouponsStats />
-          <CouponsTable />
-        </div>
-        <CouponFormModal />
-      </CouponsProvider>
-    </DashboardLayout>
+    <CouponsProvider initialCoupons={coupons}>
+      <div className="space-y-6">
+        <CouponsPageHeader />
+        <CouponsStats />
+        <CouponsTable />
+      </div>
+      <CouponFormModal />
+    </CouponsProvider>
   )
 }

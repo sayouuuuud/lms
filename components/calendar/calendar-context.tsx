@@ -13,7 +13,7 @@ import {
   type CalendarEvent,
   type CalendarEventType,
 } from '@/lib/calendar-data'
-import { createEvent, updateEvent, deleteEvent } from '@/app/calendar/actions'
+import { createEvent, updateEvent, deleteEvent } from '@/app/(admin)/calendar/actions'
 
 export type EventFormValues = {
   title: string

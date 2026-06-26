@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
 import { CourseDetail } from '@/components/courses/course-detail'
 import { courseRecords, getCourseById } from '@/lib/courses-data'
 
@@ -19,9 +18,5 @@ export default async function CourseDetailPage({
     notFound()
   }
 
-  return (
-    <DashboardLayout>
-      <CourseDetail course={course} />
-    </DashboardLayout>
-  )
+  return <CourseDetail course={course} />
 }
