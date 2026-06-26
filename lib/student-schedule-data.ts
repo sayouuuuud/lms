@@ -55,6 +55,18 @@ export const scheduleTypeStyles: Record<
   },
 }
 
+// Neutral fallback for unknown event types coming from the database.
+export const scheduleTypeStyleFallback = {
+  chip: 'bg-secondary text-muted-foreground',
+  bar: 'border-r-border',
+  dot: 'bg-muted-foreground',
+}
+
+/** Safe lookup: never returns undefined for an unexpected event type. */
+export function getScheduleTypeStyle(type: string | null | undefined) {
+  return scheduleTypeStyles[type as ScheduleEventType] ?? scheduleTypeStyleFallback
+}
+
 /** أسماء أيام الأسبوع (يبدأ من السبت) */
 export const weekDays = [
   'السبت',

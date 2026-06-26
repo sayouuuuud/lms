@@ -69,7 +69,7 @@ const statusConfig: Record<
 }
 
 function AssignmentCard({ assignment }: { assignment: Assignment }) {
-  const cfg = statusConfig[assignment.status]
+  const cfg = statusConfig[assignment.status] ?? statusConfig['لم يبدأ']
   const StatusIcon = cfg.icon
   const isQuiz = assignment.type === 'اختبار'
   const courseTitle = courseTitleById.get(assignment.courseId) ?? ''
@@ -140,7 +140,7 @@ function AssignmentCard({ assignment }: { assignment: Assignment }) {
             ) : (
               <>
                 <FileText className="size-3.5" />
-                {assignment.attachments.length} مرفقات
+                {assignment.attachments?.length ?? 0} مرفقات
               </>
             )}
           </span>

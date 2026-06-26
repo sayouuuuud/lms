@@ -48,7 +48,7 @@ export function UpcomingExams() {
     <PanelCard title="الاختبارات القادمة" action="عرض الكل">
       <ul className="space-y-0.5">
         {exams.map((exam) => {
-          const cfg = statusConfig[exam.status as keyof typeof statusConfig]
+          const cfg = statusConfig[exam.status as keyof typeof statusConfig] ?? statusConfig['قادم']
           const Icon = cfg.icon
           return (
             <li

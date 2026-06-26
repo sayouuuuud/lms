@@ -32,13 +32,15 @@ const femaleAvatars = [
  * (أفاتار ولد للذكر وأفاتار بنت للأنثى) بشكل ثابت لكل طالب.
  */
 export function getStudentAvatar(student: {
-  id: string
-  gender: StudentGender
+  id?: string
+  gender?: StudentGender
   avatar?: string
 }): string {
-  if (student.avatar) return student.avatar
-  const pool = student.gender === 'أنثى' ? femaleAvatars : maleAvatars
-  const seed = student.id
+  if (student?.avatar) return student.avatar
+  const pool = student?.gender === 'أنثى' ? femaleAvatars : maleAvatars
+  // Fall back to a stable seed when the student has no id yet (e.g. a freshly
+  // registered user that doesn't have a `students` row).
+  const seed = (student?.id ?? '')
     .split('')
     .reduce((acc, char) => acc + char.charCodeAt(0), 0)
   return pool[seed % pool.length]

@@ -29,6 +29,7 @@ export function PageHeader() {
                 ? ''
                 : 'border-border bg-card text-foreground hover:bg-secondary'
             }
+            nativeButton={false}
             render={<Link href={action.href} />}
           >
             <action.icon className="size-4" />

@@ -21,6 +21,7 @@ import {
   weekDays,
   monthNames,
   scheduleTypeStyles,
+  getScheduleTypeStyle,
   type ScheduleEvent,
   type ScheduleEventType,
 } from '@/lib/student-schedule-data'
@@ -272,7 +273,7 @@ export function StudentSchedulePage({ scheduleEvents = [] }: { scheduleEvents?: 
                         key={ev.id}
                         className={cn(
                           'truncate rounded-md px-1.5 py-0.5 text-right text-[11px] font-medium leading-tight',
-                          scheduleTypeStyles[ev.type].chip,
+                          getScheduleTypeStyle(ev.type).chip,
                         )}
                       >
                         <span className="hidden sm:inline">{ev.title}</span>
@@ -337,7 +338,7 @@ export function StudentSchedulePage({ scheduleEvents = [] }: { scheduleEvents?: 
                   }}
                   className={cn(
                     'flex w-full items-start gap-3 rounded-xl border border-border border-r-4 bg-secondary/40 p-3 text-right transition-colors hover:bg-secondary',
-                    scheduleTypeStyles[ev.type].bar,
+                    getScheduleTypeStyle(ev.type).bar,
                   )}
                 >
                   <div className="min-w-0 flex-1">
@@ -355,7 +356,7 @@ export function StudentSchedulePage({ scheduleEvents = [] }: { scheduleEvents?: 
                   <span
                     className={cn(
                       'shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold',
-                      scheduleTypeStyles[ev.type].chip,
+                      getScheduleTypeStyle(ev.type).chip,
                     )}
                   >
                     {ev.type}
@@ -372,19 +373,19 @@ export function StudentSchedulePage({ scheduleEvents = [] }: { scheduleEvents?: 
 }
 
 function EventRow({ event }: { event: ScheduleEvent }) {
-  const Icon = typeIcons[event.type]
+  const Icon = typeIcons[event.type] ?? CalendarDays
   return (
     <div
       className={cn(
         'rounded-xl border border-border border-r-4 bg-secondary/40 p-3',
-        scheduleTypeStyles[event.type].bar,
+        getScheduleTypeStyle(event.type).bar,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <span
           className={cn(
             'inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold',
-            scheduleTypeStyles[event.type].chip,
+            getScheduleTypeStyle(event.type).chip,
           )}
         >
           <Icon className="size-3" />
