@@ -1,0 +1,152 @@
+import { createClient } from '@/lib/supabase/server'
+import type { Stage, Branch, Lecture, Lesson } from '@/lib/landing-data'
+
+// ── Row shapes coming back from Supabase ───────────────────────────
+type StageRow = {
+  id: string
+  slug: string
+  idx: string
+  title: string
+  subtitle: string
+  rows: string[]
+  formula: string
+  image: string
+  accent: string
+  term_price: number
+  term_old_price: number | null
+}
+
+type BranchRow = {
+  id: string
+  stage_id: string
+  slug: string
+  title: string
+  description: string
+  image: string
+  topics: string[]
+}
+
+type LectureRow = {
+  id: string
+  branch_id: string
+  slug: string
+  title: string
+  description: string
+  price: number
+  old_price: number | null
+  badge: string | null
+}
+
+type LessonRow = {
+  id: string
+  lecture_id: string
+  slug: string
+  title: string
+  duration: string
+  is_free: boolean
+}
+
+function mapLesson(row: LessonRow): Lesson {
+  return {
+    id: row.slug,
+    title: row.title,
+    duration: row.duration,
+    isFree: row.is_free,
+  }
+}
+
+// Builds the full nested stages → branches → lectures → lessons tree
+// from flat queries (one query per level, assembled in memory).
+export async function getCurriculum(): Promise<Stage[]> {
+  const supabase = await createClient()
+
+  const [stagesRes, branchesRes, lecturesRes, lessonsRes] = await Promise.all([
+    supabase
+      .from('stages')
+      .select('id, slug, idx, title, subtitle, rows, formula, image, accent, term_price, term_old_price')
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('branches')
+      .select('id, stage_id, slug, title, description, image, topics')
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('lectures')
+      .select('id, branch_id, slug, title, description, price, old_price, badge')
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('lessons')
+      .select('id, lecture_id, slug, title, duration, is_free')
+      .order('sort_order', { ascending: true }),
+  ])
+
+  if (stagesRes.error) {
+    console.log('[v0] getCurriculum stages error:', stagesRes.error.message)
+    return []
+  }
+
+  const lessonsByLecture = new Map<string, Lesson[]>()
+  for (const row of (lessonsRes.data as LessonRow[]) ?? []) {
+    const list = lessonsByLecture.get(row.lecture_id) ?? []
+    list.push(mapLesson(row))
+    lessonsByLecture.set(row.lecture_id, list)
+  }
+
+  const lecturesByBranch = new Map<string, Lecture[]>()
+  for (const row of (lecturesRes.data as LectureRow[]) ?? []) {
+    const list = lecturesByBranch.get(row.branch_id) ?? []
+    list.push({
+      id: row.slug,
+      title: row.title,
+      description: row.description,
+      price: Number(row.price),
+      oldPrice: row.old_price != null ? Number(row.old_price) : undefined,
+      badge: row.badge ?? undefined,
+      lessons: lessonsByLecture.get(row.id) ?? [],
+    })
+    lecturesByBranch.set(row.branch_id, list)
+  }
+
+  const branchesByStage = new Map<string, Branch[]>()
+  for (const row of (branchesRes.data as BranchRow[]) ?? []) {
+    const list = branchesByStage.get(row.stage_id) ?? []
+    list.push({
+      id: row.slug,
+      title: row.title,
+      description: row.description,
+      image: row.image,
+      topics: row.topics ?? [],
+      lectures: lecturesByBranch.get(row.id) ?? [],
+    })
+    branchesByStage.set(row.stage_id, list)
+  }
+
+  return ((stagesRes.data as StageRow[]) ?? []).map((row) => ({
+    id: row.slug,
+    index: row.idx,
+    title: row.title,
+    subtitle: row.subtitle,
+    rows: row.rows ?? [],
+    formula: row.formula,
+    image: row.image,
+    accent: (row.accent as Stage['accent']) ?? 'emerald',
+    termPrice: Number(row.term_price),
+    termOldPrice: row.term_old_price != null ? Number(row.term_old_price) : undefined,
+    branches: branchesByStage.get(row.id) ?? [],
+  }))
+}
+
+export async function getStageBySlug(slug: string): Promise<Stage | undefined> {
+  const all = await getCurriculum()
+  return all.find((s) => s.id === slug)
+}
+
+export async function getBranchBySlug(
+  stageSlug: string,
+  branchSlug: string,
+): Promise<{ stage: Stage; branch: Branch } | undefined> {
+  const stage = await getStageBySlug(stageSlug)
+  if (!stage) return undefined
+  const branch = stage.branches.find((b) => b.id === branchSlug)
+  if (!branch) return undefined
+  return { stage, branch }
+}

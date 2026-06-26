@@ -5,11 +5,11 @@ import Link from 'next/link'
 import gsap from 'gsap'
 import Image from 'next/image'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
-import { stages, type Stage } from '@/lib/landing-data'
+import { type Stage } from '@/lib/landing-data'
 import { cn } from '@/lib/utils'
 import { useReveal } from '@/lib/use-reveal'
 
-export function StagesSection() {
+export function StagesSection({ stages = [] }: { stages?: Stage[] }) {
   const headRef = useReveal<HTMLDivElement>(undefined, { y: 30 })
   const [active, setActive] = useState(0)
 
@@ -76,7 +76,7 @@ export function StagesSection() {
           </ul>
           </div>
 
-          <StagePreview stage={stages[active]} />
+          {stages[active] && <StagePreview stage={stages[active]} />}
         </div>
 
         {/* Mobile heading — only shows below lg */}
