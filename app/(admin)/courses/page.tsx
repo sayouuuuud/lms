@@ -1,16 +1,24 @@
-import { CoursesPageHeader } from '@/components/courses/courses-page-header'
-import { CoursesStats } from '@/components/courses/courses-stats'
-import { CoursesGrid } from '@/components/courses/courses-grid'
-import { getCourses } from './actions'
+import { getLecturesAdmin, getBranchOptions } from './actions'
+import { LecturesProvider } from '@/components/courses/lectures-context'
+import { LecturesPageHeader } from '@/components/courses/lectures-page-header'
+import { LecturesStats } from '@/components/courses/lectures-stats'
+import { LecturesGrid } from '@/components/courses/lectures-grid'
+import { LectureFormModals } from '@/components/courses/lecture-form-modals'
+
+export const dynamic = 'force-dynamic'
 
 export default async function CoursesPage() {
-  const courses = await getCourses()
+  const [lectures, branchOptions] = await Promise.all([
+    getLecturesAdmin(),
+    getBranchOptions(),
+  ])
 
   return (
-    <>
-      <CoursesPageHeader />
-      <CoursesStats />
-      <CoursesGrid courses={courses} />
-    </>
+    <LecturesProvider initialLectures={lectures} branchOptions={branchOptions}>
+      <LecturesPageHeader />
+      <LecturesStats />
+      <LecturesGrid />
+      <LectureFormModals />
+    </LecturesProvider>
   )
 }
