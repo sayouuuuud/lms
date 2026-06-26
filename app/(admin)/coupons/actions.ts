@@ -43,18 +43,22 @@ export async function createCoupon(values: {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
-  const { data: latest } = await supabase
+  // Compute the next sequence number numerically. `display_code` is text, so
+  // ordering it in the DB would sort lexicographically (e.g. "CPN-09" > "CPN-10")
+  // and yield duplicate codes once we reach two digits. Fetch all codes and take
+  // the real numeric max instead.
+  const { data: existing } = await supabase
     .from('coupons')
     .select('display_code')
-    .order('display_code', { ascending: false })
-    .limit(1)
-    .single()
 
-  let nextNum = 1
-  if (latest && latest.display_code.startsWith('CPN-')) {
-    const num = parseInt(latest.display_code.replace('CPN-', ''), 10)
-    if (!isNaN(num)) nextNum = num + 1
+  let maxNum = 0
+  for (const row of existing ?? []) {
+    if (typeof row.display_code === 'string' && row.display_code.startsWith('CPN-')) {
+      const num = parseInt(row.display_code.replace('CPN-', ''), 10)
+      if (!isNaN(num) && num > maxNum) maxNum = num
+    }
   }
+  const nextNum = maxNum + 1
   const displayCode = `CPN-${String(nextNum).padStart(2, '0')}`
 
   const { error } = await supabase.from('coupons').insert({

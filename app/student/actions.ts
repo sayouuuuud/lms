@@ -46,14 +46,13 @@ type PaymentRow = {
 // by the billing UI.
 export async function getStudentInvoices(): Promise<Invoice[]> {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return []
+  const student = await getCurrentStudent(supabase)
+  if (!student) return []
 
   const { data, error } = await supabase
     .from('payments')
     .select('code, course, amount, method, reference, submitted_at, status, created_at')
+    .eq('student_id', student.id)
     .order('created_at', { ascending: false })
 
   if (error || !data) {
@@ -76,22 +75,22 @@ export async function getStudentInvoices(): Promise<Invoice[]> {
 }
 
 // Resubmits payment proof for one of the student's own payments (e.g. after
-// rejection). RLS guarantees the student can only touch their own rows.
+// rejection). Scoped to the current student so a student can only touch their
+// own rows.
 export async function resubmitPayment(
   code: string,
   method: PaymentMethod,
   reference: string,
 ) {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'غير مسجّل الدخول.' }
+  const student = await getCurrentStudent(supabase)
+  if (!student) return { error: 'غير مسجّل الدخول.' }
 
   const { error } = await supabase
     .from('payments')
     .update({ method, reference, status: 'قيد المراجعة', submitted_at: 'الآن' })
     .eq('code', code)
+    .eq('student_id', student.id)
 
   if (error) {
     console.log('[v0] resubmitPayment error:', error.message)
