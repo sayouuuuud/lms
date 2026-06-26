@@ -1,23 +1,18 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
 
-// Animates only the page content on navigation. Kept separate from the
-// dashboard/student shells (sidebar + header) so those stay mounted and
-// never flicker when switching pages.
+// Lightweight page-content transition: a short CSS fade keyed on the pathname.
+// No animation-library runtime per navigation, so switching pages feels snappy.
+// Kept separate from the dashboard/student shells (sidebar + header) so those
+// stay mounted and never flicker.
 export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <motion.div
-      key={pathname}
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
-    >
+    <div key={pathname} className="ns-page-fade">
       {children}
-    </motion.div>
+    </div>
   )
 }

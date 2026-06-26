@@ -1,27 +1,27 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   ArrowRight,
   Check,
   CheckCheck,
+  Loader2,
   MessageSquare,
   Paperclip,
+  Plus,
   Search,
   Send,
   Smile,
+  X,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { type Conversation } from '@/lib/student-messages-data'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import {
-  sendStudentMessage,
-  startStudentConversation,
-} from '@/app/student/messages/actions'
+import { sendStudentMessage, startConversation } from '@/app/student/messages/actions'
 
 export function StudentMessagesPage({
   initialConversations,
@@ -33,25 +33,9 @@ export function StudentMessagesPage({
   const [activeId, setActiveId] = useState<string>(initialConversations[0]?.id ?? '')
   const [query, setQuery] = useState('')
   const [draft, setDraft] = useState('')
-  const [newDraft, setNewDraft] = useState('')
   const [showChatMobile, setShowChatMobile] = useState(false)
-  const [isPending, startTransition] = useTransition()
-
-  // Starts a fresh conversation with the teacher (used by the empty state).
-  const startConversation = () => {
-    const text = newDraft.trim()
-    if (!text) return
-    startTransition(async () => {
-      const res = await startStudentConversation(text)
-      if (res?.error) {
-        toast.error(res.error)
-        return
-      }
-      setNewDraft('')
-      toast.success('تم إرسال رسالتك للمدرّس')
-      router.refresh()
-    })
-  }
+  const [newOpen, setNewOpen] = useState(false)
+  const [, startTransition] = useTransition()
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -119,33 +103,23 @@ export function StudentMessagesPage({
           </div>
           <h2 className="text-lg font-bold text-foreground">ابدأ محادثة مع المدرّس</h2>
           <p className="max-w-sm text-sm text-muted-foreground">
-            اكتب رسالتك للأستاذ عبد السلام أو فريق الدعم وهيتم الرد عليك من هنا.
+            ابدأ محادثة مع الأستاذ عبد السلام وفريق الدعم بخصوص اشتراكاتك أو أي استفسار.
           </p>
-          <div className="flex w-full max-w-md items-end gap-2">
-            <textarea
-              value={newDraft}
-              onChange={(e) => setNewDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  startConversation()
-                }
-              }}
-              rows={2}
-              placeholder="اكتب رسالتك للمدرّس..."
-              className="max-h-32 min-h-[48px] flex-1 resize-none rounded-xl border border-border bg-secondary/60 px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card"
-            />
-            <Button
-              size="icon"
-              className="size-11 shrink-0"
-              onClick={startConversation}
-              disabled={!newDraft.trim() || isPending}
-              aria-label="إرسال"
-            >
-              <Send className="size-5" />
-            </Button>
-          </div>
+          <Button onClick={() => setNewOpen(true)} className="mt-2">
+            <Plus className="size-4" />
+            محادثة جديدة
+          </Button>
         </Card>
+
+        {newOpen && (
+          <NewConversationModal
+            onClose={() => setNewOpen(false)}
+            onCreated={() => {
+              setNewOpen(false)
+              router.refresh()
+            }}
+          />
+        )}
       </div>
     )
   }
@@ -153,17 +127,23 @@ export function StudentMessagesPage({
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-foreground">الرسائل</h1>
-        <p className="text-sm text-muted-foreground">
-          تواصل مع محاضريك وزملائك وفريق الدعم.
-          {totalUnread > 0 && (
-            <span className="mr-1 font-semibold text-primary">
-              {' '}
-              لديك {totalUnread} رسائل غير مقروءة.
-            </span>
-          )}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-foreground">الرسائل</h1>
+          <p className="text-sm text-muted-foreground">
+            تواصل مع محاضريك وزملائك وفريق الدعم.
+            {totalUnread > 0 && (
+              <span className="mr-1 font-semibold text-primary">
+                {' '}
+                لديك {totalUnread} رسائل غير مقروءة.
+              </span>
+            )}
+          </p>
+        </div>
+        <Button onClick={() => setNewOpen(true)}>
+          <Plus className="size-4" />
+          محادثة جديدة
+        </Button>
       </div>
 
       <Card className="grid h-[calc(100vh-13rem)] min-h-[520px] grid-cols-1 gap-0 overflow-hidden p-0 md:grid-cols-[320px_1fr]">
@@ -358,6 +338,99 @@ export function StudentMessagesPage({
           </div>
         </div>
       </Card>
+
+      {newOpen && (
+        <NewConversationModal
+          onClose={() => setNewOpen(false)}
+          onCreated={() => {
+            setNewOpen(false)
+            router.refresh()
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function NewConversationModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [subject, setSubject] = useState('')
+  const [text, setText] = useState('')
+  const [sending, setSending] = useState(false)
+
+  async function submit() {
+    if (!text.trim()) {
+      toast.error('اكتب رسالتك الأول.')
+      return
+    }
+    setSending(true)
+    const res = await startConversation(subject, text)
+    setSending(false)
+    if (res?.error) {
+      toast.error(res.error)
+      return
+    }
+    toast.success('تم إرسال رسالتك لفريق الدعم')
+    onCreated()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="إغلاق"
+        onClick={onClose}
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
+      />
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-border bg-background p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">محادثة جديدة</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-muted"
+            aria-label="إغلاق"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">
+          الموضوع
+        </label>
+        <input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="مثال: استفسار عن اشتراك"
+          className="mb-4 h-11 w-full rounded-xl border border-border bg-secondary/50 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background"
+        />
+
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">
+          رسالتك
+        </label>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={4}
+          placeholder="اكتب رسالتك لفريق الدعم..."
+          className="mb-4 w-full resize-none rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background"
+        />
+
+        <div className="flex justify-start gap-2">
+          <Button onClick={submit} disabled={sending}>
+            {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            إرسال
+          </Button>
+          <Button variant="outline" type="button" onClick={onClose}>
+            إلغاء
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

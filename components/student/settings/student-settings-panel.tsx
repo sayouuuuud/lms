@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   Camera,
   Check,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -288,9 +289,9 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
                 <FieldLabel>البريد الإلكتروني</FieldLabel>
                 <Input
                   type="email"
-                  defaultValue={studentProfile.email}
-                  disabled
-                  className="text-right"
+                  value={studentProfile.email ?? ''}
+                  readOnly
+                  className="text-right opacity-70"
                   dir="ltr"
                 />
               </div>
@@ -300,15 +301,16 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  placeholder="01xxxxxxxxx"
                   className="text-right"
                   dir="ltr"
-                  placeholder="01xxxxxxxxx"
                 />
               </div>
             </div>
 
             <div className="flex justify-start gap-3">
               <Button onClick={handleProfileSave} disabled={isPending}>
+                {isPending && <Loader2 className="size-4 animate-spin" />}
                 حفظ التغييرات
               </Button>
             </div>

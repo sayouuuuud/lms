@@ -10,6 +10,7 @@ import {
   Layers,
 } from 'lucide-react'
 import { countLessons, type Stage } from '@/lib/landing-data'
+import { SubscribeButton } from './subscribe-button'
 
 function formatEGP(value: number) {
   return new Intl.NumberFormat('ar-EG').format(value)
@@ -18,6 +19,11 @@ function formatEGP(value: number) {
 export function StageDetail({ stage }: { stage: Stage }) {
   const totalLessons = stage.branches.reduce((sum, b) => sum + countLessons(b), 0)
   const totalLectures = stage.branches.reduce((sum, b) => sum + b.lectures.length, 0)
+  // All lecture db ids in this stage (for "subscribe to the whole stage").
+  const stageLectureIds = stage.branches
+    .flatMap((b) => b.lectures)
+    .map((l) => l.dbId)
+    .filter((id): id is string => Boolean(id))
 
   return (
     <main className="min-h-screen bg-cream dark:bg-ink-base">
@@ -239,13 +245,11 @@ export function StageDetail({ stage }: { stage: Stage }) {
                 </p>
               )}
 
-              <Link
-                href="/auth?mode=register"
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 text-base font-bold text-navy-deep transition-transform duration-200 hover:-translate-y-0.5 dark:bg-violet-glow dark:text-white dark:shadow-[0_0_24px_oklch(0.66_0.2_292_/_0.4)]"
-              >
-                اشترك في المرحلة كاملة
-                <ArrowRight className="size-5 rotate-180" />
-              </Link>
+              <SubscribeButton
+                lectureIds={stageLectureIds}
+                label="اشترك في المرحلة كاملة"
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 text-base font-bold text-navy-deep transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-70 dark:bg-violet-glow dark:text-white dark:shadow-[0_0_24px_oklch(0.66_0.2_292_/_0.4)]"
+              />
               <p className="mt-3 text-center text-xs text-cream/50">
                 ضمان استرجاع خلال 7 أيام
               </p>

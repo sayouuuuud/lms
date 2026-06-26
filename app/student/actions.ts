@@ -103,43 +103,7 @@ export async function resubmitPayment(
 }
 
 // ── Portal data ──────────────────────────────────────────────────
-
-// Persists the student's editable profile fields (name + phone) to both the
-// profiles row (auth-linked) and the students row (portal record).
-export async function updateStudentProfile(input: {
-  fullName: string
-  phone: string
-}) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'لازم تسجّل دخول.' }
-
-  const fullName = input.fullName.trim()
-  const phone = input.phone.trim()
-  if (!fullName) return { error: 'الاسم مطلوب.' }
-
-  const { error: profileErr } = await supabase
-    .from('profiles')
-    .update({ full_name: fullName, phone })
-    .eq('id', user.id)
-
-  if (profileErr) {
-    console.log('[v0] updateStudentProfile error:', profileErr.message)
-    return { error: 'تعذّر حفظ التغييرات. حاول تاني.' }
-  }
-
-  // Keep the portal students record in sync (best-effort).
-  await supabase
-    .from('students')
-    .update({ name: fullName, phone })
-    .eq('user_id', user.id)
-
-  revalidatePath('/student', 'layout')
-  revalidatePath('/student/settings')
-  return { success: true }
-}
+// (updateStudentProfile lives further down, near the other profile helpers.)
 
 export async function getStudentProfile() {
   const supabase = await createClient()
@@ -461,4 +425,37 @@ export async function getStudentAssignments() {
       dueDate: new Date(a.due_date || new Date()).toLocaleDateString('ar-EG'),
     }
   })
+}
+
+// ── Profile update (student settings) ────────────────────────────
+export async function updateStudentProfile(input: {
+  fullName: string
+  phone: string
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'لازم تسجّل دخول.' }
+
+  const fullName = input.fullName.trim()
+  const phone = input.phone.trim()
+  if (!fullName) return { error: 'الاسم مطلوب.' }
+
+  // Update the profile row (source of truth for name/phone).
+  const { error: profileErr } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName, phone })
+    .eq('id', user.id)
+  if (profileErr) return { error: profileErr.message }
+
+  // Keep the students row in sync when it exists.
+  await supabase
+    .from('students')
+    .update({ name: fullName, phone })
+    .eq('user_id', user.id)
+
+  revalidatePath('/student/settings')
+  revalidatePath('/student', 'layout')
+  return { success: true }
 }

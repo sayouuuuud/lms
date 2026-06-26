@@ -2,11 +2,18 @@
 
 import { useRef } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { GravityPills } from './gravity-pills'
+
+// The matter-js physics canvas is heavy; load it client-side only so it never
+// blocks first paint of the landing page.
+const GravityPills = dynamic(
+  () => import('./gravity-pills').then((m) => m.GravityPills),
+  { ssr: false },
+)
 
 gsap.registerPlugin(ScrollTrigger)
 

@@ -53,9 +53,11 @@ export async function getStudentConversations(): Promise<Conversation[]> {
 }
 
 // Starts a brand-new conversation from the student to the teacher/support.
-export async function startStudentConversation(text: string) {
+// Writes go through the service-role client because the messages table is
+// admin-only under RLS; the row is always scoped to the authenticated user.
+export async function startConversation(subject: string, text: string) {
   const message = text.trim()
-  if (!message) return { error: 'الرسالة فاضية.' }
+  if (!message) return { error: 'اكتب رسالتك الأول.' }
 
   const supabase = await createClient()
   const {
@@ -82,7 +84,7 @@ export async function startStudentConversation(text: string) {
     student_id: user.id,
     sender_name: studentName,
     sender_avatar: null,
-    subject: 'رسالة من الطالب',
+    subject: subject.trim() || 'رسالة من الطالب',
     content: message,
     time_label: 'الآن',
     is_read: false,
