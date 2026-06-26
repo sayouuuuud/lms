@@ -20,6 +20,7 @@ export default async function StudentLayout({ children }: { children: ReactNode 
 
   // Fallback profile if not found
   const defaultProfile = {
+    id: '',
     name: 'طالب غير مسجل',
     email: '',
     initials: 'ط',

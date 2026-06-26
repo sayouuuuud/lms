@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User, GraduationCap, Check, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User, GraduationCap, Check, AlertCircle, ShieldCheck, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
@@ -35,11 +35,18 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
   const [grade, setGrade] = useState('')
   const [password, setPassword] = useState('')
 
+  // OTP / email verification step
+  const [awaitingCode, setAwaitingCode] = useState(false)
+  const [code, setCode] = useState('')
+  const [resending, setResending] = useState(false)
+
   const switchTab = (next: Tab) => {
     setTab(next)
     setDone(false)
     setError('')
     setShowPassword(false)
+    setAwaitingCode(false)
+    setCode('')
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -76,45 +83,187 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
         router.push(destination)
         router.refresh()
       } else {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            emailRedirectTo:
-              process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
-              `${window.location.origin}/auth/callback`,
-            data: {
-              full_name: name.trim(),
-              phone: phone.trim(),
-              grade,
-              role: 'student',
-            },
-          },
+        // Register via our own endpoint, which creates the user and emails an
+        // activation code through our SMTP (Gmail).
+        const res = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+            full_name: name.trim(),
+            phone: phone.trim(),
+            grade,
+          }),
         })
-        if (signUpError) {
-          setError(
-            signUpError.message.includes('already')
-              ? 'البريد الإلكتروني مستخدم بالفعل.'
-              : 'حصلت مشكلة أثناء إنشاء الحساب. حاول تاني.',
-          )
+        const result = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setError(result.error ?? 'حصلت مشكلة أثناء إنشاء الحساب. حاول تاني.')
           return
         }
-        // If a session exists immediately (email confirmation disabled), go in.
-        if (data.session) {
-          router.push('/student')
-          router.refresh()
-          return
-        }
+        // Code emailed -> show the activation-code step.
         setDoneMessage(
-          'تم إنشاء حسابك! بصّ على بريدك الإلكتروني وأكّد الحساب عشان تقدر تدخل.',
+          'بعتنالك كود تفعيل على بريدك الإلكتروني. اكتبه تحت عشان تفعّل حسابك.',
         )
-        setDone(true)
+        setAwaitingCode(true)
       }
     } catch {
       setError('حصل خطأ غير متوقّع. حاول تاني.')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Verify the activation code sent to the user's email.
+  const handleVerify = async (e: FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError('')
+
+    const supabase = createClient()
+
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: code.trim(),
+        type: 'signup',
+      })
+      if (verifyError || !data.session) {
+        setError('الكود غير صحيح أو انتهت صلاحيته. حاول تاني أو اطلب كود جديد.')
+        return
+      }
+      // Account activated + signed in -> students go to their portal.
+      router.push('/student')
+      router.refresh()
+    } catch {
+      setError('حصل خطأ غير متوقّع. حاول تاني.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Resend a fresh activation code to the same email (via our SMTP endpoint).
+  const handleResend = async () => {
+    setResending(true)
+    setError('')
+
+    try {
+      const res = await fetch('/auth/register/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(result.error ?? 'مقدرناش نبعت الكود تاني دلوقتي. حاول مرة كمان.')
+        return
+      }
+      setDoneMessage('بعتنالك كود جديد على بريدك الإلكتروني.')
+    } catch {
+      setError('حصل خطأ غير متوقّع. حاول تاني.')
+    } finally {
+      setResending(false)
+    }
+  }
+
+  // ---- Activation-code step (after registration) --------------------------
+  if (awaitingCode) {
+    return (
+      <div className="w-full">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <span className="grid size-14 place-items-center rounded-2xl bg-navy/5 text-navy dark:bg-violet-glow/15 dark:text-violet-glow">
+            <ShieldCheck className="size-7" />
+          </span>
+          <h2 className="mt-4 text-xl font-extrabold text-navy dark:text-ink-fg">
+            فعّل حسابك
+          </h2>
+          <p className="mt-2 text-sm text-navy-soft dark:text-ink-dim">
+            بعتنالك كود تفعيل على{' '}
+            <span className="font-bold text-navy dark:text-ink-fg" dir="ltr">
+              {email}
+            </span>
+          </p>
+        </div>
+
+        {/* Info / success message */}
+        {doneMessage && !error && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-brand/30 bg-emerald-brand/10 px-4 py-3 text-emerald-deep">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-brand/20">
+              <Check className="size-4" />
+            </span>
+            <p className="text-sm font-semibold">{doneMessage}</p>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-600 dark:text-red-400">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-red-500/20">
+              <AlertCircle className="size-4" />
+            </span>
+            <p className="text-sm font-semibold">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleVerify} className="space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="code" className="block text-sm font-semibold text-navy dark:text-ink-fg">
+              كود التفعيل
+            </label>
+            <input
+              id="code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              maxLength={8}
+              placeholder="00000000"
+              value={code}
+              dir="ltr"
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              className={cn(
+                'h-14 w-full rounded-xl border border-navy/15 bg-cream/60 px-4 text-center font-mono text-2xl font-bold tracking-[0.35em] text-navy outline-none transition-colors dark:border-ink-line dark:bg-ink-base/60 dark:text-ink-fg',
+                'placeholder:text-navy-soft/40 focus:border-gold focus:ring-4 focus:ring-gold/15 dark:placeholder:text-ink-dim/40 dark:focus:border-teal-glow dark:focus:ring-teal-glow/15',
+              )}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || code.length < 6}
+            className={cn(
+              'mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-cream transition-all dark:bg-violet-glow dark:text-white',
+              'hover:bg-navy-deep active:translate-y-px disabled:opacity-70 dark:hover:bg-violet-deep',
+            )}
+          >
+            {submitting && <Loader2 className="size-4 animate-spin" />}
+            تأكيد وتفعيل الحساب
+          </button>
+        </form>
+
+        <div className="mt-6 flex flex-col items-center gap-3 text-center text-sm">
+          <p className="text-navy-soft dark:text-ink-dim">
+            ماوصلكش الكود؟{' '}
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="font-bold text-gold-deep hover:underline disabled:opacity-60 dark:text-teal-glow"
+            >
+              {resending ? 'بنبعت...' : 'ابعت كود تاني'}
+            </button>
+          </p>
+          <button
+            type="button"
+            onClick={() => switchTab('register')}
+            className="inline-flex items-center gap-1.5 font-semibold text-navy-soft transition-colors hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg"
+          >
+            <ArrowRight className="size-4" />
+            الرجوع للتسجيل
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
