@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import {
   BookOpen,
@@ -20,6 +21,7 @@ function formatEGP(value: number) {
 
 type FlatLecture = {
   dbId?: string
+  slug: string
   title: string
   description: string
   price: number
@@ -43,6 +45,7 @@ export function StudentBrowsePage({ stages = [] }: { stages?: Stage[] }) {
         for (const lec of branch.lectures) {
           out.push({
             dbId: lec.dbId,
+            slug: lec.id,
             title: lec.title,
             description: lec.description,
             price: lec.price,
@@ -138,20 +141,31 @@ export function StudentBrowsePage({ stages = [] }: { stages?: Stage[] }) {
             return (
               <div
                 key={(lec.dbId ?? lec.title) + i}
-                className="flex flex-col rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-md"
+                className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="rounded-lg bg-secondary px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-                    {lec.stageTitle}
-                  </span>
-                  {lec.badge && (
-                    <span className="rounded-lg bg-primary/10 px-2 py-1 text-[11px] font-bold text-primary">
-                      {lec.badge}
+                {/* lecture artwork */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-secondary to-muted">
+                  <Image
+                    src={`/lessons/${lec.slug}.png`}
+                    alt={lec.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    className="object-contain p-4"
+                  />
+                  <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
+                    <span className="rounded-lg bg-card/90 px-2 py-1 text-[11px] font-semibold text-muted-foreground backdrop-blur">
+                      {lec.stageTitle}
                     </span>
-                  )}
+                    {lec.badge && (
+                      <span className="rounded-lg bg-primary px-2 py-1 text-[11px] font-bold text-primary-foreground shadow">
+                        {lec.badge}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <h3 className="mt-3 text-base font-bold text-foreground">{lec.title}</h3>
+                <div className="flex flex-1 flex-col p-5">
+                <h3 className="text-base font-bold text-foreground">{lec.title}</h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">{lec.branchTitle}</p>
                 {lec.description && (
                   <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
@@ -200,6 +214,7 @@ export function StudentBrowsePage({ stages = [] }: { stages?: Stage[] }) {
                       </>
                     )}
                   </button>
+                </div>
                 </div>
               </div>
             )
