@@ -7,7 +7,9 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { MathLoader } from '@/components/landing/math-loader'
 import { CartProvider } from '@/components/cart/cart-provider'
 import { CartModal } from '@/components/cart/cart-modal'
+import { colorPresets } from '@/lib/color-presets'
 import './globals.css'
+
 
 const cairo = Cairo({
   variable: '--font-cairo',
@@ -59,9 +61,27 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})();`,
+            __html: `(function(){try{
+              var t=localStorage.getItem('theme');
+              var isDark = t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+              if(isDark){document.documentElement.classList.add('dark')}
+              
+              var presets=${JSON.stringify(colorPresets)};
+              var c=localStorage.getItem('color-preset')||'navy';
+              var preset=presets.find(function(p){return p.id===c});
+              if(preset){
+                var vals=isDark?preset.dark:preset.light;
+                var root=document.documentElement;
+                root.style.setProperty('--primary', vals.primary);
+                root.style.setProperty('--ring', vals.ring);
+                root.style.setProperty('--sidebar-primary', vals.sidebar);
+                root.style.setProperty('--sidebar-accent', vals.sidebar);
+                root.style.setProperty('--sidebar-ring', vals.ring);
+              }
+            }catch(e){}})();`,
           }}
         />
+
       </head>
       <body className={`${cairo.className} font-sans antialiased`}>
         <ThemeProvider>
@@ -71,7 +91,26 @@ export default function RootLayout({
             <CartModal />
           </CartProvider>
         </ThemeProvider>
-        <Toaster position="top-center" richColors dir="rtl" theme="system" />
+        <Toaster 
+          position="top-center" 
+          dir="rtl" 
+          theme="system" 
+          toastOptions={{
+            className: 'font-sans',
+            classNames: {
+              toast: 'group flex items-start bg-background/95 backdrop-blur-xl border border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] rounded-2xl p-4 gap-4 text-right transition-all duration-300',
+              title: 'text-foreground font-bold text-[15px] leading-none mb-1.5',
+              description: 'text-muted-foreground text-[13px] leading-relaxed',
+              actionButton: 'bg-primary text-primary-foreground font-semibold rounded-xl px-4 py-2 hover:bg-primary/90 transition-colors shrink-0',
+              cancelButton: 'bg-muted text-muted-foreground font-semibold rounded-xl px-4 py-2 hover:bg-muted/80 transition-colors shrink-0',
+              success: 'border-emerald-500/20 bg-emerald-500/10 dark:bg-emerald-500/10 dark:border-emerald-500/20',
+              error: 'border-rose-500/20 bg-rose-500/10 dark:bg-rose-500/10 dark:border-rose-500/20',
+              info: 'border-blue-500/20 bg-blue-500/10 dark:bg-blue-500/10 dark:border-blue-500/20',
+              warning: 'border-amber-500/20 bg-amber-500/10 dark:bg-amber-500/10 dark:border-amber-500/20',
+              icon: 'size-5 mt-0.5 shrink-0',
+            }
+          }}
+        />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

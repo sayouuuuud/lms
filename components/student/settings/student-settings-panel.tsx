@@ -201,7 +201,7 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
                   {studentProfile.name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {studentProfile.level} · {studentProfile.id}
+                  {studentProfile.level}
                 </p>
               </div>
             </div>
