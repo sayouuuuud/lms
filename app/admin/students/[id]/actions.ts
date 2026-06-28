@@ -252,14 +252,23 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
     { month: 'يونيو', amount: spendBase },
   ]
 
-  const skills = [
-    { subject: 'الجبر', score: 85 },
-    { subject: 'الهندسة الفراغية', score: 78 },
-    { subject: 'التفاضل والتكامل', score: 92 },
-    { subject: 'الديناميكا', score: 88 },
-    { subject: 'الاستاتيكا', score: 82 },
-    { subject: 'حساب المثلثات', score: 90 },
-  ]
+  // 7. Fetch all categories to build dynamic skills
+  const { data: categoriesData } = await supabase.from('categories').select('name')
+  const allCategories = categoriesData?.map(c => c.name) || ['الجبر', 'الهندسة الفراغية', 'التفاضل والتكامل', 'الديناميكا', 'الاستاتيكا', 'حساب المثلثات']
+
+  const skills = allCategories.map((catName) => {
+    // Find courses student is enrolled in for this category
+    const enrolledInCat = courses.filter((c) => c.category === catName)
+    
+    let score = 0
+    if (enrolledInCat.length > 0) {
+      // Calculate average progress as the skill score
+      const totalProgress = enrolledInCat.reduce((sum, c) => sum + c.progress, 0)
+      score = Math.round(totalProgress / enrolledInCat.length)
+    }
+
+    return { subject: catName, score }
+  })
 
   const submitted = assignments.filter((a) => a.status === 'تم التسليم').length
   const late = assignments.filter((a) => a.status === 'متأخر').length
