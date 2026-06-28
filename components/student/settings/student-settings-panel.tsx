@@ -112,10 +112,10 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
   const darkMode = isDark
   const setDarkMode = (_v: boolean) => toggleTheme()
   const [activeColor, setActiveColor] = useState<PresetId>(
-    () => (studentProfile.profile?.color_preset as PresetId) ||
+    () => ((studentProfile.profile?.color_preset as PresetId) ||
       (typeof window !== 'undefined'
         ? (localStorage.getItem('color-preset') as PresetId)
-        : null) ?? 'navy',
+        : null)) ?? 'navy',
   )
 
   function handleColorChange(id: PresetId) {
