@@ -6,6 +6,7 @@ import { Menu, X, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/components/theme-provider'
 import { CartButton } from '@/components/cart/cart-button'
+import { useCart } from '@/components/cart/cart-provider'
 
 const links = [
   { label: 'المنهج', href: '#features' },
@@ -35,6 +36,7 @@ function ThemeToggle({ className }: { className?: string }) {
 export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const { loggedIn } = useCart()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -78,18 +80,29 @@ export function LandingNavbar() {
         <div className="hidden items-center gap-2 md:flex">
           <CartButton className="text-navy dark:text-ink-fg" />
           <ThemeToggle />
-          <Link
-            href="/auth"
-            className="rounded-full px-5 py-2.5 text-sm font-bold text-navy transition-colors hover:bg-navy/5 dark:text-ink-fg dark:hover:bg-white/5"
-          >
-            تسجيل الدخول
-          </Link>
-          <Link
-            href="/auth?mode=register"
-            className="inline-flex items-center rounded-full bg-navy px-6 py-2.5 text-sm font-bold text-cream transition-transform duration-200 hover:-translate-y-0.5 hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:shadow-[0_0_22px_oklch(0.66_0.2_292_/_0.45)] dark:hover:bg-violet-deep"
-          >
-            ابدأ الآن
-          </Link>
+          {loggedIn ? (
+            <Link
+              href="/auth"
+              className="inline-flex items-center rounded-full bg-navy px-6 py-2.5 text-sm font-bold text-cream transition-transform duration-200 hover:-translate-y-0.5 hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
+            >
+              حسابي
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/auth"
+                className="rounded-full px-5 py-2.5 text-sm font-bold text-navy transition-colors hover:bg-navy/5 dark:text-ink-fg dark:hover:bg-white/5"
+              >
+                تسجيل الدخول
+              </Link>
+              <Link
+                href="/auth?mode=register"
+                className="inline-flex items-center rounded-full bg-navy px-6 py-2.5 text-sm font-bold text-cream transition-transform duration-200 hover:-translate-y-0.5 hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:shadow-[0_0_22px_oklch(0.66_0.2_292_/_0.45)] dark:hover:bg-violet-deep"
+              >
+                ابدأ الآن
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
@@ -120,20 +133,32 @@ export function LandingNavbar() {
               </a>
             ))}
             <div className="mt-2 flex gap-2">
-              <Link
-                href="/auth"
-                onClick={() => setOpen(false)}
-                className="flex-1 rounded-full border border-navy/15 px-6 py-3 text-center text-base font-bold text-navy dark:border-white/10 dark:text-ink-fg"
-              >
-                تسجيل الدخول
-              </Link>
-              <Link
-                href="/auth?mode=register"
-                onClick={() => setOpen(false)}
-                className="flex-1 rounded-full bg-navy px-6 py-3 text-center text-base font-bold text-cream dark:bg-violet-glow dark:text-white"
-              >
-                ابدأ الآن
-              </Link>
+              {loggedIn ? (
+                <Link
+                  href="/auth"
+                  onClick={() => setOpen(false)}
+                  className="flex-1 rounded-full bg-navy px-6 py-3 text-center text-base font-bold text-cream dark:bg-violet-glow dark:text-white"
+                >
+                  حسابي
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-full border border-navy/15 px-6 py-3 text-center text-base font-bold text-navy dark:border-white/10 dark:text-ink-fg"
+                  >
+                    تسجيل الدخول
+                  </Link>
+                  <Link
+                    href="/auth?mode=register"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-full bg-navy px-6 py-3 text-center text-base font-bold text-cream dark:bg-violet-glow dark:text-white"
+                  >
+                    ابدأ الآن
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
