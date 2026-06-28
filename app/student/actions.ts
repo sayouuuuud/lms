@@ -576,3 +576,32 @@ export async function updateStudentProfile(input: {
   revalidatePath('/student', 'layout')
   return { success: true }
 }
+
+export async function getAvailableStagesMinimal() {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('stages')
+    .select('id, slug, title')
+    .order('sort_order', { ascending: true })
+
+  return data || []
+}
+
+export async function setStudentGrade(grade: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'لازم تسجّل دخول.' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ grade })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  // Update students table as well if necessary, but typically grade is in profiles or both
+  // Here we update profiles.
+  
+  revalidatePath('/student', 'layout')
+  return { success: true }
+}

@@ -7,8 +7,10 @@ import {
   getStudentUpcomingSchedule,
   getStudentRecentGrades,
   getStudentAnnouncements,
-  getStudentLearningActivity
+  getStudentLearningActivity,
+  getAvailableStagesMinimal
 } from './actions'
+import { ForceGradeSelection } from '@/components/student/force-grade-selection'
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
   // Fetch the portal data in parallel instead of a slow sequential waterfall.
@@ -20,6 +22,7 @@ export default async function StudentLayout({ children }: { children: ReactNode 
       getStudentRecentGrades(),
       getStudentAnnouncements(),
       getStudentLearningActivity(),
+      getAvailableStagesMinimal(),
     ])
 
   // Fallback profile if not found
@@ -42,6 +45,9 @@ export default async function StudentLayout({ children }: { children: ReactNode 
       activity
     }}>
       <LayoutComponent>{children}</LayoutComponent>
+      {profile?.profile && !profile.profile.grade && (
+        <ForceGradeSelection stages={stages} />
+      )}
     </StudentProvider>
   )
 }

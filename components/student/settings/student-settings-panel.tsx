@@ -462,15 +462,6 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
               </p>
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <FieldLabel>اللغة</FieldLabel>
-                <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                  <option>العربية</option>
-                  <option>English</option>
-                </select>
-              </div>
-            </div>
             <div className="flex justify-start pt-4">
               <Button onClick={handlePrefsSave} disabled={isPending}>حفظ التفضيلات</Button>
             </div>
