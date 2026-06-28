@@ -252,13 +252,27 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
     { month: 'يونيو', amount: spendBase },
   ]
 
-  // 7. Fetch all categories to build dynamic skills
-  const { data: categoriesData } = await supabase.from('categories').select('name')
-  const allCategories = categoriesData?.map(c => c.name) || ['الجبر', 'الهندسة الفراغية', 'التفاضل والتكامل', 'الديناميكا', 'الاستاتيكا', 'حساب المثلثات']
+  // 7. Fetch all branches relevant to the student's grade to build dynamic skills
+  let validBranches: string[] = []
+  const { data: stage } = await supabase.from('stages').select('id').eq('title', studentRow.level).single()
+  
+  if (stage) {
+    const { data: branches } = await supabase.from('branches').select('title').eq('stage_id', stage.id)
+    if (branches && branches.length > 0) {
+      validBranches = branches.map((b: any) => b.title)
+    }
+  }
 
-  const skills = allCategories.map((catName) => {
-    // Find courses student is enrolled in for this category
-    const enrolledInCat = courses.filter((c) => c.category === catName)
+  // Fallback to categories if no branches exist for the stage
+  if (validBranches.length === 0) {
+    const { data: categoriesData } = await supabase.from('categories').select('name')
+    validBranches = categoriesData?.map((c: any) => c.name) || ['الجبر', 'الهندسة الفراغية', 'التفاضل والتكامل', 'الديناميكا', 'الاستاتيكا', 'حساب المثلثات']
+  }
+
+  const skills = validBranches.map((branchName) => {
+    // Find courses student is enrolled in for this branch/category
+    // Courses might store the branch name in 'category' field
+    const enrolledInCat = courses.filter((c) => c.category === branchName)
     
     let score = 0
     if (enrolledInCat.length > 0) {
@@ -267,7 +281,7 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
       score = Math.round(totalProgress / enrolledInCat.length)
     }
 
-    return { subject: catName, score }
+    return { subject: branchName, score }
   })
 
   const submitted = assignments.filter((a) => a.status === 'تم التسليم').length
