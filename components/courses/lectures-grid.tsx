@@ -112,14 +112,14 @@ export function LecturesGrid() {
                 className="overflow-hidden rounded-2xl border border-border bg-card"
               >
                 {/* Lecture row */}
-                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3">
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-1 items-start gap-4">
                     <button
                       type="button"
                       onClick={() =>
                         setExpanded((prev) => ({ ...prev, [lecture.id]: !isOpen }))
                       }
-                      className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-secondary"
+                      className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-secondary"
                       aria-label={isOpen ? 'طي الدروس' : 'عرض الدروس'}
                     >
                       <ChevronDown
@@ -129,9 +129,24 @@ export function LecturesGrid() {
                         )}
                       />
                     </button>
-                    <div>
+                    
+                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl border border-border bg-secondary/50 sm:h-20 sm:w-32">
+                      {lecture.image ? (
+                        <img
+                          src={lecture.image}
+                          alt={lecture.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+                          <Layers className="size-6" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-bold text-foreground">
+                        <h3 className="text-base font-bold text-foreground truncate">
                           {lecture.title}
                         </h3>
                         {lecture.badge && (
@@ -143,7 +158,7 @@ export function LecturesGrid() {
                           </Badge>
                         )}
                       </div>
-                      <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                      <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground line-clamp-2">
                         {lecture.description}
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
