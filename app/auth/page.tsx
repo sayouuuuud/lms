@@ -35,7 +35,7 @@ export default async function AuthPage({
       .single()
 
     if (profile?.role === 'admin') {
-      redirect('/dashboard')
+      redirect('/admin/dashboard')
     } else {
       redirect('/student')
     }
