@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
+import { createNotification } from '@/lib/notify'
 
 // ── Types ─────────────────────────────────────────────────────────
 export type AdminLesson = {
@@ -21,6 +22,7 @@ export type AdminLecture = {
   price: number
   oldPrice: number | null
   badge: string | null
+  image: string | null
   sortOrder: number
   branchId: string
   branchTitle: string
@@ -43,6 +45,7 @@ export type LectureInput = {
   price: number
   oldPrice: number | null
   badge: string | null
+  image?: string | null
 }
 
 export type LessonInput = {
@@ -70,7 +73,7 @@ export async function getLecturesAdmin(): Promise<AdminLecture[]> {
     supabase.from('branches').select('id, stage_id, title, sort_order'),
     supabase
       .from('lectures')
-      .select('id, branch_id, slug, title, description, price, old_price, badge, sort_order')
+      .select('*')
       .order('sort_order', { ascending: true }),
     supabase
       .from('lessons')
@@ -121,6 +124,7 @@ export async function getLecturesAdmin(): Promise<AdminLecture[]> {
       price: Number(row.price),
       oldPrice: row.old_price != null ? Number(row.old_price) : null,
       badge: row.badge,
+      image: (row as any).image ?? null,
       sortOrder: row.sort_order,
       branchId: row.branch_id,
       branchTitle: branch?.title ?? '',
@@ -167,7 +171,7 @@ export async function createLecture(input: LectureInput) {
     .select('id', { count: 'exact', head: true })
     .eq('branch_id', input.branchId)
 
-  const { error } = await supabase.from('lectures').insert({
+  const row: Record<string, any> = {
     branch_id: input.branchId,
     slug: slugify(input.title),
     title: input.title,
@@ -176,32 +180,74 @@ export async function createLecture(input: LectureInput) {
     old_price: input.oldPrice,
     badge: input.badge,
     sort_order: (count ?? 0) + 1,
-  })
+  }
+  if (input.image) row.image = input.image
+
+  let { error } = await supabase.from('lectures').insert(row)
+  // Retry without `image` if that column doesn't exist yet (migration pending).
+  if (error && /image/.test(error.message) && 'image' in row) {
+    delete row.image
+    ;({ error } = await supabase.from('lectures').insert(row))
+  }
 
   if (error) {
     console.log('[v0] createLecture error:', error.message)
     return { error: 'تعذّر إضافة المحاضرة.' }
   }
+
+  // Notify the students of this lecture's grade that a new lecture is available.
+  await notifyLectureGrade(supabase, input.branchId, input.title)
+
   revalidatePath('/courses')
   revalidatePath('/')
   return { success: true }
+}
+
+// Resolves the stage slug (= grade) for a branch and notifies that grade's
+// students about a newly added lecture. Best-effort; never fails the caller.
+async function notifyLectureGrade(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  branchId: string,
+  lectureTitle: string,
+) {
+  try {
+    const { data: branch } = await supabase
+      .from('branches')
+      .select('stage_id, stages:stage_id ( slug )')
+      .eq('id', branchId)
+      .single()
+    const grade = (branch as any)?.stages?.slug as string | undefined
+    await createNotification({
+      type: 'كورس',
+      title: 'محاضرة جديدة متاحة',
+      description: `تمت إضافة محاضرة "${lectureTitle}". تقدر تشوفها في صفحة تصفّح المحاضرات.`,
+      grade: grade ?? null,
+    })
+  } catch {
+    // ignore notification failures
+  }
 }
 
 export async function updateLecture(id: string, input: LectureInput) {
   const supabase = await createClient()
   if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
-  const { error } = await supabase
-    .from('lectures')
-    .update({
-      branch_id: input.branchId,
-      title: input.title,
-      description: input.description,
-      price: input.price,
-      old_price: input.oldPrice,
-      badge: input.badge,
-    })
-    .eq('id', id)
+  const patch: Record<string, any> = {
+    branch_id: input.branchId,
+    title: input.title,
+    description: input.description,
+    price: input.price,
+    old_price: input.oldPrice,
+    badge: input.badge,
+  }
+  if (input.image !== undefined) patch.image = input.image
+
+  let { error } = await supabase.from('lectures').update(patch).eq('id', id)
+  // Retry without `image` if that column doesn't exist yet (migration pending).
+  if (error && /image/.test(error.message) && 'image' in patch) {
+    delete patch.image
+    ;({ error } = await supabase.from('lectures').update(patch).eq('id', id))
+  }
 
   if (error) {
     console.log('[v0] updateLecture error:', error.message)

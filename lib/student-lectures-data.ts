@@ -15,6 +15,7 @@ type LectureRow = {
   slug: string
   title: string
   description: string | null
+  image?: string | null
   branches: {
     title: string | null
     image: string | null
@@ -65,7 +66,7 @@ function toCourseDetail(row: LectureRow): CourseDetail {
     id: row.slug,
     title: row.title,
     instructor: 'أ. عبد السلام',
-    image: lectureImage(row.slug),
+    image: row.image || lectureImage(row.slug),
     category: row.branches?.title ?? 'رياضيات',
     completedLessons: 0,
     totalLessons: lessons.length,
@@ -89,6 +90,13 @@ function toCourseDetail(row: LectureRow): CourseDetail {
 }
 
 const LECTURE_SELECT = `
+  id, slug, title, description, image,
+  branches:branch_id ( title, image, stages:stage_id ( title ) ),
+  lessons ( id, slug, title, duration, is_free, sort_order )
+`
+
+// Same projection without the optional `image` column (pre-migration fallback).
+const LECTURE_SELECT_NO_IMAGE = `
   id, slug, title, description,
   branches:branch_id ( title, image, stages:stage_id ( title ) ),
   lessons ( id, slug, title, duration, is_free, sort_order )
@@ -127,13 +135,21 @@ export async function getPurchasedCourses(): Promise<CourseDetail[]> {
   const ids = await getPurchasedLectureIds(supabase, user.id)
   if (ids.length === 0) return []
 
-  const { data, error } = await supabase
+  let res: { data: any; error: any } = await supabase
     .from('lectures')
     .select(LECTURE_SELECT)
     .in('id', ids)
 
-  if (error || !data) return []
-  return (data as unknown as LectureRow[]).map(toCourseDetail)
+  // Fall back to the legacy select (no `image`) if that column isn't there yet.
+  if (res.error && /image/.test(res.error.message)) {
+    res = await supabase
+      .from('lectures')
+      .select(LECTURE_SELECT_NO_IMAGE)
+      .in('id', ids)
+  }
+
+  if (res.error || !res.data) return []
+  return (res.data as unknown as LectureRow[]).map(toCourseDetail)
 }
 
 // One purchased lecture by its slug (used by the course-detail page). Returns

@@ -17,6 +17,8 @@ export type Lecture = {
   price: number
   oldPrice?: number
   badge?: string
+  // optional admin-uploaded artwork; falls back to /lessons/<slug>.png
+  image?: string
   lessons: Lesson[]
 }
 

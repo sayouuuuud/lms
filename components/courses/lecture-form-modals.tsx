@@ -5,6 +5,7 @@ import { Modal, Field } from '@/components/ui/modal'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ImageUploadField } from '@/components/ui/image-upload-field'
 import { cn } from '@/lib/utils'
 import { useLectures } from './lectures-context'
 
@@ -41,6 +42,7 @@ export function LectureFormModals() {
   const [price, setPrice] = useState('')
   const [oldPrice, setOldPrice] = useState('')
   const [badge, setBadge] = useState('')
+  const [image, setImage] = useState('')
 
   // Unique stages derived from branch options
   const stages = useMemo(() => {
@@ -69,6 +71,7 @@ export function LectureFormModals() {
       setPrice(editingLecture ? String(editingLecture.price) : '')
       setOldPrice(editingLecture?.oldPrice != null ? String(editingLecture.oldPrice) : '')
       setBadge(editingLecture?.badge ?? '')
+      setImage(editingLecture?.image ?? '')
     }
   }, [lectureFormOpen, editingLecture, branchOptions])
 
@@ -91,6 +94,7 @@ export function LectureFormModals() {
       price: Number(price) || 0,
       oldPrice: oldPrice ? Number(oldPrice) : null,
       badge: badge.trim() || null,
+      image: image || null,
     })
   }
 
@@ -205,6 +209,13 @@ export function LectureFormModals() {
               />
             </Field>
           </div>
+
+          <ImageUploadField
+            label="صورة المحاضرة"
+            value={image}
+            onChange={setImage}
+            hint="لو مرفعتش صورة، هنستخدم الصورة الافتراضية للمحاضرة."
+          />
 
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit" disabled={!branchId}>

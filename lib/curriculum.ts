@@ -35,6 +35,7 @@ type LectureRow = {
   price: number
   old_price: number | null
   badge: string | null
+  image?: string | null
 }
 
 type LessonRow = {
@@ -71,7 +72,7 @@ export async function getCurriculum(): Promise<Stage[]> {
       .order('sort_order', { ascending: true }),
     supabase
       .from('lectures')
-      .select('id, branch_id, slug, title, description, price, old_price, badge')
+      .select('*')
       .order('sort_order', { ascending: true }),
     supabase
       .from('lessons')
@@ -102,6 +103,7 @@ export async function getCurriculum(): Promise<Stage[]> {
       price: Number(row.price),
       oldPrice: row.old_price != null ? Number(row.old_price) : undefined,
       badge: row.badge ?? undefined,
+      image: row.image ?? undefined,
       lessons: lessonsByLecture.get(row.id) ?? [],
     })
     lecturesByBranch.set(row.branch_id, list)

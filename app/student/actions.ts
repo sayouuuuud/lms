@@ -285,6 +285,123 @@ export async function getStudentAnnouncements() {
   })
 }
 
+// Maps an admin-side notification type to the student-facing notification type.
+function mapNotifType(type: string): 'lesson' | 'exam' | 'assignment' | 'grade' | 'message' | 'system' {
+  switch (type) {
+    case 'كورس':
+      return 'lesson'
+    case 'اختبار':
+      return 'exam'
+    case 'رسالة':
+      return 'message'
+    case 'طالب':
+      return 'system'
+    default:
+      return 'system'
+  }
+}
+
+// Returns the full notification feed for the current student: their own
+// notifications, global broadcasts, and notifications targeted at their grade.
+// Read state comes from notification_reads (graceful if the table is absent).
+export async function getStudentNotifications() {
+  const supabase = await createClient()
+  const student = await getCurrentStudent(supabase)
+  if (!student) return []
+
+  // The student's grade matches the stage slug (sec-1/sec-2/sec-3).
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('grade')
+    .eq('id', student.user_id)
+    .single()
+  const grade = profile?.grade as string | undefined
+
+  // Own + broadcast.
+  const filters = [`student_id.eq.${student.id}`, 'student_id.is.null']
+  const { data: notifs } = await supabase
+    .from('notifications')
+    .select('*')
+    .or(filters.join(','))
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  let rows = notifs ?? []
+
+  // Grade-targeted (column may not exist yet → ignore errors).
+  if (grade) {
+    const { data: gradeNotifs } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('grade', grade)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (gradeNotifs?.length) {
+      const seen = new Set(rows.map((r: any) => r.id))
+      rows = [...rows, ...gradeNotifs.filter((r: any) => !seen.has(r.id))]
+    }
+  }
+
+  // Read state from notification_reads (best-effort).
+  let readIds = new Set<string>()
+  const { data: reads } = await supabase
+    .from('notification_reads')
+    .select('notification_id')
+    .eq('student_id', student.id)
+  if (reads) readIds = new Set(reads.map((r: any) => r.notification_id))
+
+  rows.sort(
+    (a: any, b: any) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  )
+
+  return rows.map((n: any) => ({
+    id: n.code,
+    notifId: n.id,
+    type: mapNotifType(n.type),
+    title: n.title,
+    text: n.description,
+    time: new Date(n.created_at).toLocaleDateString('ar-EG', {
+      day: 'numeric',
+      month: 'long',
+    }),
+    read: readIds.has(n.id),
+  }))
+}
+
+// Marks a single notification as read for the current student.
+export async function markStudentNotificationRead(notifId: string) {
+  const supabase = await createClient()
+  const student = await getCurrentStudent(supabase)
+  if (!student) return { error: 'لازم تسجّل دخول.' }
+
+  const { error } = await supabase
+    .from('notification_reads')
+    .upsert(
+      { notification_id: notifId, student_id: student.id },
+      { onConflict: 'notification_id,student_id' },
+    )
+  if (error) return { error: error.message }
+  revalidatePath('/student/notifications')
+  return { success: true }
+}
+
+// Marks every currently-visible notification as read for the student.
+export async function markAllStudentNotificationsRead(notifIds: string[]) {
+  const supabase = await createClient()
+  const student = await getCurrentStudent(supabase)
+  if (!student) return { error: 'لازم تسجّل دخول.' }
+  if (notifIds.length === 0) return { success: true }
+
+  const { error } = await supabase.from('notification_reads').upsert(
+    notifIds.map((id) => ({ notification_id: id, student_id: student.id })),
+    { onConflict: 'notification_id,student_id' },
+  )
+  if (error) return { error: error.message }
+  revalidatePath('/student/notifications')
+  return { success: true }
+}
+
 export async function getStudentLearningActivity() {
   // Weekly activity derived from lessons the student completed in the last 7
   // days (proxy: ~0.5h per completed lesson). Falls back to zeros when there's

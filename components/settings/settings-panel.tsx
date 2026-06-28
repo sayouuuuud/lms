@@ -116,7 +116,7 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
     profile: { firstName: 'محمد', lastName: 'أحمد', email: 'mohamed@platform.com', phone: '+20 100 123 4567', bio: 'مدير منصة تعليمية متخصصة في الدورات التقنية.' },
     notifications: { emailNotif: true, pushNotif: true, smsNotif: false, marketingNotif: false, weeklyReport: true },
     security: { twoFactor: true },
-    preferences: { darkMode: false, autoPublish: false, activeColor: 'navy' as PresetId, language: 'العربية', timezone: '(GMT+2) القاهرة', currency: 'جنيه مصري (EGP)' }
+    preferences: { darkMode: false, autoPublish: false, activeColor: 'navy' as PresetId, language: 'العربية', currency: 'جنيه مصري (EGP)' }
   }
 
   const [firstName, setFirstName] = useState(settings.profile.firstName)
@@ -178,7 +178,7 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
         profile: { firstName, lastName, email, phone, bio },
         notifications: { emailNotif, pushNotif, smsNotif, marketingNotif, weeklyReport },
         security: { twoFactor: true, requireEmailVerification },
-        preferences: { darkMode, autoPublish, activeColor, language: settings.preferences.language, timezone: settings.preferences.timezone, currency: settings.preferences.currency }
+        preferences: { darkMode, autoPublish, activeColor, language: settings.preferences.language, currency: settings.preferences.currency }
       }
       
       const res = await updateSettings(newSettings)
@@ -487,14 +487,6 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
                 <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
                   <option>العربية</option>
                   <option>English</option>
-                </select>
-              </div>
-              <div>
-                <FieldLabel>المنطقة الزمنية</FieldLabel>
-                <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                  <option>(GMT+2) القاهرة</option>
-                  <option>(GMT+3) الرياض</option>
-                  <option>(GMT+4) دبي</option>
                 </select>
               </div>
               <div>
