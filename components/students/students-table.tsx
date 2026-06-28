@@ -94,7 +94,7 @@ export function StudentsTable() {
             {filtered.map((student) => (
               <tr
                 key={student.id}
-                onClick={() => router.push(`/students/${student.id}`)}
+                onClick={() => router.push(`/admin/students/${student.id}`)}
                 className="cursor-pointer transition-colors hover:bg-secondary/40"
               >
                 <td className="px-3 py-3">
@@ -178,7 +178,7 @@ export function StudentsTable() {
           >
             <div
               className="flex cursor-pointer items-center gap-3"
-              onClick={() => router.push(`/students/${student.id}`)}
+              onClick={() => router.push(`/admin/students/${student.id}`)}
             >
               <Avatar className="size-10">
                 <AvatarImage src={getStudentAvatar(student)} alt={student.name} />
