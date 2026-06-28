@@ -36,6 +36,7 @@ export function CurriculumFormModals() {
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [idx, setIdx] = useState('')
+  const [rows, setRows] = useState('')
 
   const [stageImage, setStageImage] = useState('')
 
