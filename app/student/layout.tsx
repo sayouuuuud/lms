@@ -14,7 +14,7 @@ import { ForceGradeSelection } from '@/components/student/force-grade-selection'
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
   // Fetch the portal data in parallel instead of a slow sequential waterfall.
-  const [profile, enrolledCourses, schedule, grades, announcements, activity] =
+  const [profile, enrolledCourses, schedule, grades, announcements, activity, stages] =
     await Promise.all([
       getStudentProfile(),
       getStudentEnrolledCourses(),

@@ -625,3 +625,50 @@ export async function updateStudentPreferences(colorPreset: string, notifPrefs: 
   revalidatePath('/student', 'layout')
   return { success: true }
 }
+
+export async function trackStudentDevice() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  
+  const { data: student } = await supabase.from('students').select('id').eq('user_id', user.id).single();
+  if (!student) return;
+
+  const { headers } = await import('next/headers');
+  const hdrs = await headers();
+  
+  const ip = hdrs.get('x-real-ip') || hdrs.get('x-forwarded-for') || '127.0.0.1';
+  const city = hdrs.get('x-vercel-ip-city') || 'القاهرة';
+  const country = hdrs.get('x-vercel-ip-country') || 'مصر';
+  const ua = hdrs.get('user-agent') || '';
+
+  let browser = 'Chrome';
+  if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Edge')) browser = 'Edge';
+
+  let os = 'Windows';
+  if (ua.includes('Mac OS')) os = 'macOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iOS') || ua.includes('iPhone')) os = 'iOS';
+
+  let deviceType = 'كمبيوتر مكتبي';
+  if (ua.includes('Mobile') || ua.includes('Android') || ua.includes('iPhone')) deviceType = 'موبايل';
+  else if (ua.includes('iPad') || ua.includes('Tablet')) deviceType = 'تابلت';
+
+  const { data: existing } = await supabase.from('student_devices').select('sessions').eq('student_id', student.id).single();
+  const sessions = (existing?.sessions || 0) + 1;
+
+  await supabase.from('student_devices').upsert({
+    student_id: student.id,
+    ip,
+    city,
+    country,
+    browser,
+    os,
+    device_type: deviceType,
+    last_active: new Date().toISOString(),
+    sessions
+  }, { onConflict: 'student_id' });
+}
