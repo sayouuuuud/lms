@@ -38,8 +38,8 @@ export function StudentLayout({ children }: { children: ReactNode }) {
           onToggleTheme={toggleTheme}
         />
 
-        <main className="flex-1 space-y-6 p-4 sm:p-6">
-          <PageTransition>{children}</PageTransition>
+        <main className="flex-1 p-4 sm:p-6">
+          <PageTransition className="space-y-6">{children}</PageTransition>
         </main>
       </div>
     </div>
