@@ -2,8 +2,35 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
+import { createNotification } from '@/lib/notify'
 import { revalidatePath } from 'next/cache'
 import type { NotificationRecord, NotificationType } from '@/lib/notifications-data'
+
+// Admin broadcasts an announcement to students. `grade` of 'all' targets every
+// student; a specific stage slug (sec-1/sec-2/sec-3) targets that grade only.
+export async function sendAnnouncement(input: {
+  title: string
+  description: string
+  grade: string
+}) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) {
+    return { error: 'غير مسموح. لازم تكون أدمن.' }
+  }
+  const title = input.title.trim()
+  if (!title) return { error: 'العنوان مطلوب.' }
+
+  const res = await createNotification({
+    type: 'طالب',
+    title,
+    description: input.description.trim(),
+    grade: input.grade === 'all' ? null : input.grade,
+  })
+  if (res.error) return { error: 'تعذّر إرسال الإشعار. حاول تاني.' }
+
+  revalidatePath('/notifications')
+  return { success: true }
+}
 
 export async function getNotifications(): Promise<NotificationRecord[]> {
   const supabase = await createClient()

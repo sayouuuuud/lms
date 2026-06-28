@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
+import { createNotification } from '@/lib/notify'
 import { revalidatePath } from 'next/cache'
 import type { CalendarEvent, CalendarEventType } from '@/lib/calendar-data'
 
@@ -66,6 +67,14 @@ export async function createEvent(values: {
   })
 
   if (error) return { error: error.message }
+
+  // Notify all students about the new event (exam / assignment / lesson, etc).
+  await createNotification({
+    type: values.type === 'اختبار' ? 'اختبار' : 'نظام',
+    title: `موعد جديد: ${values.title}`,
+    description: `${values.date} - ${values.time}${values.course ? ` · ${values.course}` : ''}`,
+  })
+
   revalidatePath('/calendar')
   return { success: true }
 }

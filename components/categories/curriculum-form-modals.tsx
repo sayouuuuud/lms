@@ -5,6 +5,7 @@ import { Modal, Field } from '@/components/ui/modal'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ImageUploadField } from '@/components/ui/image-upload-field'
 import { cn } from '@/lib/utils'
 import { useCurriculum } from './curriculum-context'
 
@@ -43,6 +44,7 @@ export function CurriculumFormModals() {
   const [accent, setAccent] = useState<'emerald' | 'gold'>('emerald')
   const [termPrice, setTermPrice] = useState('')
   const [termOldPrice, setTermOldPrice] = useState('')
+  const [stageImage, setStageImage] = useState('')
 
   useEffect(() => {
     if (stageFormOpen) {
@@ -56,6 +58,7 @@ export function CurriculumFormModals() {
       setTermOldPrice(
         editingStage?.termOldPrice != null ? String(editingStage.termOldPrice) : '',
       )
+      setStageImage(editingStage?.image ?? '')
     }
   }, [stageFormOpen, editingStage])
 
@@ -71,7 +74,7 @@ export function CurriculumFormModals() {
       accent,
       termPrice: Number(termPrice) || 0,
       termOldPrice: termOldPrice ? Number(termOldPrice) : null,
-      image: editingStage?.image ?? '',
+      image: stageImage,
     })
   }
 
@@ -79,12 +82,14 @@ export function CurriculumFormModals() {
   const [bTitle, setBTitle] = useState('')
   const [bDescription, setBDescription] = useState('')
   const [bTopics, setBTopics] = useState('')
+  const [bImage, setBImage] = useState('')
 
   useEffect(() => {
     if (branchFormOpen) {
       setBTitle(editingBranch?.title ?? '')
       setBDescription(editingBranch?.description ?? '')
       setBTopics((editingBranch?.topics ?? []).join('\n'))
+      setBImage(editingBranch?.image ?? '')
     }
   }, [branchFormOpen, editingBranch])
 
@@ -95,7 +100,7 @@ export function CurriculumFormModals() {
       title: bTitle.trim(),
       description: bDescription.trim(),
       topics: bTopics.split('\n').map((t) => t.trim()).filter(Boolean),
-      image: editingBranch?.image ?? '',
+      image: bImage,
     })
   }
 
@@ -197,6 +202,13 @@ export function CurriculumFormModals() {
             </Field>
           </div>
 
+          <ImageUploadField
+            label="صورة المرحلة"
+            value={stageImage}
+            onChange={setStageImage}
+            hint="تظهر للطلاب على كارت المرحلة في الصفحة الرئيسية."
+          />
+
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit">
               {editingStage ? 'حفظ التغييرات' : 'إضافة المرحلة'}
@@ -242,6 +254,12 @@ export function CurriculumFormModals() {
               className={textareaClass}
             />
           </Field>
+          <ImageUploadField
+            label="صورة الفرع"
+            value={bImage}
+            onChange={setBImage}
+            hint="تظهر للطلاب على كارت الفرع."
+          />
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit">
               {editingBranch ? 'حفظ التغييرات' : 'إضافة الفرع'}

@@ -7,6 +7,11 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       return { url: file.url };
     }),
+  // Curriculum artwork (stages / branches / lectures) uploaded from admin.
+  curriculumImage: f({ image: { maxFileSize: "8MB", maxFileCount: 1 } })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url };
+    }),
 } satisfies FileRouter
 
 export type OurFileRouter = typeof ourFileRouter

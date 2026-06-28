@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { markAsRead, markAllAsRead, deleteNotification } from '@/app/(admin)/notifications/actions'
+import { markAsRead, markAllAsRead, deleteNotification, sendAnnouncement } from '@/app/(admin)/notifications/actions'
 import {
   Bell,
   BellRing,
@@ -11,10 +11,13 @@ import {
   CreditCard,
   FileText,
   GraduationCap,
+  Loader2,
   MessageSquare,
+  Send,
   Settings,
   Trash2,
   Users,
+  X,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -67,6 +70,7 @@ export function NotificationsFeed({
   const [items, setItems] = useState<NotificationRecord[]>(initialNotifications)
   const [filter, setFilter] = useState<NotificationType | 'الكل'>('الكل')
   const [onlyUnread, setOnlyUnread] = useState(false)
+  const [composing, setComposing] = useState(false)
 
   const unreadCount = useMemo(
     () => items.filter((n) => !n.read).length,
@@ -132,7 +136,18 @@ export function NotificationsFeed({
       <NotificationsPageHeader
         onMarkAllRead={markAllRead}
         unreadCount={unreadCount}
+        onCompose={() => setComposing(true)}
       />
+
+      {composing && (
+        <ComposeAnnouncementModal
+          onClose={() => setComposing(false)}
+          onSent={() => {
+            setComposing(false)
+            router.refresh()
+          }}
+        />
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
@@ -281,5 +296,114 @@ export function NotificationsFeed({
         )}
       </Card>
     </>
+  )
+}
+
+const GRADE_OPTIONS = [
+  { value: 'all', label: 'كل الطلاب' },
+  { value: 'sec-1', label: 'الصف الأول الثانوي' },
+  { value: 'sec-2', label: 'الصف الثاني الثانوي' },
+  { value: 'sec-3', label: 'الصف الثالث الثانوي' },
+]
+
+function ComposeAnnouncementModal({
+  onClose,
+  onSent,
+}: {
+  onClose: () => void
+  onSent: () => void
+}) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [grade, setGrade] = useState('all')
+  const [sending, setSending] = useState(false)
+
+  async function submit() {
+    if (!title.trim()) {
+      toast.error('اكتب عنوان الإشعار.')
+      return
+    }
+    setSending(true)
+    const res = await sendAnnouncement({ title, description, grade })
+    setSending(false)
+    if (res.error) {
+      toast.error(res.error)
+      return
+    }
+    toast.success('تم إرسال الإشعار للطلاب')
+    onSent()
+  }
+
+  const inputCls =
+    'h-11 w-full rounded-xl border border-border bg-secondary/50 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background'
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="إغلاق"
+        onClick={onClose}
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
+      />
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-border bg-background p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">إرسال إشعار للطلاب</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-muted"
+            aria-label="إغلاق"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <label className="mb-1.5 block text-right text-sm font-semibold text-foreground">
+          العنوان
+        </label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="مثال: إجازة يوم الجمعة"
+          className={`${inputCls} mb-4 text-right`}
+        />
+
+        <label className="mb-1.5 block text-right text-sm font-semibold text-foreground">
+          نص الإشعار
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={4}
+          placeholder="اكتب تفاصيل الإشعار..."
+          className="mb-4 w-full resize-none rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-right text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background"
+        />
+
+        <label className="mb-1.5 block text-right text-sm font-semibold text-foreground">
+          إرسال إلى
+        </label>
+        <select
+          value={grade}
+          onChange={(e) => setGrade(e.target.value)}
+          className={`${inputCls} mb-5 text-right`}
+        >
+          {GRADE_OPTIONS.map((g) => (
+            <option key={g.value} value={g.value}>
+              {g.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="flex justify-start gap-2">
+          <Button onClick={submit} disabled={sending}>
+            {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            إرسال
+          </Button>
+          <Button variant="outline" type="button" onClick={onClose}>
+            إلغاء
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }

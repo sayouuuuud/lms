@@ -1,22 +1,23 @@
 'use client'
 
-import { CheckCheck, Settings2 } from 'lucide-react'
-import { toast } from 'sonner'
+import { CheckCheck, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function NotificationsPageHeader({
   onMarkAllRead,
   unreadCount,
+  onCompose,
 }: {
   onMarkAllRead: () => void
   unreadCount: number
+  onCompose: () => void
 }) {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="text-right">
         <h2 className="text-2xl font-bold text-foreground">الإشعارات</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          متابعة جميع التنبيهات والأنشطة الأخيرة على المنصة
+          متابعة جميع التنبيهات وإرسال إعلانات للطلاب
         </p>
       </div>
 
@@ -30,11 +31,9 @@ export function NotificationsPageHeader({
           <CheckCheck className="size-4" />
           تعليم الكل كمقروء
         </Button>
-        <Button
-          onClick={() => toast.info('سيتم فتح إعدادات الإشعارات قريبًا')}
-        >
-          <Settings2 className="size-4" />
-          إعدادات الإشعارات
+        <Button onClick={onCompose}>
+          <Send className="size-4" />
+          إرسال إشعار للطلاب
         </Button>
       </div>
     </div>

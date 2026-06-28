@@ -41,7 +41,7 @@ function LectureCard({ lecture, index }: { lecture: Lecture; index: number }) {
       {/* lecture image with price + number overlays */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-cream to-navy/5 dark:from-ink-base dark:to-ink-raised">
         <Image
-          src={`/lessons/${lecture.id}.png`}
+          src={lecture.image || `/lessons/${lecture.id}.png`}
           alt={lecture.title}
           fill
           sizes="(max-width: 768px) 100vw, 50vw"

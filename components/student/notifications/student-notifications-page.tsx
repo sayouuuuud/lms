@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
+import { toast } from 'sonner'
 import {
   Award,
   Bell,
@@ -21,9 +22,14 @@ import { cn } from '@/lib/utils'
 import {
   type NotificationType,
 } from '@/lib/student-notifications-data'
+import {
+  markStudentNotificationRead,
+  markAllStudentNotificationsRead,
+} from '@/app/student/actions'
 
 type Notification = {
   id: string
+  notifId?: string
   title: string
   text: string
   type: NotificationType
@@ -84,6 +90,7 @@ type Filter = 'all' | 'unread' | NotificationType
 export function StudentNotificationsPage({ notifications: initNotifications = [] }: { notifications?: Notification[] }) {
   const [items, setItems] = useState<Notification[]>(initNotifications)
   const [filter, setFilter] = useState<Filter>('all')
+  const [, startTransition] = useTransition()
 
   const unreadCount = items.filter((n) => !n.read).length
 
@@ -102,12 +109,33 @@ export function StudentNotificationsPage({ notifications: initNotifications = []
     return items.filter((n) => n.type === filter)
   }, [items, filter])
 
-  const markAllRead = () =>
+  const markAllRead = () => {
+    const ids = items.filter((n) => !n.read && n.notifId).map((n) => n.notifId!)
     setItems((prev) => prev.map((n) => ({ ...n, read: true })))
-  const markRead = (id: string) =>
+    startTransition(async () => {
+      await markAllStudentNotificationsRead(ids)
+    })
+    toast.success('تم تعيين كل الإشعارات كمقروءة')
+  }
+  const markRead = (id: string) => {
+    const item = items.find((n) => n.id === id)
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
-  const remove = (id: string) =>
+    if (item?.notifId) {
+      startTransition(async () => {
+        await markStudentNotificationRead(item.notifId!)
+      })
+    }
+  }
+  const remove = (id: string) => {
+    const item = items.find((n) => n.id === id)
     setItems((prev) => prev.filter((n) => n.id !== id))
+    // "Remove" from the student's view = mark it read so it won't reappear.
+    if (item?.notifId) {
+      startTransition(async () => {
+        await markStudentNotificationRead(item.notifId!)
+      })
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">

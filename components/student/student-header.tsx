@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   ArrowRight,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
@@ -24,14 +25,20 @@ import { useStudent } from '@/components/student/student-context'
 import { getStudentAvatar } from '@/lib/students-data'
 import { useLogout } from '@/lib/use-logout'
 import { CartButton } from '@/components/cart/cart-button'
+import {
+  getStudentNotifications,
+  markStudentNotificationRead,
+  markAllStudentNotificationsRead,
+} from '@/app/student/actions'
 
-const mockNotifications = [
-  { id: 1, text: 'تم رفع درس جديد في كورس React', time: 'منذ 10 د', read: false },
-  { id: 2, text: 'باقي يومان على تسليم مشروع التصميم', time: 'منذ ساعة', read: false },
-  { id: 3, text: 'تم تصحيح اختبار الوحدة الثانية', time: 'منذ 3 س', read: false },
-  { id: 4, text: 'تهانينا! حصلت على شهادة JavaScript', time: 'أمس', read: true },
-  { id: 5, text: 'تذكير: محاضرة مباشرة غداً 6 مساءً', time: 'أمس', read: true },
-]
+type HeaderNotif = {
+  id: string
+  notifId?: string
+  text: string
+  title?: string
+  time: string
+  read: boolean
+}
 
 function useOutsideClick(ref: React.RefObject<HTMLElement | null>, cb: () => void) {
   useEffect(() => {
@@ -45,13 +52,45 @@ function useOutsideClick(ref: React.RefObject<HTMLElement | null>, cb: () => voi
 
 function NotificationsDropdown() {
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState(mockNotifications)
+  const [notifications, setNotifications] = useState<HeaderNotif[]>([])
   const ref = useRef<HTMLDivElement>(null)
+  const knownIds = useRef<Set<string>>(new Set())
+  const firstLoad = useRef(true)
   useOutsideClick(ref, () => setOpen(false))
 
+  // Fetch real notifications on mount and poll periodically. Toast when a new
+  // unread notification arrives (but not on the very first load).
+  useEffect(() => {
+    let active = true
+    async function load() {
+      const data = (await getStudentNotifications()) as HeaderNotif[]
+      if (!active) return
+      if (!firstLoad.current) {
+        const fresh = data.filter(
+          (n) => !n.read && n.notifId && !knownIds.current.has(n.notifId),
+        )
+        for (const n of fresh.slice(0, 3)) {
+          toast(n.title || n.text, { description: n.title ? n.text : undefined })
+        }
+      }
+      knownIds.current = new Set(data.map((n) => n.notifId).filter(Boolean) as string[])
+      firstLoad.current = false
+      setNotifications(data)
+    }
+    load()
+    const interval = setInterval(load, 60_000)
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [])
+
   const unread = notifications.filter((n) => !n.read).length
-  const markAllRead = () =>
+  const markAllRead = () => {
+    const ids = notifications.filter((n) => !n.read && n.notifId).map((n) => n.notifId!)
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+    if (ids.length) markAllStudentNotificationsRead(ids)
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -94,36 +133,48 @@ function NotificationsDropdown() {
           </div>
 
           <ul className="max-h-72 divide-y divide-border overflow-y-auto scrollbar-hide">
-            {notifications.map((n) => (
-              <li key={n.id}>
-                <button
-                  onClick={() =>
-                    setNotifications((prev) =>
-                      prev.map((item) =>
-                        item.id === n.id ? { ...item, read: true } : item,
-                      ),
-                    )
-                  }
-                  className={cn(
-                    'flex w-full items-start gap-3 px-4 py-3 text-right transition-colors hover:bg-secondary/60',
-                    !n.read && 'bg-primary/5',
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'mt-0.5 size-2 shrink-0 rounded-full',
-                      !n.read ? 'bg-primary' : 'bg-transparent',
-                    )}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm leading-snug text-foreground">{n.text}</p>
-                    <span className="mt-0.5 text-[11px] text-muted-foreground">
-                      {n.time}
-                    </span>
-                  </div>
-                </button>
+            {notifications.length === 0 ? (
+              <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                لا توجد إشعارات.
               </li>
-            ))}
+            ) : (
+              notifications.map((n) => (
+                <li key={n.id}>
+                  <button
+                    onClick={() => {
+                      setNotifications((prev) =>
+                        prev.map((item) =>
+                          item.id === n.id ? { ...item, read: true } : item,
+                        ),
+                      )
+                      if (n.notifId) markStudentNotificationRead(n.notifId)
+                    }}
+                    className={cn(
+                      'flex w-full items-start gap-3 px-4 py-3 text-right transition-colors hover:bg-secondary/60',
+                      !n.read && 'bg-primary/5',
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'mt-0.5 size-2 shrink-0 rounded-full',
+                        !n.read ? 'bg-primary' : 'bg-transparent',
+                      )}
+                    />
+                    <div className="min-w-0 flex-1">
+                      {n.title && (
+                        <p className="text-sm font-semibold leading-snug text-foreground">
+                          {n.title}
+                        </p>
+                      )}
+                      <p className="text-sm leading-snug text-muted-foreground">{n.text}</p>
+                      <span className="mt-0.5 text-[11px] text-muted-foreground">
+                        {n.time}
+                      </span>
+                    </div>
+                  </button>
+                </li>
+              ))
+            )}
           </ul>
 
           <div className="border-t border-border px-4 py-2.5">

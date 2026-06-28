@@ -470,14 +470,6 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
                   <option>English</option>
                 </select>
               </div>
-              <div>
-                <FieldLabel>المنطقة الزمنية</FieldLabel>
-                <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                  <option>(GMT+2) القاهرة</option>
-                  <option>(GMT+3) الرياض</option>
-                  <option>(GMT+4) دبي</option>
-                </select>
-              </div>
             </div>
             <div className="flex justify-start pt-4">
               <Button onClick={handlePrefsSave} disabled={isPending}>حفظ التفضيلات</Button>
