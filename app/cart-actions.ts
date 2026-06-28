@@ -51,6 +51,63 @@ export async function addToCart(lectureId: string) {
   } = await supabase.auth.getUser()
   if (!user) return { error: 'unauthenticated' as const }
 
+  // Check if lecture is free
+  const { data: lecture } = await supabase
+    .from('lectures')
+    .select(`
+      price, title,
+      branches:branch_id ( title, stages:stage_id ( title ) )
+    `)
+    .eq('id', lectureId)
+    .single()
+
+  if (lecture && Number(lecture.price) === 0) {
+    // Auto-enroll!
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, phone, email')
+      .eq('id', user.id)
+      .single()
+
+    const code = generateOrderCode()
+    const { data: order, error: orderErr } = await supabase
+      .from('orders')
+      .insert({
+        code,
+        student_id: user.id,
+        student_name: profile?.full_name || 'طالب',
+        student_email: profile?.email || user.email || '',
+        student_phone: profile?.phone || '',
+        method: 'مجاني',
+        reference: '',
+        note: '',
+        subtotal: 0,
+        discount: 0,
+        coupon_code: null,
+        total: 0,
+        status: 'approved',
+      })
+      .select('id')
+      .single()
+
+    if (!orderErr && order) {
+      // TypeScript safety for nested relations
+      const branchTitle = (lecture.branches as any)?.title || ''
+      const stageTitle = (lecture.branches as any)?.stages?.title || ''
+
+      await supabase.from('order_items').insert({
+        order_id: order.id,
+        lecture_id: lectureId,
+        lecture_title: lecture.title,
+        branch_title: branchTitle,
+        stage_title: stageTitle,
+        price: 0,
+      })
+      revalidatePath('/', 'layout')
+      return { success: true, enrolledFree: true }
+    }
+  }
+
   const { error } = await supabase
     .from('cart_items')
     .insert({ student_id: user.id, lecture_id: lectureId })

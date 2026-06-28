@@ -25,8 +25,8 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
   const [error, setError] = useState('')
 
   // login state
-  const [loginEmail, setLoginEmail] = useState('')
-  const [loginPassword, setLoginPassword] = useState('')
+  const [loginEmail, setLoginEmail] = useState('admin@test.com')
+  const [loginPassword, setLoginPassword] = useState('111111')
 
   // register state
   const [name, setName] = useState('')

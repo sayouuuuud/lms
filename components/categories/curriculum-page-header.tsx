@@ -10,15 +10,15 @@ export function CurriculumPageHeader() {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="text-right">
-        <h2 className="text-2xl font-bold text-foreground">المراحل والفروع</h2>
+        <h2 className="text-2xl font-bold text-foreground">التصنيفات</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          نظّم المراحل الدراسية وفروعها — وهي نفس البيانات اللي بتظهر للطلاب في الصفحة الرئيسية
+          نظّم التصنيفات الرئيسية والفرعية — وهي نفس البيانات اللي بتظهر للطلاب
         </p>
       </div>
 
       <Button onClick={openCreateStage}>
         <Plus className="size-4" />
-        إضافة مرحلة
+        إضافة تصنيف رئيسي
       </Button>
     </div>
   )

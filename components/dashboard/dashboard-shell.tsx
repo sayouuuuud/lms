@@ -13,7 +13,7 @@ export function DashboardShell({ data }: { data?: any }) {
   if (!data) return <PageHeader />
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader />
 
       <StatCards stats={data.stats} />
@@ -49,6 +49,6 @@ export function DashboardShell({ data }: { data?: any }) {
         <LatestPayments payments={data.latestPayments} />
         <LatestCourses courses={data.latestCourses} />
       </div>
-    </>
+    </div>
   )
 }

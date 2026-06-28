@@ -80,6 +80,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         toast.error(res.error)
         return
       }
+      if (res?.enrolledFree) {
+        toast.success('تم الاشتراك مجاناً في المحاضرة بنجاح! وتقدر تبدأ تذاكرها دلوقتي.')
+        router.push('/student')
+        return
+      }
+
       await refresh()
       toast.success(title ? `تمت إضافة "${title}" للسلة` : 'تمت الإضافة للسلة')
     },

@@ -23,11 +23,7 @@ export type AdminStage = {
   title: string
   subtitle: string
   rows: string[]
-  formula: string
   image: string
-  accent: 'gold' | 'emerald'
-  termPrice: number
-  termOldPrice: number | null
   sortOrder: number
   branches: AdminBranch[]
 }
@@ -37,10 +33,6 @@ export type StageInput = {
   subtitle: string
   idx: string
   rows: string[]
-  formula: string
-  accent: 'gold' | 'emerald'
-  termPrice: number
-  termOldPrice: number | null
   image: string
 }
 
@@ -69,7 +61,7 @@ export async function getCurriculumAdmin(): Promise<AdminStage[]> {
   const [stagesRes, branchesRes, lecturesRes] = await Promise.all([
     supabase
       .from('stages')
-      .select('id, slug, idx, title, subtitle, rows, formula, image, accent, term_price, term_old_price, sort_order')
+      .select('id, slug, idx, title, subtitle, rows, image, sort_order')
       .order('sort_order', { ascending: true }),
     supabase
       .from('branches')
@@ -114,11 +106,7 @@ export async function getCurriculumAdmin(): Promise<AdminStage[]> {
     title: row.title,
     subtitle: row.subtitle,
     rows: row.rows ?? [],
-    formula: row.formula,
     image: row.image,
-    accent: (row.accent as 'gold' | 'emerald') ?? 'emerald',
-    termPrice: Number(row.term_price),
-    termOldPrice: row.term_old_price != null ? Number(row.term_old_price) : null,
     sortOrder: row.sort_order,
     branches: branchesByStage.get(row.id) ?? [],
   }))
@@ -140,11 +128,7 @@ export async function createStage(input: StageInput) {
     title: input.title,
     subtitle: input.subtitle,
     rows: input.rows,
-    formula: input.formula,
     image: input.image || '/stages/sec-1.png',
-    accent: input.accent,
-    term_price: input.termPrice,
-    term_old_price: input.termOldPrice,
     sort_order: sortOrder,
   })
 
@@ -168,11 +152,7 @@ export async function updateStage(id: string, input: StageInput) {
       title: input.title,
       subtitle: input.subtitle,
       rows: input.rows,
-      formula: input.formula,
       image: input.image,
-      accent: input.accent,
-      term_price: input.termPrice,
-      term_old_price: input.termOldPrice,
     })
     .eq('id', id)
 

@@ -14,8 +14,8 @@ const supabase = createClient(url, serviceKey, {
 
 const accounts = [
   {
-    email: 'admin@platform.com',
-    password: 'Admin12345!',
+    email: 'admin@test.com',
+    password: '111111',
     metadata: { full_name: 'محمد أحمد', role: 'admin' },
   },
   {

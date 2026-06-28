@@ -14,21 +14,18 @@ export function CurriculumStats() {
     (sum, s) => sum + s.branches.reduce((b, br) => b + br.lectureCount, 0),
     0,
   )
-  const avgTermPrice =
-    totalStages > 0
-      ? Math.round(stages.reduce((sum, s) => sum + s.termPrice, 0) / totalStages)
-      : 0
+
 
   const stats = [
     {
-      label: 'المراحل الدراسية',
+      label: 'التصنيفات الرئيسية',
       value: totalStages.toLocaleString('en-US'),
       icon: Layers,
       color: 'text-primary',
       bg: 'bg-primary/10',
     },
     {
-      label: 'إجمالي الفروع',
+      label: 'التصنيفات الفرعية',
       value: totalBranches.toLocaleString('en-US'),
       icon: GitBranch,
       color: 'text-emerald-600',
@@ -41,13 +38,7 @@ export function CurriculumStats() {
       color: 'text-amber-600',
       bg: 'bg-amber-50 dark:bg-amber-500/10',
     },
-    {
-      label: 'متوسط سعر الترم',
-      value: `${avgTermPrice.toLocaleString('en-US')} ج`,
-      icon: Coins,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50 dark:bg-blue-500/10',
-    },
+
   ]
 
   return (

@@ -28,7 +28,7 @@ import { useLogout } from '@/lib/use-logout'
 const navItems = [
   { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/dashboard' },
   { label: 'الطلاب', icon: Users, href: '/students' },
-  { label: 'المراحل والفروع', icon: Layers, href: '/categories' },
+  { label: 'التصنيفات', icon: Layers, href: '/categories' },
   { label: 'المحاضرات', icon: BookOpen, href: '/courses' },
   { label: 'الاختبارات', icon: ClipboardList, href: '/exams' },
   { label: 'التقويم', icon: CalendarDays, href: '/calendar' },

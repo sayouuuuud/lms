@@ -12,10 +12,7 @@ import { useCurriculum } from './curriculum-context'
 const textareaClass =
   'w-full resize-none rounded-xl border border-border bg-secondary/60 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card'
 
-const accents: { value: 'emerald' | 'gold'; label: string }[] = [
-  { value: 'emerald', label: 'زمردي' },
-  { value: 'gold', label: 'ذهبي' },
-]
+
 
 export function CurriculumFormModals() {
   const {
@@ -39,11 +36,7 @@ export function CurriculumFormModals() {
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [idx, setIdx] = useState('')
-  const [formula, setFormula] = useState('')
-  const [rows, setRows] = useState('')
-  const [accent, setAccent] = useState<'emerald' | 'gold'>('emerald')
-  const [termPrice, setTermPrice] = useState('')
-  const [termOldPrice, setTermOldPrice] = useState('')
+
   const [stageImage, setStageImage] = useState('')
 
   useEffect(() => {
@@ -51,13 +44,7 @@ export function CurriculumFormModals() {
       setTitle(editingStage?.title ?? '')
       setSubtitle(editingStage?.subtitle ?? '')
       setIdx(editingStage?.idx ?? '')
-      setFormula(editingStage?.formula ?? '')
       setRows((editingStage?.rows ?? []).join('\n'))
-      setAccent(editingStage?.accent ?? 'emerald')
-      setTermPrice(editingStage ? String(editingStage.termPrice) : '')
-      setTermOldPrice(
-        editingStage?.termOldPrice != null ? String(editingStage.termOldPrice) : '',
-      )
       setStageImage(editingStage?.image ?? '')
     }
   }, [stageFormOpen, editingStage])
@@ -69,11 +56,7 @@ export function CurriculumFormModals() {
       title: title.trim(),
       subtitle: subtitle.trim(),
       idx: idx.trim(),
-      formula: formula.trim(),
       rows: rows.split('\n').map((r) => r.trim()).filter(Boolean),
-      accent,
-      termPrice: Number(termPrice) || 0,
-      termOldPrice: termOldPrice ? Number(termOldPrice) : null,
       image: stageImage,
     })
   }
@@ -110,13 +93,13 @@ export function CurriculumFormModals() {
       <Modal
         open={stageFormOpen}
         onClose={closeStageForm}
-        title={editingStage ? 'تعديل المرحلة' : 'إضافة مرحلة جديدة'}
-        description="بيانات المرحلة كما تظهر للطلاب في الصفحة الرئيسية"
+        title={editingStage ? 'تعديل التصنيف الرئيسي' : 'إضافة تصنيف رئيسي جديد'}
+        description="بيانات التصنيف الرئيسي (السنة الدراسية) كما تظهر للطلاب"
       >
         <form onSubmit={handleStageSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="sm:col-span-2">
-              <Field label="اسم المرحلة">
+              <Field label="اسم التصنيف (مثل: الصف الأول الثانوي)">
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -138,7 +121,7 @@ export function CurriculumFormModals() {
             <textarea
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
-              placeholder="نبذة قصيرة عن المرحلة"
+              placeholder="نبذة قصيرة"
               rows={2}
               className={textareaClass}
             />
@@ -154,64 +137,18 @@ export function CurriculumFormModals() {
             />
           </Field>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="المعادلة المميزة">
-              <Input
-                value={formula}
-                onChange={(e) => setFormula(e.target.value)}
-                placeholder="sin²θ + cos²θ = 1"
-              />
-            </Field>
-            <Field label="اللون المميز">
-              <div className="flex gap-2">
-                {accents.map((a) => (
-                  <button
-                    key={a.value}
-                    type="button"
-                    onClick={() => setAccent(a.value)}
-                    className={cn(
-                      'flex-1 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors',
-                      accent === a.value
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-secondary/60 text-muted-foreground hover:bg-secondary',
-                    )}
-                  >
-                    {a.label}
-                  </button>
-                ))}
-              </div>
-            </Field>
-          </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="سعر الترم (ج)">
-              <Input
-                type="number"
-                value={termPrice}
-                onChange={(e) => setTermPrice(e.target.value)}
-                placeholder="750"
-              />
-            </Field>
-            <Field label="السعر قبل الخصم (اختياري)">
-              <Input
-                type="number"
-                value={termOldPrice}
-                onChange={(e) => setTermOldPrice(e.target.value)}
-                placeholder="1100"
-              />
-            </Field>
-          </div>
 
           <ImageUploadField
-            label="صورة المرحلة"
+            label="صورة التصنيف"
             value={stageImage}
             onChange={setStageImage}
-            hint="تظهر للطلاب على كارت المرحلة في الصفحة الرئيسية."
+            hint="تظهر للطلاب على كارت التصنيف الرئيسي."
           />
 
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit">
-              {editingStage ? 'حفظ التغييرات' : 'إضافة المرحلة'}
+              {editingStage ? 'حفظ التغييرات' : 'إضافة التصنيف'}
             </Button>
             <Button type="button" variant="outline" onClick={closeStageForm}>
               إلغاء
@@ -224,11 +161,11 @@ export function CurriculumFormModals() {
       <Modal
         open={branchFormOpen}
         onClose={closeBranchForm}
-        title={editingBranch ? 'تعديل الفرع' : 'إضافة فرع جديد'}
-        description="الفرع بيجمع مجموعة محاضرات داخل المرحلة"
+        title={editingBranch ? 'تعديل التصنيف الفرعي' : 'إضافة تصنيف فرعي جديد'}
+        description="التصنيف الفرعي بيجمع مجموعة محاضرات داخله"
       >
         <form onSubmit={handleBranchSubmit} className="space-y-4">
-          <Field label="اسم الفرع">
+          <Field label="اسم التصنيف الفرعي">
             <Input
               value={bTitle}
               onChange={(e) => setBTitle(e.target.value)}
@@ -240,7 +177,7 @@ export function CurriculumFormModals() {
             <textarea
               value={bDescription}
               onChange={(e) => setBDescription(e.target.value)}
-              placeholder="وصف مختصر للفرع"
+              placeholder="وصف مختصر للتصنيف الفرعي"
               rows={2}
               className={textareaClass}
             />
@@ -255,14 +192,14 @@ export function CurriculumFormModals() {
             />
           </Field>
           <ImageUploadField
-            label="صورة الفرع"
+            label="صورة التصنيف الفرعي"
             value={bImage}
             onChange={setBImage}
-            hint="تظهر للطلاب على كارت الفرع."
+            hint="تظهر للطلاب على كارت التصنيف الفرعي."
           />
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit">
-              {editingBranch ? 'حفظ التغييرات' : 'إضافة الفرع'}
+              {editingBranch ? 'حفظ التغييرات' : 'إضافة التصنيف الفرعي'}
             </Button>
             <Button type="button" variant="outline" onClick={closeBranchForm}>
               إلغاء
@@ -276,15 +213,15 @@ export function CurriculumFormModals() {
         open={!!deletingStage}
         onClose={closeDeleteStage}
         onConfirm={confirmDeleteStage}
-        title="حذف المرحلة"
-        description={`هل أنت متأكد من حذف مرحلة "${deletingStage?.title}"؟ سيتم حذف كل الفروع والمحاضرات التابعة لها. لا يمكن التراجع.`}
+        title="حذف التصنيف الرئيسي"
+        description={`هل أنت متأكد من حذف تصنيف "${deletingStage?.title}"؟ سيتم حذف كل التصنيفات الفرعية والمحاضرات التابعة له. لا يمكن التراجع.`}
       />
       <ConfirmDialog
         open={!!deletingBranch}
         onClose={closeDeleteBranch}
         onConfirm={confirmDeleteBranch}
-        title="حذف الفرع"
-        description={`هل أنت متأكد من حذف فرع "${deletingBranch?.title}"؟ سيتم حذف كل المحاضرات التابعة له. لا يمكن التراجع.`}
+        title="حذف التصنيف الفرعي"
+        description={`هل أنت متأكد من حذف تصنيف "${deletingBranch?.title}"؟ سيتم حذف كل المحاضرات التابعة له. لا يمكن التراجع.`}
       />
     </>
   )

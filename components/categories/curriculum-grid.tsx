@@ -16,11 +16,7 @@ import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useCurriculum } from './curriculum-context'
 
-const accentStyles: Record<string, string> = {
-  gold: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400',
-  emerald:
-    'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400',
-}
+
 
 export function CurriculumGrid() {
   const {
@@ -37,7 +33,7 @@ export function CurriculumGrid() {
   if (stages.length === 0) {
     return (
       <Card className="p-16 text-center text-sm text-muted-foreground">
-        لا توجد مراحل بعد. اضغط «إضافة مرحلة» للبدء.
+        لا توجد تصنيفات رئيسية بعد. اضغط «إضافة تصنيف رئيسي» للبدء.
       </Card>
     )
   }
@@ -61,7 +57,7 @@ export function CurriculumGrid() {
                     setExpanded((prev) => ({ ...prev, [stage.id]: !isOpen }))
                   }
                   className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-secondary"
-                  aria-label={isOpen ? 'طي الفروع' : 'عرض الفروع'}
+                  aria-label={isOpen ? 'طي التصنيفات الفرعية' : 'عرض التصنيفات الفرعية'}
                 >
                   <ChevronDown
                     className={cn(
@@ -78,12 +74,7 @@ export function CurriculumGrid() {
                     <h3 className="text-base font-bold text-foreground">
                       {stage.title}
                     </h3>
-                    <Badge
-                      variant="outline"
-                      className={cn('font-medium', accentStyles[stage.accent])}
-                    >
-                      {stage.accent === 'gold' ? 'ذهبي' : 'زمردي'}
-                    </Badge>
+
                   </div>
                   <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
                     {stage.subtitle}
@@ -94,7 +85,7 @@ export function CurriculumGrid() {
                       <span className="font-medium text-foreground">
                         {stage.branches.length}
                       </span>
-                      فرع
+                      تصنيف فرعي
                     </span>
                     <span className="flex items-center gap-1.5">
                       <BookOpen className="size-3.5" />
@@ -103,13 +94,7 @@ export function CurriculumGrid() {
                       </span>
                       محاضرة
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <Coins className="size-3.5" />
-                      سعر الترم
-                      <span className="font-medium text-foreground">
-                        {stage.termPrice.toLocaleString('en-US')} ج
-                      </span>
-                    </span>
+
                   </div>
                 </div>
               </div>
@@ -131,7 +116,7 @@ export function CurriculumGrid() {
                   onClick={() => requestDeleteStage(stage)}
                 >
                   <Trash2 className="size-4" />
-                  <span className="sr-only">حذف المرحلة</span>
+                  <span className="sr-only">حذف التصنيف الرئيسي</span>
                 </Button>
               </div>
             </div>
@@ -141,7 +126,7 @@ export function CurriculumGrid() {
               <div className="space-y-3 bg-secondary/30 p-5">
                 {stage.branches.length === 0 ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
-                    لا توجد فروع في هذه المرحلة بعد.
+                    لا توجد تصنيفات فرعية في هذا التصنيف بعد.
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -179,7 +164,7 @@ export function CurriculumGrid() {
                             onClick={() => requestDeleteBranch(branch)}
                           >
                             <Trash2 className="size-3.5" />
-                            <span className="sr-only">حذف الفرع</span>
+                            <span className="sr-only">حذف التصنيف الفرعي</span>
                           </Button>
                         </div>
                       </div>
@@ -194,7 +179,7 @@ export function CurriculumGrid() {
                   onClick={() => openCreateBranch(stage.id)}
                 >
                   <Plus className="size-4" />
-                  إضافة فرع لهذه المرحلة
+                  إضافة تصنيف فرعي
                 </Button>
               </div>
             )}
