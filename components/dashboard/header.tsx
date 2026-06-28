@@ -138,7 +138,7 @@ function MessagesDropdown() {
           {/* footer */}
           <div className="border-t border-border px-4 py-2.5">
             <Link
-              href="/messages"
+              href="/admin/messages"
               onClick={() => setOpen(false)}
               className="flex items-center justify-center gap-1.5 text-sm font-medium text-primary hover:underline"
             >
@@ -236,7 +236,7 @@ function NotificationsDropdown() {
           {/* footer */}
           <div className="border-t border-border px-4 py-2.5">
             <Link
-              href="/notifications"
+              href="/admin/notifications"
               onClick={() => setOpen(false)}
               className="flex items-center justify-center gap-1.5 text-sm font-medium text-primary hover:underline"
             >
@@ -293,7 +293,7 @@ function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleT
           {/* menu items */}
           <div className="py-1.5">
             <Link
-              href="/settings"
+              href="/admin/settings"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary/60"
             >
@@ -301,7 +301,7 @@ function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleT
               الملف الشخصي
             </Link>
             <Link
-              href="/settings"
+              href="/admin/settings"
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary/60"
             >

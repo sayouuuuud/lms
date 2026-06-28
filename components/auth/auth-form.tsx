@@ -78,7 +78,7 @@ export function AuthForm({ initialTab = 'login' }: { initialTab?: Tab }) {
             .select('role')
             .eq('id', user.id)
             .single()
-          destination = profile?.role === 'admin' ? '/dashboard' : '/student'
+          destination = profile?.role === 'admin' ? '/admin/dashboard' : '/student'
         }
         router.push(destination)
         router.refresh()

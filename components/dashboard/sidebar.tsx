@@ -26,18 +26,18 @@ import { Button } from '@/components/ui/button'
 import { useLogout } from '@/lib/use-logout'
 
 const navItems = [
-  { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'الطلاب', icon: Users, href: '/students' },
-  { label: 'التصنيفات', icon: Layers, href: '/categories' },
-  { label: 'المحاضرات', icon: BookOpen, href: '/courses' },
-  { label: 'الاختبارات', icon: ClipboardList, href: '/exams' },
-  { label: 'التقويم', icon: CalendarDays, href: '/calendar' },
-  { label: 'الطلبات', icon: ShoppingCart, href: '/payments' },
-  { label: 'رسائل', icon: MessageSquare, href: '/messages' },
-  { label: 'الإشعارات', icon: Bell, href: '/notifications' },
-  { label: 'خصومات و الكوبونات', icon: Tag, href: '/coupons' },
-  { label: 'التقارير', icon: BarChart3, href: '/reports' },
-  { label: 'الإعدادات', icon: Settings, href: '/settings' },
+  { label: 'الصفحة الرئيسية', icon: LayoutDashboard, href: '/admin/dashboard' },
+  { label: 'الطلاب', icon: Users, href: '/admin/students' },
+  { label: 'التصنيفات', icon: Layers, href: '/admin/categories' },
+  { label: 'المحاضرات', icon: BookOpen, href: '/admin/courses' },
+  { label: 'الاختبارات', icon: ClipboardList, href: '/admin/exams' },
+  { label: 'التقويم', icon: CalendarDays, href: '/admin/calendar' },
+  { label: 'الطلبات', icon: ShoppingCart, href: '/admin/payments' },
+  { label: 'رسائل', icon: MessageSquare, href: '/admin/messages' },
+  { label: 'الإشعارات', icon: Bell, href: '/admin/notifications' },
+  { label: 'خصومات و الكوبونات', icon: Tag, href: '/admin/coupons' },
+  { label: 'التقارير', icon: BarChart3, href: '/admin/reports' },
+  { label: 'الإعدادات', icon: Settings, href: '/admin/settings' },
 ]
 
 export function Sidebar({
