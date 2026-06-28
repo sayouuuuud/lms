@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { markAsRead, markAllAsRead, deleteNotification, sendAnnouncement } from '@/app/(admin)/notifications/actions'
+import { markAsRead, markAllAsRead, deleteNotification, sendAnnouncement } from '@/app/admin/notifications/actions'
 import {
   Bell,
   BellRing,

@@ -15,7 +15,7 @@ import {
   type CouponType,
   type CouponScope,
 } from '@/lib/coupons-data'
-import { createCoupon, updateCoupon, deleteCoupon } from '@/app/(admin)/coupons/actions'
+import { createCoupon, updateCoupon, deleteCoupon } from '@/app/admin/coupons/actions'
 
 export type LectureOption = { id: string; title: string; branch: string }
 

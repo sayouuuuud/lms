@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useCoupons } from './coupons-context'
-import { getCouponLectureIds } from '@/app/(admin)/coupons/actions'
+import { getCouponLectureIds } from '@/app/admin/coupons/actions'
 import type { CouponStatus, CouponType, CouponScope } from '@/lib/coupons-data'
 
 const types: CouponType[] = ['نسبة مئوية', 'مبلغ ثابت']

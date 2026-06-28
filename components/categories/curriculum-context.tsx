@@ -20,7 +20,7 @@ import {
   createBranch,
   updateBranch,
   deleteBranch,
-} from '@/app/(admin)/categories/actions'
+} from '@/app/admin/categories/actions'
 
 type CurriculumContextValue = {
   stages: AdminStage[]

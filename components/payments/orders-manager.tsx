@@ -34,7 +34,7 @@ import {
   messageStudent,
   type AdminOrder,
   type OrderStatus,
-} from '@/app/(admin)/payments/orders-actions'
+} from '@/app/admin/payments/orders-actions'
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'قيد المراجعة',

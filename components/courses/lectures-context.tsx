@@ -21,7 +21,7 @@ import {
   createLesson,
   updateLesson,
   deleteLesson,
-} from '@/app/(admin)/courses/actions'
+} from '@/app/admin/courses/actions'
 
 type LecturesContextValue = {
   lectures: AdminLecture[]
