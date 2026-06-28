@@ -253,10 +253,12 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
   ]
 
   const skills = [
-    { subject: 'البرمجة', score: 85 },
-    { subject: 'قواعد البيانات', score: 78 },
-    { subject: 'التصميم', score: 92 },
-    { subject: 'الخوارزميات', score: 88 },
+    { subject: 'الجبر', score: 85 },
+    { subject: 'الهندسة الفراغية', score: 78 },
+    { subject: 'التفاضل والتكامل', score: 92 },
+    { subject: 'الديناميكا', score: 88 },
+    { subject: 'الاستاتيكا', score: 82 },
+    { subject: 'حساب المثلثات', score: 90 },
   ]
 
   const submitted = assignments.filter((a) => a.status === 'تم التسليم').length
