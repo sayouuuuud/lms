@@ -146,8 +146,8 @@ export async function getStudentEnrolledCourses() {
   }))
 }
 
-// Helper to build targeted calendar query for a student
-async function getStudentCalendarQuery(supabase: any, student: any) {
+// Helper to build targeted calendar query filters for a student
+async function getStudentCalendarFilters(supabase: any, student: any) {
   // 1. Get student profile for grade
   const { data: profile } = await supabase.from('profiles').select('grade').eq('id', student.user_id).single()
   const gradeSlug = profile?.grade
@@ -170,21 +170,16 @@ async function getStudentCalendarQuery(supabase: any, student: any) {
     branchIds = Array.from(new Set(lectures?.map((l: any) => l.branch_id) || []))
   }
 
-  let query = supabase.from('calendar_events').select('*')
-
   let stageFilter = `stage_id.is.null`
   if (stageId) stageFilter += `,stage_id.eq.${stageId}`
-  query = query.or(stageFilter)
 
   let branchFilter = `branch_id.is.null`
   if (branchIds.length > 0) branchFilter += `,branch_id.in.(${branchIds.join(',')})`
-  query = query.or(branchFilter)
 
   let lectureFilter = `lecture_id.is.null`
   if (lectureIds.length > 0) lectureFilter += `,lecture_id.in.(${lectureIds.join(',')})`
-  query = query.or(lectureFilter)
 
-  return query
+  return { stageFilter, branchFilter, lectureFilter }
 }
 
 export async function getStudentUpcomingSchedule() {
@@ -192,12 +187,17 @@ export async function getStudentUpcomingSchedule() {
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
-  let query = await getStudentCalendarQuery(supabase, student)
-  query = query.gte('event_date', new Date().toISOString().split('T')[0])
-               .order('event_date', { ascending: true })
-               .limit(5)
-
-  const { data: events } = await query
+  const filters = await getStudentCalendarFilters(supabase, student)
+  
+  const { data: events } = await supabase
+    .from('calendar_events')
+    .select('*')
+    .or(filters.stageFilter)
+    .or(filters.branchFilter)
+    .or(filters.lectureFilter)
+    .gte('event_date', new Date().toISOString().split('T')[0])
+    .order('event_date', { ascending: true })
+    .limit(5)
 
   if (!events) return []
 
@@ -220,10 +220,15 @@ export async function getStudentFullSchedule() {
   if (!student) return []
 
   // Filter by enrolled courses and stage
-  let query = await getStudentCalendarQuery(supabase, student)
-  query = query.order('event_date', { ascending: true })
-
-  const { data: events } = await query
+  const filters = await getStudentCalendarFilters(supabase, student)
+  
+  const { data: events } = await supabase
+    .from('calendar_events')
+    .select('*')
+    .or(filters.stageFilter)
+    .or(filters.branchFilter)
+    .or(filters.lectureFilter)
+    .order('event_date', { ascending: true })
 
   if (!events) return []
 
