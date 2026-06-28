@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 import { Search, Clock, ListChecks, Users } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ function scoreColor(score: number) {
 }
 
 export function ExamsTable({ initialExams }: { initialExams: ExamRecord[] }) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<ExamStatus | 'الكل'>('الكل')
 
@@ -88,7 +90,11 @@ export function ExamsTable({ initialExams }: { initialExams: ExamRecord[] }) {
           </thead>
           <tbody className="divide-y divide-border">
             {filtered.map((exam) => (
-              <tr key={exam.id} className="transition-colors hover:bg-secondary/40">
+              <tr 
+                key={exam.id} 
+                onClick={() => router.push(`/admin/exams/${exam.id}`)}
+                className="cursor-pointer transition-colors hover:bg-secondary/40"
+              >
                 <td className="px-3 py-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground">{exam.title}</p>
@@ -135,7 +141,8 @@ export function ExamsTable({ initialExams }: { initialExams: ExamRecord[] }) {
         {filtered.map((exam) => (
           <li
             key={exam.id}
-            className="rounded-xl border border-border bg-secondary/30 p-4"
+            onClick={() => router.push(`/admin/exams/${exam.id}`)}
+            className="cursor-pointer rounded-xl border border-border bg-secondary/30 p-4 transition-colors hover:bg-secondary/60"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
