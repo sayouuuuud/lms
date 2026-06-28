@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useLogout } from '@/lib/use-logout'
+import { toast } from 'sonner'
 
 /* ─── mock data ─── */
 const mockMessages = [
@@ -370,6 +371,18 @@ export function Header({
             Ctrl K
           </kbd>
         </div>
+
+        {/* Test Notification - visible on desktop */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="mr-2 hidden gap-2 md:flex"
+          onClick={() => toast.success('تمت العملية بنجاح!', { description: 'هذا إشعار تجريبي' })}
+          title="تجربة الإشعارات"
+        >
+          <Bell className="size-4" />
+          تجربة الإشعارات
+        </Button>
 
         {/* View site - visible on desktop */}
         <Button
