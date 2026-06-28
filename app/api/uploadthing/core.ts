@@ -12,6 +12,11 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ file }) => {
       return { url: file.url };
     }),
+  // Lesson video uploaded from admin lesson editor.
+  lessonVideo: f({ video: { maxFileSize: "512MB", maxFileCount: 1 } })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url };
+    }),
 } satisfies FileRouter
 
 export type OurFileRouter = typeof ourFileRouter
