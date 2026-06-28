@@ -1,15 +1,26 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { StudentSidebar } from './student-sidebar'
 import { StudentHeader } from './student-header'
 import { useTheme } from '@/components/theme-provider'
 import { PageTransition } from '@/components/page-transition'
+import { useStudent } from '@/components/student/student-context'
+import { applyColorPreset } from '@/lib/color-presets'
 
 export function StudentLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const { isDark, toggleTheme } = useTheme()
+  const { profile } = useStudent()
+
+  useEffect(() => {
+    // Determine the color from the database profile or fallback to local storage / default
+    const dbPreset = profile?.profile?.color_preset
+    const localPreset = typeof window !== 'undefined' ? localStorage.getItem('color-preset') : null
+    const colorToApply = dbPreset || localPreset || 'navy'
+    applyColorPreset(colorToApply)
+  }, [profile, isDark])
 
   return (
     <div className="flex min-h-screen bg-background">

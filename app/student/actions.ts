@@ -605,3 +605,23 @@ export async function setStudentGrade(grade: string) {
   revalidatePath('/student', 'layout')
   return { success: true }
 }
+
+export async function updateStudentPreferences(colorPreset: string, notifPrefs: any) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'لازم تسجّل دخول.' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      color_preset: colorPreset,
+      notif_prefs: notifPrefs
+    })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  
+  revalidatePath('/student/settings')
+  revalidatePath('/student', 'layout')
+  return { success: true }
+}
