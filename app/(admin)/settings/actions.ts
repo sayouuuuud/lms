@@ -22,12 +22,24 @@ export async function updateSettings(newSettings: any) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
-  const { error } = await supabase
+  // Update the existing row; upsert (insert-if-missing) so a fresh project with
+  // no settings row still saves. The unique `key` makes upsert idempotent.
+  const { data, error } = await supabase
     .from('settings')
-    .update({ value: newSettings, updated_at: new Date().toISOString() })
-    .eq('key', 'global')
+    .upsert(
+      { key: 'global', value: newSettings, updated_at: new Date().toISOString() },
+      { onConflict: 'key' },
+    )
+    .select('id')
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.log('[v0] updateSettings error:', error.message)
+    return { error: 'تعذّر حفظ الإعدادات. حاول تاني.' }
+  }
+  if (!data || data.length === 0) {
+    console.log('[v0] updateSettings: no row affected')
+    return { error: 'تعذّر حفظ الإعدادات (لا يوجد صف).' }
+  }
   revalidatePath('/settings')
   return { success: true }
 }
