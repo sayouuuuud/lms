@@ -12,6 +12,9 @@ export type CalendarEvent = {
   description?: string
   /** هل أنشأه المستخدم بنفسه */
   custom?: boolean
+  stageId?: string | null
+  branchId?: string | null
+  lectureId?: string | null
 }
 
 export const eventTypes: CalendarEventType[] = [

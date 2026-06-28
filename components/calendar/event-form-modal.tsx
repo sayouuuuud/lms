@@ -19,6 +19,7 @@ export function EventFormModal() {
     deleting,
     closeDelete,
     confirmDelete,
+    targetingOptions,
   } = useCalendar()
 
   const [title, setTitle] = useState('')
@@ -27,6 +28,10 @@ export function EventFormModal() {
   const [type, setType] = useState<CalendarEventType>('حدث مخصص')
   const [course, setCourse] = useState('')
   const [description, setDescription] = useState('')
+  
+  const [stageId, setStageId] = useState('')
+  const [branchId, setBranchId] = useState('')
+  const [lectureId, setLectureId] = useState('')
 
   useEffect(() => {
     if (formOpen) {
@@ -36,6 +41,9 @@ export function EventFormModal() {
       setType(editing?.type ?? 'حدث مخصص')
       setCourse(editing?.course ?? '')
       setDescription(editing?.description ?? '')
+      setStageId(editing?.stageId ?? '')
+      setBranchId(editing?.branchId ?? '')
+      setLectureId(editing?.lectureId ?? '')
     }
   }, [formOpen, editing, presetDate])
 
@@ -49,6 +57,9 @@ export function EventFormModal() {
       type,
       course: course.trim() || undefined,
       description: description.trim() || undefined,
+      stageId: stageId || null,
+      branchId: branchId || null,
+      lectureId: lectureId || null,
     })
   }
 
@@ -131,6 +142,75 @@ export function EventFormModal() {
               className={cn(inputCls, 'h-auto resize-none py-3 leading-relaxed')}
             />
           </Field>
+
+          <div className="space-y-4 rounded-xl border border-border p-4 bg-secondary/20">
+            <h4 className="text-sm font-semibold text-foreground">تخصيص الحدث (اختياري)</h4>
+            <p className="text-xs text-muted-foreground">
+              يمكنك تخصيص ظهور الحدث لفئة معينة فقط. إذا لم تختر شيئاً، سيظهر الحدث للجميع.
+            </p>
+            
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Field label="السنة الدراسية">
+                <select
+                  value={stageId}
+                  onChange={(e) => {
+                    setStageId(e.target.value)
+                    setBranchId('')
+                    setLectureId('')
+                  }}
+                  className={cn(inputCls, 'pr-4')}
+                >
+                  <option value="">كل السنوات</option>
+                  {targetingOptions.stages.map((stage) => (
+                    <option key={stage.id} value={stage.id}>
+                      {stage.title}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              {stageId && (
+                <Field label="الفرع">
+                  <select
+                    value={branchId}
+                    onChange={(e) => {
+                      setBranchId(e.target.value)
+                      setLectureId('')
+                    }}
+                    className={cn(inputCls, 'pr-4')}
+                  >
+                    <option value="">كل الفروع</option>
+                    {targetingOptions.branches
+                      .filter((b) => b.stage_id === stageId)
+                      .map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.title}
+                        </option>
+                      ))}
+                  </select>
+                </Field>
+              )}
+
+              {branchId && (
+                <Field label="المحاضرة">
+                  <select
+                    value={lectureId}
+                    onChange={(e) => setLectureId(e.target.value)}
+                    className={cn(inputCls, 'pr-4')}
+                  >
+                    <option value="">كل المحاضرات</option>
+                    {targetingOptions.lectures
+                      .filter((l) => l.branch_id === branchId)
+                      .map((lecture) => (
+                        <option key={lecture.id} value={lecture.id}>
+                          {lecture.title}
+                        </option>
+                      ))}
+                  </select>
+                </Field>
+              )}
+            </div>
+          </div>
 
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit">

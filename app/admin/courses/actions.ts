@@ -24,6 +24,7 @@ export type AdminLecture = {
   badge: string | null
   image: string | null
   sortOrder: number
+  releaseDate: string | null
   branchId: string
   branchTitle: string
   stageId: string
@@ -46,6 +47,7 @@ export type LectureInput = {
   oldPrice: number | null
   badge: string | null
   image?: string | null
+  releaseDate?: string | null
 }
 
 export type LessonInput = {
@@ -126,6 +128,7 @@ export async function getLecturesAdmin(): Promise<AdminLecture[]> {
       badge: row.badge,
       image: (row as any).image ?? null,
       sortOrder: row.sort_order,
+      releaseDate: row.release_date ?? null,
       branchId: row.branch_id,
       branchTitle: branch?.title ?? '',
       stageId: branch?.stageId ?? '',
@@ -180,6 +183,7 @@ export async function createLecture(input: LectureInput) {
     old_price: input.oldPrice,
     badge: input.badge,
     sort_order: (count ?? 0) + 1,
+    release_date: input.releaseDate || null,
   }
   if (input.image) row.image = input.image
 
@@ -198,7 +202,49 @@ export async function createLecture(input: LectureInput) {
   // Notify the students of this lecture's grade that a new lecture is available.
   await notifyLectureGrade(supabase, input.branchId, input.title)
 
+  // Sync with calendar if a release date is provided
+  if (input.releaseDate) {
+    // Generate a unique code for the event
+    const { data: latest } = await supabase.from('calendar_events').select('code').order('code', { ascending: false }).limit(1).single()
+    let nextNum = 1
+    if (latest && latest.code.startsWith('EVT-')) {
+      const num = parseInt(latest.code.replace('EVT-', ''), 10)
+      if (!isNaN(num)) nextNum = num + 1
+    }
+    const code = `EVT-${String(nextNum).padStart(2, '0')}`
+
+    // Parse date and time from the input.releaseDate (which is a full ISO or datetime string)
+    // Actually, if it's coming from an input type="datetime-local", it might be "YYYY-MM-DDTHH:mm"
+    const parsedDate = new Date(input.releaseDate)
+    const d = parsedDate.toISOString().slice(0, 10)
+    const t = parsedDate.toTimeString().slice(0, 5)
+
+    const { data: branch } = await supabase.from('branches').select('stage_id').eq('id', input.branchId).single()
+
+    // Assuming we can get the newly created lecture ID using supabase logic or by fetching it.
+    // However, insert(row) without select() doesn't return data.
+    // Let's refactor the insert above to return the ID, or we fetch it.
+    const { data: newLecture } = await supabase.from('lectures').select('id').eq('branch_id', input.branchId).eq('slug', row.slug).single()
+
+    if (newLecture) {
+      await supabase.from('calendar_events').insert({
+        code,
+        title: `موعد نزول: ${input.title}`,
+        event_date: d,
+        event_time: t,
+        type: 'محاضرة',
+        course: input.title,
+        description: input.description,
+        custom: false,
+        lecture_id: newLecture.id,
+        branch_id: input.branchId,
+        stage_id: branch?.stage_id,
+      })
+    }
+  }
+
   revalidatePath('/courses')
+  revalidatePath('/calendar')
   revalidatePath('/')
   return { success: true }
 }
@@ -239,6 +285,7 @@ export async function updateLecture(id: string, input: LectureInput) {
     price: input.price,
     old_price: input.oldPrice,
     badge: input.badge,
+    release_date: input.releaseDate || null,
   }
   if (input.image !== undefined) patch.image = input.image
 
@@ -253,7 +300,54 @@ export async function updateLecture(id: string, input: LectureInput) {
     console.log('[v0] updateLecture error:', error.message)
     return { error: 'تعذّر تحديث المحاضرة.' }
   }
+
+  // Update or create calendar event
+  if (input.releaseDate) {
+    const parsedDate = new Date(input.releaseDate)
+    const d = parsedDate.toISOString().slice(0, 10)
+    const t = parsedDate.toTimeString().slice(0, 5)
+
+    const { data: existingEvent } = await supabase.from('calendar_events').select('code').eq('lecture_id', id).single()
+
+    if (existingEvent) {
+      await supabase.from('calendar_events').update({
+        event_date: d,
+        event_time: t,
+        title: `موعد نزول: ${input.title}`,
+        course: input.title,
+        description: input.description,
+      }).eq('lecture_id', id)
+    } else {
+      const { data: branch } = await supabase.from('branches').select('stage_id').eq('id', input.branchId).single()
+      const { data: latest } = await supabase.from('calendar_events').select('code').order('code', { ascending: false }).limit(1).single()
+      let nextNum = 1
+      if (latest && latest.code.startsWith('EVT-')) {
+        const num = parseInt(latest.code.replace('EVT-', ''), 10)
+        if (!isNaN(num)) nextNum = num + 1
+      }
+      const code = `EVT-${String(nextNum).padStart(2, '0')}`
+
+      await supabase.from('calendar_events').insert({
+        code,
+        title: `موعد نزول: ${input.title}`,
+        event_date: d,
+        event_time: t,
+        type: 'محاضرة',
+        course: input.title,
+        description: input.description,
+        custom: false,
+        lecture_id: id,
+        branch_id: input.branchId,
+        stage_id: branch?.stage_id,
+      })
+    }
+  } else {
+    // If release date is removed, remove the calendar event
+    await supabase.from('calendar_events').delete().eq('lecture_id', id)
+  }
+
   revalidatePath('/courses')
+  revalidatePath('/calendar')
   revalidatePath('/')
   return { success: true }
 }

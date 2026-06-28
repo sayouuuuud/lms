@@ -25,7 +25,26 @@ export async function getEvents(): Promise<CalendarEvent[]> {
     course: row.course || undefined,
     description: row.description || undefined,
     custom: row.custom,
+    stageId: row.stage_id,
+    branchId: row.branch_id,
+    lectureId: row.lecture_id,
   }))
+}
+
+export async function getTargetingOptions() {
+  const supabase = await createClient()
+
+  const [stagesRes, branchesRes, lecturesRes] = await Promise.all([
+    supabase.from('stages').select('id, title, sort_order').order('sort_order'),
+    supabase.from('branches').select('id, stage_id, title, sort_order').order('sort_order'),
+    supabase.from('lectures').select('id, branch_id, title, sort_order').order('sort_order'),
+  ])
+
+  return {
+    stages: stagesRes.data || [],
+    branches: branchesRes.data || [],
+    lectures: lecturesRes.data || [],
+  }
 }
 
 export async function createEvent(values: {
@@ -35,6 +54,9 @@ export async function createEvent(values: {
   type: string
   course?: string
   description?: string
+  stageId?: string | null
+  branchId?: string | null
+  lectureId?: string | null
 }) {
   const supabase = await createClient()
   if (!(await requireAdmin(supabase))) {
@@ -64,6 +86,9 @@ export async function createEvent(values: {
     course: values.course,
     description: values.description,
     custom: true,
+    stage_id: values.stageId,
+    branch_id: values.branchId,
+    lecture_id: values.lectureId,
   })
 
   if (error) return { error: error.message }
@@ -88,6 +113,9 @@ export async function updateEvent(
     type: string
     course?: string
     description?: string
+    stageId?: string | null
+    branchId?: string | null
+    lectureId?: string | null
   },
 ) {
   const supabase = await createClient()
@@ -104,6 +132,9 @@ export async function updateEvent(
       type: values.type,
       course: values.course,
       description: values.description,
+      stage_id: values.stageId,
+      branch_id: values.branchId,
+      lecture_id: values.lectureId,
     })
     .eq('code', id)
 

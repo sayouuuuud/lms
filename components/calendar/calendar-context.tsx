@@ -24,8 +24,15 @@ export type EventFormValues = {
   description?: string
 }
 
+export type TargetingOptions = {
+  stages: { id: string; title: string }[]
+  branches: { id: string; stage_id: string; title: string }[]
+  lectures: { id: string; branch_id: string; title: string }[]
+}
+
 type CalendarContextValue = {
   events: CalendarEvent[]
+  targetingOptions: TargetingOptions
   /** الشهر المعروض حاليًا */
   current: Date
   goToMonth: (offset: number) => void
@@ -55,10 +62,12 @@ export function useCalendar() {
 
 export function CalendarProvider({ 
   children,
-  initialEvents 
+  initialEvents,
+  targetingOptions,
 }: { 
   children: ReactNode
-  initialEvents: CalendarEvent[] 
+  initialEvents: CalendarEvent[]
+  targetingOptions: TargetingOptions
 }) {
   const router = useRouter()
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents)
@@ -75,6 +84,7 @@ export function CalendarProvider({
   const value = useMemo<CalendarContextValue>(
     () => ({
       events,
+      targetingOptions,
       current,
       goToMonth: (offset) =>
         setCurrent((prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1)),

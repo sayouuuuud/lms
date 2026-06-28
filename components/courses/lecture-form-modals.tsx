@@ -43,6 +43,7 @@ export function LectureFormModals() {
   const [oldPrice, setOldPrice] = useState('')
   const [badge, setBadge] = useState('')
   const [image, setImage] = useState('')
+  const [releaseDate, setReleaseDate] = useState('')
 
   // Unique stages derived from branch options
   const stages = useMemo(() => {
@@ -72,6 +73,16 @@ export function LectureFormModals() {
       setOldPrice(editingLecture?.oldPrice != null ? String(editingLecture.oldPrice) : '')
       setBadge(editingLecture?.badge ?? '')
       setImage(editingLecture?.image ?? '')
+      
+      if (editingLecture?.releaseDate) {
+        // convert ISO to YYYY-MM-DDTHH:mm
+        const d = new Date(editingLecture.releaseDate)
+        const tzOffset = d.getTimezoneOffset() * 60000
+        const localISOTime = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16)
+        setReleaseDate(localISOTime)
+      } else {
+        setReleaseDate('')
+      }
     }
   }, [lectureFormOpen, editingLecture, branchOptions])
 
@@ -95,6 +106,7 @@ export function LectureFormModals() {
       oldPrice: oldPrice ? Number(oldPrice) : null,
       badge: badge.trim() || null,
       image: image || null,
+      releaseDate: releaseDate || null,
     })
   }
 
@@ -216,6 +228,19 @@ export function LectureFormModals() {
             onChange={setImage}
             hint="لو مرفعتش صورة، هنستخدم الصورة الافتراضية للمحاضرة."
           />
+
+          <Field label="موعد النزول وتفعيل المحاضرة (اختياري)">
+            <input
+              type="datetime-local"
+              value={releaseDate}
+              onChange={(e) => setReleaseDate(e.target.value)}
+              className={cn(selectClass, 'w-full')}
+              dir="ltr"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              إذا حددت موعداً، سيظهر في التقويم وتصبح المحاضرة متاحة في هذا الموعد.
+            </p>
+          </Field>
 
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit" disabled={!branchId}>
