@@ -33,10 +33,12 @@ function ThemeToggle({ className }: { className?: string }) {
   )
 }
 
-export function LandingNavbar() {
+export function LandingNavbar({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const { loggedIn } = useCart()
+  const { loggedIn: cartLoggedIn } = useCart()
+
+  const isUserLoggedIn = isLoggedIn || cartLoggedIn
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -80,7 +82,7 @@ export function LandingNavbar() {
         <div className="hidden items-center gap-2 md:flex">
           <CartButton className="text-navy dark:text-ink-fg" />
           <ThemeToggle />
-          {loggedIn ? (
+          {isUserLoggedIn ? (
             <Link
               href="/auth"
               className="inline-flex items-center rounded-full bg-navy px-6 py-2.5 text-sm font-bold text-cream transition-transform duration-200 hover:-translate-y-0.5 hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
@@ -133,7 +135,7 @@ export function LandingNavbar() {
               </a>
             ))}
             <div className="mt-2 flex gap-2">
-              {loggedIn ? (
+              {isUserLoggedIn ? (
                 <Link
                   href="/auth"
                   onClick={() => setOpen(false)}

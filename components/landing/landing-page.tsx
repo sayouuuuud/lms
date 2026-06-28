@@ -17,7 +17,13 @@ const fadeInUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
 }
 
-export function LandingPage({ stages = [] }: { stages?: Stage[] }) {
+export function LandingPage({
+  stages = [],
+  isLoggedIn = false,
+}: {
+  stages?: Stage[]
+  isLoggedIn?: boolean
+}) {
   return (
     <div className="relative min-h-screen bg-cream dark:bg-ink-base">
       <ScrollRefresh />
@@ -36,7 +42,7 @@ export function LandingPage({ stages = [] }: { stages?: Stage[] }) {
         }}
       />
       <div className="relative z-10">
-        <LandingNavbar />
+        <LandingNavbar isLoggedIn={isLoggedIn} />
         <main>
           <HeroSection />
           
