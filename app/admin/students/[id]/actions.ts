@@ -2,8 +2,28 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { StudentProfile, DeviceInfo, EnrolledCourse, PaymentRecord, ExamGrade, AssignmentRecord } from '@/lib/student-profile-data'
-import { formatDistanceToNow } from 'date-fns'
-import { arEG } from 'date-fns/locale'
+
+function formatRelativeTime(date: string | Date): string {
+  try {
+    const d = new Date(date);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'منذ لحظات';
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `منذ ${diffInMinutes} دقيقة`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `منذ ${diffInHours} ساعة`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `منذ ${diffInDays} يوم`;
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) return `منذ ${diffInMonths} شهر`;
+    const diffInYears = Math.floor(diffInDays / 365);
+    return `منذ ${diffInYears} سنة`;
+  } catch {
+    return 'غير معروف';
+  }
+}
 
 function formatJoinedAt(date: string): string {
   try {
@@ -59,7 +79,7 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
         ip: deviceRow.ip,
         city: deviceRow.city,
         country: deviceRow.country,
-        lastActive: formatDistanceToNow(new Date(deviceRow.last_active), { addSuffix: true, locale: arEG }),
+        lastActive: formatRelativeTime(deviceRow.last_active),
         sessions: deviceRow.sessions,
       }
     : {
@@ -124,7 +144,7 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
       progress,
       lessonsDone,
       lessonsTotal,
-      lastAccessed: formatDistanceToNow(new Date(lastAccessedDate), { addSuffix: true, locale: arEG }),
+      lastAccessed: formatRelativeTime(lastAccessedDate),
       status: progress >= 100 ? 'مكتمل' : progress === 0 ? 'متوقف' : 'قيد التقدم',
     }
   })
