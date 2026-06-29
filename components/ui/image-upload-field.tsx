@@ -2,13 +2,12 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { ImagePlus, Loader2, X } from 'lucide-react'
+import { ImagePlus, X, Upload, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { UploadButton } from '@/lib/uploadthing'
-import { cn } from '@/lib/utils'
+import { UploadDropzone } from '@/lib/uploadthing'
 
 // Reusable image picker used by the admin curriculum forms. Shows a preview of
-// the current image (URL string) and an UploadThing button to replace it.
+// the current image (URL string) and an upload zone to replace it.
 export function ImageUploadField({
   value,
   onChange,
@@ -23,19 +22,20 @@ export function ImageUploadField({
   const [uploading, setUploading] = useState(false)
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-3">
       <label className="block text-right text-sm font-medium text-foreground">
         {label}
       </label>
-      <div className="flex items-center gap-4">
-        <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-border bg-secondary/60">
+      <div className="flex flex-col gap-4 sm:flex-row">
+        {/* Preview thumbnail */}
+        <div className="relative size-24 shrink-0 overflow-hidden rounded-xl border border-border bg-secondary/60">
           {value ? (
             <>
               <Image
                 src={value}
                 alt="معاينة"
                 fill
-                sizes="80px"
+                sizes="96px"
                 className="object-contain p-1"
               />
               <button
@@ -49,13 +49,14 @@ export function ImageUploadField({
             </>
           ) : (
             <div className="flex size-full items-center justify-center text-muted-foreground">
-              <ImagePlus className="size-6" />
+              <ImagePlus className="size-8" />
             </div>
           )}
         </div>
 
+        {/* Upload zone */}
         <div className="flex-1">
-          <UploadButton
+          <UploadDropzone
             endpoint="curriculumImage"
             onUploadBegin={() => setUploading(true)}
             onClientUploadComplete={(res) => {
@@ -68,28 +69,24 @@ export function ImageUploadField({
             }}
             onUploadError={(e) => {
               setUploading(false)
-              toast.error('فشل رفع الصورة. حاول تاني.')
-              console.log('[v0] image upload error:', e.message)
+              toast.error(`فشل الرفع: ${e?.message || 'خطأ غير معروف'}`)
+              console.log('[v0] image upload error:', e)
             }}
             appearance={{
-              button: cn(
-                'h-9 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground',
-                'ut-uploading:cursor-not-allowed ut-uploading:opacity-70',
-              ),
+              label: 'text-sm text-muted-foreground',
               allowedContent: 'text-xs text-muted-foreground',
+              button: 'ut-btn-upload:bg-primary ut-btn-upload:text-primary-foreground ut-btn-upload:hover:bg-primary/90',
             }}
             content={{
-              button: uploading ? (
-                <span className="flex items-center gap-1.5">
-                  <Loader2 className="size-3.5 animate-spin" /> جاري الرفع...
-                </span>
-              ) : (
-                'رفع صورة'
-              ),
+              label: uploading
+                ? 'جاري الرفع... يرجى الانتظار'
+                : 'اسحب الصورة هنا أو انقر لتحديد ملف',
+              allowedContent: uploading ? '' : 'JPG أو PNG (أقل من 8 MB)',
+              uploadIcon: !uploading ? <Upload className="size-8" /> : <Loader2 className="size-8 animate-spin" />,
             }}
           />
           {hint && (
-            <p className="mt-1.5 text-right text-xs text-muted-foreground">{hint}</p>
+            <p className="mt-2 text-right text-xs text-muted-foreground">{hint}</p>
           )}
         </div>
       </div>
