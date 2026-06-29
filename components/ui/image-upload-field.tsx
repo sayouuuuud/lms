@@ -1,14 +1,15 @@
 'use client'
 
 import Image from 'next/image'
-import { useState } from 'react'
-import { ImagePlus, Loader2, X } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { ImagePlus, X, Upload, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { UploadButton } from '@/lib/uploadthing'
+import { uploadToStorage } from '@/lib/storage-upload'
 import { cn } from '@/lib/utils'
 
 // Reusable image picker used by the admin curriculum forms. Shows a preview of
-// the current image (URL string) and an UploadThing button to replace it.
+// the current image (URL string) and uploads new files directly to Supabase
+// Storage (no server callback needed, so it works in preview/sandbox).
 export function ImageUploadField({
   value,
   onChange,
@@ -21,21 +22,41 @@ export function ImageUploadField({
   hint?: string
 }) {
   const [uploading, setUploading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  async function handleFile(file: File | undefined) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast.error('من فضلك اختر ملف صورة')
+      return
+    }
+    setUploading(true)
+    try {
+      const url = await uploadToStorage(file, 'images')
+      onChange(url)
+      toast.success('تم رفع الصورة')
+    } catch (e) {
+      toast.error(`فشل الرفع: ${e instanceof Error ? e.message : 'خطأ غير معروف'}`)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-3">
       <label className="block text-right text-sm font-medium text-foreground">
         {label}
       </label>
-      <div className="flex items-center gap-4">
-        <div className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-border bg-secondary/60">
+      <div className="flex flex-col gap-4 sm:flex-row">
+        {/* Preview thumbnail */}
+        <div className="relative size-24 shrink-0 overflow-hidden rounded-xl border border-border bg-secondary/60">
           {value ? (
             <>
               <Image
                 src={value}
                 alt="معاينة"
                 fill
-                sizes="80px"
+                sizes="96px"
                 className="object-contain p-1"
               />
               <button
@@ -49,47 +70,48 @@ export function ImageUploadField({
             </>
           ) : (
             <div className="flex size-full items-center justify-center text-muted-foreground">
-              <ImagePlus className="size-6" />
+              <ImagePlus className="size-8" />
             </div>
           )}
         </div>
 
+        {/* Upload zone */}
         <div className="flex-1">
-          <UploadButton
-            endpoint="curriculumImage"
-            onUploadBegin={() => setUploading(true)}
-            onClientUploadComplete={(res) => {
-              setUploading(false)
-              const url = res?.[0]?.url
-              if (url) {
-                onChange(url)
-                toast.success('تم رفع الصورة')
-              }
-            }}
-            onUploadError={(e) => {
-              setUploading(false)
-              toast.error('فشل رفع الصورة. حاول تاني.')
-              console.log('[v0] image upload error:', e.message)
-            }}
-            appearance={{
-              button: cn(
-                'h-9 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground',
-                'ut-uploading:cursor-not-allowed ut-uploading:opacity-70',
-              ),
-              allowedContent: 'text-xs text-muted-foreground',
-            }}
-            content={{
-              button: uploading ? (
-                <span className="flex items-center gap-1.5">
-                  <Loader2 className="size-3.5 animate-spin" /> جاري الرفع...
-                </span>
-              ) : (
-                'رفع صورة'
-              ),
-            }}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleFile(e.target.files?.[0])}
           />
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+            className={cn(
+              'flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-6 text-center transition-colors hover:bg-secondary/60',
+              uploading && 'cursor-not-allowed opacity-70',
+            )}
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="size-7 animate-spin text-primary" />
+                <span className="text-sm text-muted-foreground">جاري الرفع...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="size-7 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">
+                  اختر صورة لرفعها
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  JPG أو PNG أو WebP (أقل من 8 MB)
+                </span>
+              </>
+            )}
+          </button>
           {hint && (
-            <p className="mt-1.5 text-right text-xs text-muted-foreground">{hint}</p>
+            <p className="mt-2 text-right text-xs text-muted-foreground">{hint}</p>
           )}
         </div>
       </div>

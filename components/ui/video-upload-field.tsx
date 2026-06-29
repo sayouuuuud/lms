@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Film, Loader2, X, Link2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
-import { UploadDropzone } from '@/lib/uploadthing'
+import { uploadToStorage } from '@/lib/storage-upload'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 // Reusable video picker for the admin lesson editor. Supports both uploading a
-// video file (UploadThing via drag-drop) and pasting a direct video URL. Stores the final URL
-// as a plain string via `onChange`.
+// video file directly to Supabase Storage and pasting a direct video URL.
+// Stores the final URL as a plain string via `onChange`.
 export function VideoUploadField({
   value,
   onChange,
@@ -21,6 +22,25 @@ export function VideoUploadField({
   hint?: string
 }) {
   const [uploading, setUploading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  async function handleFile(file: File | undefined) {
+    if (!file) return
+    if (!file.type.startsWith('video/')) {
+      toast.error('من فضلك اختر ملف فيديو')
+      return
+    }
+    setUploading(true)
+    try {
+      const url = await uploadToStorage(file, 'videos')
+      onChange(url)
+      toast.success('تم رفع الفيديو')
+    } catch (e) {
+      toast.error(`فشل الرفع: ${e instanceof Error ? e.message : 'خطأ غير معروف'}`)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div className="space-y-2">
@@ -55,40 +75,43 @@ export function VideoUploadField({
         )}
       </div>
 
-      {/* Upload via drag-drop or URL */}
+      {/* Upload via file picker or URL */}
       <div className="space-y-2">
-        {/* Drag-drop zone */}
-        <UploadDropzone
-          endpoint="lessonVideo"
-          onUploadBegin={() => setUploading(true)}
-          onClientUploadComplete={(res) => {
-            setUploading(false)
-            const url = res?.[0]?.url
-            if (url) {
-              onChange(url)
-              toast.success('تم رفع الفيديو')
-            }
-          }}
-          onUploadError={(e) => {
-            setUploading(false)
-            toast.error(`فشل الرفع: ${e?.message || 'خطأ غير معروف'}`)
-            console.log('[v0] video upload error:', e)
-          }}
-          appearance={{
-            label: 'text-sm text-muted-foreground',
-            allowedContent: 'text-xs text-muted-foreground',
-            button: 'ut-btn-upload:bg-primary ut-btn-upload:text-primary-foreground ut-btn-upload:hover:bg-primary/90',
-          }}
-          content={{
-            label: uploading
-              ? 'جاري الرفع... يرجى الانتظار'
-              : 'اسحب الفيديو هنا أو انقر لتحديد ملف',
-            allowedContent: uploading
-              ? ''
-              : 'MP4 أو MOV أو WebM (أقل من 512 MB)',
-            uploadIcon: !uploading ? <Upload className="size-8" /> : <Loader2 className="size-8 animate-spin" />,
-          }}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="video/*"
+          className="hidden"
+          onChange={(e) => handleFile(e.target.files?.[0])}
         />
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            'flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-6 text-center transition-colors hover:bg-secondary/60',
+            uploading && 'cursor-not-allowed opacity-70',
+          )}
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="size-7 animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground">
+                جاري رفع الفيديو... قد يستغرق دقيقة
+              </span>
+            </>
+          ) : (
+            <>
+              <Upload className="size-7 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">
+                اختر فيديو لرفعه
+              </span>
+              <span className="text-xs text-muted-foreground">
+                MP4 أو MOV أو WebM (أقل من 500 MB)
+              </span>
+            </>
+          )}
+        </button>
 
         {/* Direct URL input */}
         <div className="relative">

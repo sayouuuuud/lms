@@ -14,7 +14,8 @@ import {
   Plus,
   Lock,
   Film,
-  GripVertical,
+  BookOpen,
+  ChevronDown,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -24,16 +25,16 @@ import { Modal, Field } from '@/components/ui/modal'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ImageUploadField } from '@/components/ui/image-upload-field'
 import { VideoUploadField } from '@/components/ui/video-upload-field'
-import { LectureExamEditor } from '@/components/courses/lecture-exam-editor'
-import { cn } from '@/lib/utils'
+import { AssignmentEditor } from '@/components/courses/assignment-editor'
 import {
   type AdminLecture,
   type AdminLesson,
-  type AdminExam,
+  type AdminContentItem,
   updateLecture,
   createLesson,
   updateLesson,
   deleteLesson,
+  reorderLectureContent,
 } from '@/app/admin/courses/actions'
 
 const textareaClass =
@@ -41,15 +42,18 @@ const textareaClass =
 
 export function AdminLectureDetail({
   lecture,
-  exam,
+  content,
 }: {
   lecture: AdminLecture
-  exam: AdminExam | null
+  content: AdminContentItem[]
 }) {
   const router = useRouter()
 
-  // ── Lecture edit modal ──
+  // ── State ──
+  const [contentList, setContentList] = useState(content)
   const [editOpen, setEditOpen] = useState(false)
+  const [creatingAssignment, setCreatingAssignment] = useState(false)
+  const [editingAssignment, setEditingAssignment] = useState<string | null>(null)
   const [title, setTitle] = useState(lecture.title)
   const [description, setDescription] = useState(lecture.description)
   const [price, setPrice] = useState(String(lecture.price))
@@ -218,99 +222,219 @@ export function AdminLectureDetail({
         </div>
       </Card>
 
-      {/* Lessons */}
+      {/* Unified Content List */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">الدروس</h2>
-          <Button size="sm" variant="outline" onClick={openCreateLesson}>
-            <Plus className="size-4" />
-            إضافة درس
-          </Button>
+          <h2 className="text-lg font-bold text-foreground">محتوى المحاضرة</h2>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={openCreateLesson}>
+              <Plus className="size-4" />
+              إضافة درس
+            </Button>
+            <Button size="sm" onClick={() => setCreatingAssignment(true)}>
+              <Plus className="size-4" />
+              إضافة واجب
+            </Button>
+          </div>
         </div>
 
-        {lecture.lessons.length === 0 ? (
+        {contentList.length === 0 ? (
           <Card className="py-12 text-center text-sm text-muted-foreground">
-            لا توجد دروس في هذه المحاضرة بعد.
+            لا توجد دروس أو واجبات في هذه المحاضرة بعد.
           </Card>
         ) : (
           <div className="space-y-2">
-            {lecture.lessons.map((lesson, i) => (
+            {contentList.map((item, i) => (
               <Card
-                key={lesson.id}
+                key={`${item.kind}-${item.kind === 'lesson' ? item.lesson.id : item.assignment.id}`}
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
               >
-                <Link
-                  href={`/admin/courses/${lecture.id}/lessons/${lesson.id}`}
-                  className="flex flex-1 items-center gap-3"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-muted-foreground">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        {lesson.title}
-                      </span>
-                      {lesson.isFree ? (
-                        <Badge
-                          variant="outline"
-                          className="border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
+                {item.kind === 'lesson' ? (
+                  <>
+                    <Link
+                      href={`/admin/courses/${lecture.id}/lessons/${item.lesson.id}`}
+                      className="flex flex-1 items-center gap-3"
+                    >
+                      <Film className="size-5 text-primary" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground">
+                            {item.lesson.title}
+                          </span>
+                          {item.lesson.isFree ? (
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
+                            >
+                              مجاني
+                            </Badge>
+                          ) : (
+                            <Lock className="size-3 text-muted-foreground" />
+                          )}
+                          {item.lesson.videoUrl ? (
+                            <span className="text-[10px] font-medium text-primary">
+                              فيديو
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-rose-500">
+                              بدون فيديو
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {item.lesson.duration || 'بدون مدة'}
+                        </span>
+                      </div>
+                    </Link>
+                    <div className="flex shrink-0 gap-1">
+                      {i > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={async () => {
+                            const newList = [...contentList]
+                            const [moved] = newList.splice(i, 1)
+                            newList.splice(i - 1, 0, moved)
+                            setContentList(newList)
+                            await reorderLectureContent(
+                              lecture.id,
+                              newList.map((it) => ({
+                                kind: it.kind,
+                                id:
+                                  it.kind === 'lesson'
+                                    ? it.lesson.id
+                                    : it.assignment.id,
+                              })),
+                            )
+                          }}
                         >
-                          مجاني
-                        </Badge>
-                      ) : (
-                        <Lock className="size-3 text-muted-foreground" />
+                          <ChevronDown className="size-4 rotate-180" />
+                        </Button>
                       )}
-                      {lesson.videoUrl ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
-                          <Film className="size-3" /> فيديو
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-medium text-rose-500">
-                          بدون فيديو
-                        </span>
+                      {i < contentList.length - 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={async () => {
+                            const newList = [...contentList]
+                            const [moved] = newList.splice(i, 1)
+                            newList.splice(i + 1, 0, moved)
+                            setContentList(newList)
+                            await reorderLectureContent(
+                              lecture.id,
+                              newList.map((it) => ({
+                                kind: it.kind,
+                                id:
+                                  it.kind === 'lesson'
+                                    ? it.lesson.id
+                                    : it.assignment.id,
+                              })),
+                            )
+                          }}
+                        >
+                          <ChevronDown className="size-4" />
+                        </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-muted-foreground hover:text-foreground"
+                        onClick={() => openEditLesson(item.lesson)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                        onClick={() => setDeletingLesson(item.lesson)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {lesson.duration || 'بدون مدة'}
-                    </span>
-                  </div>
-                </Link>
-
-                <div className="flex shrink-0 gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground hover:text-foreground"
-                    onClick={() => openEditLesson(lesson)}
-                  >
-                    <Pencil className="size-4" />
-                    <span className="sr-only">تعديل سريع</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
-                    onClick={() => setDeletingLesson(lesson)}
-                  >
-                    <Trash2 className="size-4" />
-                    <span className="sr-only">حذف الدرس</span>
-                  </Button>
-                </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-1 items-center gap-3">
+                      <BookOpen className="size-5 text-amber-500" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-foreground">
+                          {item.assignment.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.assignment.questions.length} سؤال •{' '}
+                          {item.assignment.points} درجات
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      {i > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={async () => {
+                            const newList = [...contentList]
+                            const [moved] = newList.splice(i, 1)
+                            newList.splice(i - 1, 0, moved)
+                            setContentList(newList)
+                            await reorderLectureContent(
+                              lecture.id,
+                              newList.map((it) => ({
+                                kind: it.kind,
+                                id:
+                                  it.kind === 'lesson'
+                                    ? it.lesson.id
+                                    : it.assignment.id,
+                              })),
+                            )
+                          }}
+                        >
+                          <ChevronDown className="size-4 rotate-180" />
+                        </Button>
+                      )}
+                      {i < contentList.length - 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={async () => {
+                            const newList = [...contentList]
+                            const [moved] = newList.splice(i, 1)
+                            newList.splice(i + 1, 0, moved)
+                            setContentList(newList)
+                            await reorderLectureContent(
+                              lecture.id,
+                              newList.map((it) => ({
+                                kind: it.kind,
+                                id:
+                                  it.kind === 'lesson'
+                                    ? it.lesson.id
+                                    : it.assignment.id,
+                              })),
+                            )
+                          }}
+                        >
+                          <ChevronDown className="size-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => setEditingAssignment(item.assignment.id)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
               </Card>
             ))}
           </div>
         )}
-      </div>
-
-      {/* Exam */}
-      <div>
-        <h2 className="mb-3 text-lg font-bold text-foreground">اختبار المحاضرة</h2>
-        <LectureExamEditor
-          lectureId={lecture.id}
-          lectureTitle={lecture.title}
-          exam={exam}
-        />
       </div>
 
       {/* Lecture edit modal */}
@@ -396,7 +520,7 @@ export function AdminLectureDetail({
               value={lDesc}
               onChange={(e) => setLDesc(e.target.value)}
               rows={3}
-              placeholder="نبذة عن محتوى الدرس"
+              placeholder="نبذة عن محتو�� الدرس"
               className={textareaClass}
             />
           </Field>
@@ -419,6 +543,33 @@ export function AdminLectureDetail({
           </div>
         </form>
       </Modal>
+
+      {/* Assignment modals */}
+      {creatingAssignment && (
+        <AssignmentEditor
+          lectureId={lecture.id}
+          onClose={() => setCreatingAssignment(false)}
+          onSuccess={() => {
+            setCreatingAssignment(false)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {editingAssignment && (
+        <AssignmentEditor
+          lectureId={lecture.id}
+          assignment={contentList
+            .filter((item) => item.kind === 'assignment')
+            .find((item) => item.assignment.id === editingAssignment)
+            ?.assignment}
+          onClose={() => setEditingAssignment(null)}
+          onSuccess={() => {
+            setEditingAssignment(null)
+            router.refresh()
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deletingLesson}

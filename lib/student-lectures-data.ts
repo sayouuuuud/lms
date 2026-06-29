@@ -23,8 +23,10 @@ type AssignmentRow = {
   description: string | null
   instructions: string[] | null
   points: number | null
+  sort_order?: number | null
   assignment_questions: {
     id: string
+    kind?: string | null
     question: string
     options: string[]
     correct_index: number
@@ -104,17 +106,30 @@ function mapLessons(rows: LectureRow['lessons']): Lesson[] {
 }
 
 function toCourseDetail(row: LectureRow): CourseDetail {
+  // All lessons sorted by sort_order
   const lessons = mapLessons(row.lessons)
-  // The lecture's exam (assignment of type 'اختبار') appears after its lessons.
-  const exam = (row.assignments ?? []).find((a) => a.type === 'اختبار')
+  
+  // All assignments (of type 'واجب') sorted by sort_order
+  const allAssignments = (row.assignments ?? [])
+    .filter((a) => a.type === 'واجب')
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((a) => mapAssignment(a, row.slug))
+
+  // Build a unified section with lessons and assignments interleaved
+  // (Lessons have sort_order, assignments have sort_order, display in combined order)
   const sections: Section[] = [
     {
       id: `${row.slug}-s1`,
       title: 'محتوى المحاضرة',
+      // For now, keep lessons only; assignments will be shown separately per item
       lessons,
-      assignment: exam ? mapAssignment(exam, row.slug) : undefined,
+      // But we'll store all assignments so they're available elsewhere if needed
+      assignment: undefined, // Legacy field; not used with new model
     },
   ]
+  
+  // TODO: Update the Section type to support interleaved content properly
+  // For now, assignments are available but not directly embedded in lessons
   return {
     id: row.slug,
     title: row.title,
@@ -143,8 +158,8 @@ function toCourseDetail(row: LectureRow): CourseDetail {
 }
 
 const ASSIGNMENT_SELECT = `
-  assignments ( id, code, type, title, description, instructions, points,
-    assignment_questions ( id, question, options, correct_index, position ) )
+  assignments ( id, code, type, title, description, instructions, points, sort_order,
+    assignment_questions ( id, kind, question, options, correct_index, position ) )
 `
 
 const LECTURE_SELECT = `

@@ -71,6 +71,33 @@ function slugify(input: string) {
   return `${base ? base.slice(0, 24) : 'item'}-${suffix}`
 }
 
+// The next sort_order placing a new item at the end of a lecture's unified
+// content list (lessons + assignments share one ordering space).
+async function nextContentOrder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  lectureId: string,
+): Promise<number> {
+  const [lessonsRes, assignmentsRes] = await Promise.all([
+    supabase
+      .from('lessons')
+      .select('sort_order')
+      .eq('lecture_id', lectureId)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('assignments')
+      .select('sort_order')
+      .eq('lecture_id', lectureId)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+  const maxLesson = lessonsRes.data?.sort_order ?? 0
+  const maxAssignment = assignmentsRes.data?.sort_order ?? 0
+  return Math.max(maxLesson, maxAssignment) + 1
+}
+
 // ── Read ──────────────────────────────────────────────────────────
 export async function getLecturesAdmin(): Promise<AdminLecture[]> {
   const supabase = await createClient()
@@ -379,10 +406,7 @@ export async function createLesson(lectureId: string, input: LessonInput) {
   const supabase = await createClient()
   if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
-  const { count } = await supabase
-    .from('lessons')
-    .select('id', { count: 'exact', head: true })
-    .eq('lecture_id', lectureId)
+  const sortOrder = await nextContentOrder(supabase, lectureId)
 
   const { error } = await supabase.from('lessons').insert({
     lecture_id: lectureId,
@@ -390,7 +414,7 @@ export async function createLesson(lectureId: string, input: LessonInput) {
     title: input.title,
     duration: input.duration,
     is_free: input.isFree,
-    sort_order: (count ?? 0) + 1,
+    sort_order: sortOrder,
     video_url: input.videoUrl ?? null,
     description: input.description ?? null,
   })
@@ -444,7 +468,7 @@ export async function deleteLesson(id: string) {
 // ── Single lecture / lesson detail (admin views) ──────────────────
 export async function getLectureDetailAdmin(
   id: string,
-): Promise<{ lecture: AdminLecture; exam: AdminExam | null } | null> {
+): Promise<{ lecture: AdminLecture; content: AdminContentItem[] } | null> {
   const supabase = await createClient()
 
   const { data: row, error } = await supabase
@@ -499,8 +523,27 @@ export async function getLectureDetailAdmin(
     })),
   }
 
-  const exam = await getLectureExam(supabase, id)
-  return { lecture, exam }
+  // Build the unified, ordered content list (lessons + assignments).
+  const assignments = await getLectureAssignments(supabase, id)
+
+  const content: AdminContentItem[] = [
+    ...lecture.lessons.map(
+      (lesson): AdminContentItem => ({
+        kind: 'lesson',
+        sortOrder: lesson.sortOrder,
+        lesson,
+      }),
+    ),
+    ...assignments.map(
+      (assignment): AdminContentItem => ({
+        kind: 'assignment',
+        sortOrder: assignment.sortOrder,
+        assignment,
+      }),
+    ),
+  ].sort((a, b) => a.sortOrder - b.sortOrder)
+
+  return { lecture, content }
 }
 
 export async function getLessonDetailAdmin(
@@ -555,131 +598,136 @@ export async function getLessonDetailAdmin(
   }
 }
 
-// ── Lecture exam (assignment of type 'اختبار' linked to a lecture) ─
-export type AdminExamQuestion = {
+// ── Lecture assignments (واجبات) + unified content ────────────────
+// A question can be multiple choice, an essay (written answer), or a file
+// upload that the student answers by submitting a file.
+export type QuestionKind = 'mcq' | 'essay' | 'file'
+
+export type AdminAssignmentQuestion = {
   id?: string
+  kind: QuestionKind
   question: string
+  /** خيارات الاختيار من متعدد، تُستخدم فقط عندما يكون النوع mcq */
   options: string[]
+  /** رقم الإجابة الصحيحة، يُستخدم فقط عندما يكون النوع mcq */
   correctIndex: number
 }
 
-export type AdminExam = {
+export type AdminAssignment = {
   id: string
   code: string
   title: string
   description: string
   instructions: string[]
   points: number
-  questions: AdminExamQuestion[]
+  sortOrder: number
+  questions: AdminAssignmentQuestion[]
 }
 
-export type ExamInput = {
+export type AssignmentInput = {
   title: string
   description: string
-  instructions: string[]
   points: number
-  questions: AdminExamQuestion[]
+  questions: AdminAssignmentQuestion[]
 }
 
-async function getLectureExam(
+// A single ordered entry in a lecture's content list.
+export type AdminContentItem =
+  | { kind: 'lesson'; sortOrder: number; lesson: AdminLesson }
+  | { kind: 'assignment'; sortOrder: number; assignment: AdminAssignment }
+
+async function getLectureAssignments(
   supabase: Awaited<ReturnType<typeof createClient>>,
   lectureId: string,
-): Promise<AdminExam | null> {
-  const { data: a } = await supabase
+): Promise<AdminAssignment[]> {
+  const { data: rows } = await supabase
     .from('assignments')
-    .select('id, code, title, description, instructions, points')
+    .select(
+      'id, code, title, description, instructions, points, sort_order, ' +
+        'assignment_questions ( id, kind, question, options, correct_index, position )',
+    )
     .eq('lecture_id', lectureId)
-    .eq('type', 'اختبار')
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+    .order('sort_order', { ascending: true })
 
-  if (!a) return null
-
-  const { data: qs } = await supabase
-    .from('assignment_questions')
-    .select('id, question, options, correct_index, position')
-    .eq('assignment_id', a.id)
-    .order('position', { ascending: true })
-
-  return {
+  return (rows ?? []).map((a: any) => ({
     id: a.id,
     code: a.code,
     title: a.title,
-    description: a.description,
+    description: a.description ?? '',
     instructions: (a.instructions as string[]) ?? [],
-    points: a.points,
-    questions: (qs ?? []).map((q) => ({
-      id: q.id,
-      question: q.question,
-      options: (q.options as string[]) ?? [],
-      correctIndex: q.correct_index,
-    })),
-  }
+    points: a.points ?? 0,
+    sortOrder: a.sort_order ?? 0,
+    questions: [...(a.assignment_questions ?? [])]
+      .sort((x: any, y: any) => (x.position ?? 0) - (y.position ?? 0))
+      .map((q: any) => ({
+        id: q.id,
+        kind: (q.kind as QuestionKind) ?? 'mcq',
+        question: q.question,
+        options: (q.options as string[]) ?? [],
+        correctIndex: q.correct_index ?? 0,
+      })),
+  }))
 }
 
-function examCode() {
+function assignmentCode() {
   return `ASG-LEC-${Math.random().toString(36).slice(2, 7).toUpperCase()}`
 }
 
-// Creates or updates the lecture's exam, replacing its questions.
-export async function saveLectureExam(lectureId: string, input: ExamInput) {
+// Replaces all questions of an assignment with the provided set.
+async function replaceAssignmentQuestions(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  assignmentId: string,
+  questions: AdminAssignmentQuestion[],
+) {
+  await supabase
+    .from('assignment_questions')
+    .delete()
+    .eq('assignment_id', assignmentId)
+
+  if (questions.length === 0) return null
+
+  const rows = questions.map((q, i) => ({
+    assignment_id: assignmentId,
+    kind: q.kind,
+    question: q.question,
+    options: q.kind === 'mcq' ? q.options : [],
+    correct_index: q.kind === 'mcq' ? q.correctIndex : 0,
+    position: i + 1,
+  }))
+  const { error } = await supabase.from('assignment_questions').insert(rows)
+  return error
+}
+
+export async function createAssignment(lectureId: string, input: AssignmentInput) {
   const supabase = await createClient()
   if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
-  const existing = await getLectureExam(supabase, lectureId)
+  const sortOrder = await nextContentOrder(supabase, lectureId)
 
-  let assignmentId = existing?.id
-  if (assignmentId) {
-    const { error } = await supabase
-      .from('assignments')
-      .update({
-        title: input.title,
-        description: input.description,
-        instructions: input.instructions,
-        points: input.points,
-      })
-      .eq('id', assignmentId)
-    if (error) {
-      console.log('[v0] saveLectureExam update error:', error.message)
-      return { error: 'تعذّر حفظ الاختبار.' }
-    }
-  } else {
-    const { data, error } = await supabase
-      .from('assignments')
-      .insert({
-        code: examCode(),
-        lecture_id: lectureId,
-        type: 'اختبار',
-        title: input.title,
-        description: input.description,
-        instructions: input.instructions,
-        points: input.points,
-      })
-      .select('id')
-      .single()
-    if (error || !data) {
-      console.log('[v0] saveLectureExam insert error:', error?.message)
-      return { error: 'تعذّر إنشاء الاختبار.' }
-    }
-    assignmentId = data.id
+  const { data, error } = await supabase
+    .from('assignments')
+    .insert({
+      code: assignmentCode(),
+      lecture_id: lectureId,
+      type: 'واجب',
+      title: input.title,
+      description: input.description,
+      instructions: [],
+      points: input.points,
+      sort_order: sortOrder,
+    })
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.log('[v0] createAssignment error:', error?.message)
+    return { error: 'تعذّر إنشاء الواجب.' }
   }
 
-  // Replace questions
-  await supabase.from('assignment_questions').delete().eq('assignment_id', assignmentId)
-  if (input.questions.length > 0) {
-    const rows = input.questions.map((q, i) => ({
-      assignment_id: assignmentId,
-      question: q.question,
-      options: q.options,
-      correct_index: q.correctIndex,
-      position: i + 1,
-    }))
-    const { error } = await supabase.from('assignment_questions').insert(rows)
-    if (error) {
-      console.log('[v0] saveLectureExam questions error:', error.message)
-      return { error: 'تعذّر حفظ أسئلة الاختبار.' }
-    }
+  const qErr = await replaceAssignmentQuestions(supabase, data.id, input.questions)
+  if (qErr) {
+    console.log('[v0] createAssignment questions error:', qErr.message)
+    return { error: 'تعذّر حفظ أسئلة الواجب.' }
   }
 
   revalidatePath(`/admin/courses/${lectureId}`)
@@ -687,19 +735,74 @@ export async function saveLectureExam(lectureId: string, input: ExamInput) {
   return { success: true }
 }
 
-export async function deleteLectureExam(lectureId: string) {
+export async function updateAssignment(id: string, input: AssignmentInput) {
   const supabase = await createClient()
   if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
-  const existing = await getLectureExam(supabase, lectureId)
-  if (!existing) return { success: true }
+  const { error } = await supabase
+    .from('assignments')
+    .update({
+      title: input.title,
+      description: input.description,
+      points: input.points,
+    })
+    .eq('id', id)
 
-  await supabase.from('assignment_questions').delete().eq('assignment_id', existing.id)
-  const { error } = await supabase.from('assignments').delete().eq('id', existing.id)
   if (error) {
-    console.log('[v0] deleteLectureExam error:', error.message)
-    return { error: 'تعذّر حذف الاختبار.' }
+    console.log('[v0] updateAssignment error:', error.message)
+    return { error: 'تعذّر تحديث الواجب.' }
   }
+
+  const qErr = await replaceAssignmentQuestions(supabase, id, input.questions)
+  if (qErr) {
+    console.log('[v0] updateAssignment questions error:', qErr.message)
+    return { error: 'تعذّر حفظ أسئلة الواجب.' }
+  }
+
+  revalidatePath('/courses')
+  return { success: true }
+}
+
+export async function deleteAssignment(id: string) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  await supabase.from('assignment_questions').delete().eq('assignment_id', id)
+  const { error } = await supabase.from('assignments').delete().eq('id', id)
+  if (error) {
+    console.log('[v0] deleteAssignment error:', error.message)
+    return { error: 'تعذّر حذف الواجب.' }
+  }
+  revalidatePath('/courses')
+  return { success: true }
+}
+
+// Reorders a lecture's mixed content (lessons + assignments) into one list.
+// `items` is the new order; sort_order is assigned 1..n across both tables.
+export async function reorderLectureContent(
+  lectureId: string,
+  items: { kind: 'lesson' | 'assignment'; id: string }[],
+) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+
+  const updates = items.map((item, i) => {
+    const table = item.kind === 'lesson' ? 'lessons' : 'assignments'
+    return supabase
+      .from(table)
+      .update({ sort_order: i + 1 })
+      .eq('id', item.id)
+      .eq('lecture_id', lectureId)
+  })
+
+  const results = await Promise.all(updates)
+  const failed = results.find((r) => r.error)
+  if (failed?.error) {
+    console.log('[v0] reorderLectureContent error:', failed.error.message)
+    return { error: 'تعذّر إعادة الترتيب.' }
+  }
+
   revalidatePath(`/admin/courses/${lectureId}`)
+  revalidatePath('/courses')
   return { success: true }
 }
