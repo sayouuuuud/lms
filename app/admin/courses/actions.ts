@@ -709,7 +709,7 @@ export async function createAssignment(lectureId: string, input: AssignmentInput
     .insert({
       code: assignmentCode(),
       lecture_id: lectureId,
-      type: 'واجب',
+      type: 'تسليم',
       title: input.title,
       description: input.description,
       instructions: [],

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -14,7 +14,12 @@ import {
   Plus,
   Lock,
   Film,
-  GripVertical,
+  ChevronUp,
+  ChevronDown,
+  ListChecks,
+  FileText,
+  Upload,
+  ClipboardList,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -24,29 +29,45 @@ import { Modal, Field } from '@/components/ui/modal'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ImageUploadField } from '@/components/ui/image-upload-field'
 import { VideoUploadField } from '@/components/ui/video-upload-field'
-import { LectureExamEditor } from '@/components/courses/lecture-exam-editor'
+import { AssignmentEditorModal } from '@/components/courses/assignment-editor-modal'
 import { cn } from '@/lib/utils'
 import {
   type AdminLecture,
   type AdminLesson,
-  type AdminExam,
+  type AdminAssignment,
+  type AdminContentItem,
   updateLecture,
   createLesson,
   updateLesson,
   deleteLesson,
+  deleteAssignment,
+  reorderLectureContent,
 } from '@/app/admin/courses/actions'
 
 const textareaClass =
   'w-full resize-none rounded-xl border border-border bg-secondary/60 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card'
 
+const QUESTION_KIND_BADGE = {
+  mcq: { label: 'اختيار', icon: ListChecks },
+  essay: { label: 'مقالي', icon: FileText },
+  file: { label: 'رفع ملف', icon: Upload },
+} as const
+
 export function AdminLectureDetail({
   lecture,
-  exam,
+  content,
 }: {
   lecture: AdminLecture
-  exam: AdminExam | null
+  content: AdminContentItem[]
 }) {
   const router = useRouter()
+
+  // Local copy of the content list so reordering feels instant.
+  const [items, setItems] = useState<AdminContentItem[]>(content)
+  useEffect(() => setItems(content), [content])
+
+  const lessonCount = items.filter((it) => it.kind === 'lesson').length
+  const assignmentCount = items.filter((it) => it.kind === 'assignment').length
 
   // ── Lecture edit modal ──
   const [editOpen, setEditOpen] = useState(false)
@@ -85,7 +106,6 @@ export function AdminLectureDetail({
   const [lIsFree, setLIsFree] = useState(false)
   const [lVideo, setLVideo] = useState('')
   const [lDesc, setLDesc] = useState('')
-  const [deletingLesson, setDeletingLesson] = useState<AdminLesson | null>(null)
 
   const openCreateLesson = () => {
     setEditingLesson(null)
@@ -126,14 +146,53 @@ export function AdminLectureDetail({
     router.refresh()
   }
 
-  const confirmDeleteLesson = async () => {
-    if (!deletingLesson) return
-    const id = deletingLesson.id
-    setDeletingLesson(null)
-    const res = await deleteLesson(id)
+  // ── Assignment modal ──
+  const [assignmentOpen, setAssignmentOpen] = useState(false)
+  const [editingAssignment, setEditingAssignment] = useState<AdminAssignment | null>(
+    null,
+  )
+
+  const openCreateAssignment = () => {
+    setEditingAssignment(null)
+    setAssignmentOpen(true)
+  }
+  const openEditAssignment = (a: AdminAssignment) => {
+    setEditingAssignment(a)
+    setAssignmentOpen(true)
+  }
+
+  // ── Delete (lesson or assignment) ──
+  const [deleting, setDeleting] = useState<AdminContentItem | null>(null)
+
+  const confirmDelete = async () => {
+    if (!deleting) return
+    const item = deleting
+    setDeleting(null)
+    const res =
+      item.kind === 'lesson'
+        ? await deleteLesson(item.lesson.id)
+        : await deleteAssignment(item.assignment.id)
     if (res.error) return toast.error(res.error)
-    toast.success('تم حذف الدرس')
+    toast.success(item.kind === 'lesson' ? 'تم حذف الدرس' : 'تم حذف الواجب')
     router.refresh()
+  }
+
+  // ── Reordering ──
+  const move = async (index: number, dir: -1 | 1) => {
+    const target = index + dir
+    if (target < 0 || target >= items.length) return
+    const next = [...items]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    setItems(next)
+    const payload = next.map((it) => ({
+      kind: it.kind,
+      id: it.kind === 'lesson' ? it.lesson.id : it.assignment.id,
+    }))
+    const res = await reorderLectureContent(lecture.id, payload)
+    if (res.error) {
+      toast.error(res.error)
+      setItems(items) // revert
+    }
   }
 
   return (
@@ -193,10 +252,13 @@ export function AdminLectureDetail({
               </span>
               <span className="flex items-center gap-1.5">
                 <PlayCircle className="size-3.5" />
-                <span className="font-medium text-foreground">
-                  {lecture.lessons.length}
-                </span>
+                <span className="font-medium text-foreground">{lessonCount}</span>
                 درس
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ClipboardList className="size-3.5" />
+                <span className="font-medium text-foreground">{assignmentCount}</span>
+                واجب
               </span>
               <span className="font-bold text-primary">
                 {lecture.price.toLocaleString('en-US')} ج
@@ -218,99 +280,49 @@ export function AdminLectureDetail({
         </div>
       </Card>
 
-      {/* Lessons */}
+      {/* Unified content list */}
       <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">الدروس</h2>
-          <Button size="sm" variant="outline" onClick={openCreateLesson}>
-            <Plus className="size-4" />
-            إضافة درس
-          </Button>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">محتوى المحاضرة</h2>
+            <p className="text-sm text-muted-foreground">
+              رتّب الدروس والواجبات بالترتيب الذي سيراه الطالب داخل المحاضرة
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={openCreateLesson}>
+              <PlayCircle className="size-4" />
+              إضافة درس
+            </Button>
+            <Button size="sm" onClick={openCreateAssignment}>
+              <ClipboardList className="size-4" />
+              إضافة واجب
+            </Button>
+          </div>
         </div>
 
-        {lecture.lessons.length === 0 ? (
+        {items.length === 0 ? (
           <Card className="py-12 text-center text-sm text-muted-foreground">
-            لا توجد دروس في هذه المحاضرة بعد.
+            لا يوجد محتوى في هذه المحاضرة بعد. أضف درساً أو واجباً للبدء.
           </Card>
         ) : (
           <div className="space-y-2">
-            {lecture.lessons.map((lesson, i) => (
-              <Card
-                key={lesson.id}
-                className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <Link
-                  href={`/admin/courses/${lecture.id}/lessons/${lesson.id}`}
-                  className="flex flex-1 items-center gap-3"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-muted-foreground">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        {lesson.title}
-                      </span>
-                      {lesson.isFree ? (
-                        <Badge
-                          variant="outline"
-                          className="border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
-                        >
-                          مجاني
-                        </Badge>
-                      ) : (
-                        <Lock className="size-3 text-muted-foreground" />
-                      )}
-                      {lesson.videoUrl ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
-                          <Film className="size-3" /> فيديو
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-medium text-rose-500">
-                          بدون فيديو
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {lesson.duration || 'بدون مدة'}
-                    </span>
-                  </div>
-                </Link>
-
-                <div className="flex shrink-0 gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-muted-foreground hover:text-foreground"
-                    onClick={() => openEditLesson(lesson)}
-                  >
-                    <Pencil className="size-4" />
-                    <span className="sr-only">تعديل سريع</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
-                    onClick={() => setDeletingLesson(lesson)}
-                  >
-                    <Trash2 className="size-4" />
-                    <span className="sr-only">حذف الدرس</span>
-                  </Button>
-                </div>
-              </Card>
+            {items.map((item, i) => (
+              <ContentRow
+                key={item.kind === 'lesson' ? item.lesson.id : item.assignment.id}
+                item={item}
+                index={i}
+                total={items.length}
+                lectureId={lecture.id}
+                onMoveUp={() => move(i, -1)}
+                onMoveDown={() => move(i, 1)}
+                onEditLesson={openEditLesson}
+                onEditAssignment={openEditAssignment}
+                onDelete={() => setDeleting(item)}
+              />
             ))}
           </div>
         )}
-      </div>
-
-      {/* Exam */}
-      <div>
-        <h2 className="mb-3 text-lg font-bold text-foreground">اختبار المحاضرة</h2>
-        <LectureExamEditor
-          lectureId={lecture.id}
-          lectureTitle={lecture.title}
-          exam={exam}
-        />
       </div>
 
       {/* Lecture edit modal */}
@@ -420,13 +432,200 @@ export function AdminLectureDetail({
         </form>
       </Modal>
 
-      <ConfirmDialog
-        open={!!deletingLesson}
-        onClose={() => setDeletingLesson(null)}
-        onConfirm={confirmDeleteLesson}
-        title="حذف الدرس"
-        description={`هل أنت متأكد من حذف درس "${deletingLesson?.title}"؟ لا يمكن التراجع.`}
+      {/* Assignment modal */}
+      <AssignmentEditorModal
+        open={assignmentOpen}
+        onClose={() => setAssignmentOpen(false)}
+        lectureId={lecture.id}
+        assignment={editingAssignment}
+        onSaved={() => router.refresh()}
       />
+
+      <ConfirmDialog
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onConfirm={confirmDelete}
+        title={deleting?.kind === 'lesson' ? 'حذف الدرس' : 'حذف الواجب'}
+        description={
+          deleting
+            ? `هل أنت متأكد من حذف "${
+                deleting.kind === 'lesson'
+                  ? deleting.lesson.title
+                  : deleting.assignment.title
+              }"؟ لا يمكن التراجع.`
+            : ''
+        }
+      />
+    </div>
+  )
+}
+
+function ContentRow({
+  item,
+  index,
+  total,
+  lectureId,
+  onMoveUp,
+  onMoveDown,
+  onEditLesson,
+  onEditAssignment,
+  onDelete,
+}: {
+  item: AdminContentItem
+  index: number
+  total: number
+  lectureId: string
+  onMoveUp: () => void
+  onMoveDown: () => void
+  onEditLesson: (l: AdminLesson) => void
+  onEditAssignment: (a: AdminAssignment) => void
+  onDelete: () => void
+}) {
+  return (
+    <Card className="flex flex-row items-center gap-3 p-3">
+      {/* Reorder controls */}
+      <div className="flex shrink-0 flex-col">
+        <button
+          type="button"
+          onClick={onMoveUp}
+          disabled={index === 0}
+          className="grid size-6 place-items-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30"
+          aria-label="تحريك لأعلى"
+        >
+          <ChevronUp className="size-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onMoveDown}
+          disabled={index === total - 1}
+          className="grid size-6 place-items-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30"
+          aria-label="تحريك لأسفل"
+        >
+          <ChevronDown className="size-4" />
+        </button>
+      </div>
+
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-sm font-bold text-muted-foreground">
+        {index + 1}
+      </span>
+
+      {item.kind === 'lesson' ? (
+        <LessonRowBody lecture={lectureId} lesson={item.lesson} />
+      ) : (
+        <AssignmentRowBody assignment={item.assignment} />
+      )}
+
+      {/* Actions */}
+      <div className="flex shrink-0 gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 text-muted-foreground hover:text-foreground"
+          onClick={() =>
+            item.kind === 'lesson'
+              ? onEditLesson(item.lesson)
+              : onEditAssignment(item.assignment)
+          }
+        >
+          <Pencil className="size-4" />
+          <span className="sr-only">تعديل</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+          onClick={onDelete}
+        >
+          <Trash2 className="size-4" />
+          <span className="sr-only">حذف</span>
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+function LessonRowBody({ lecture, lesson }: { lecture: string; lesson: AdminLesson }) {
+  return (
+    <Link
+      href={`/admin/courses/${lecture}/lessons/${lesson.id}`}
+      className="flex min-w-0 flex-1 items-center gap-3"
+    >
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+        <PlayCircle className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className="border-primary/30 bg-primary/5 text-[10px] font-medium text-primary"
+          >
+            درس
+          </Badge>
+          <span className="truncate text-sm font-semibold text-foreground">
+            {lesson.title}
+          </span>
+          {lesson.isFree ? (
+            <Badge
+              variant="outline"
+              className="border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400"
+            >
+              مجاني
+            </Badge>
+          ) : (
+            <Lock className="size-3 text-muted-foreground" />
+          )}
+          {lesson.videoUrl ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
+              <Film className="size-3" /> فيديو
+            </span>
+          ) : (
+            <span className="text-[10px] font-medium text-rose-500">بدون فيديو</span>
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {lesson.duration || 'بدون مدة'}
+        </span>
+      </div>
+    </Link>
+  )
+}
+
+function AssignmentRowBody({ assignment }: { assignment: AdminAssignment }) {
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-3">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+        <ClipboardList className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className="border-amber-300/40 bg-amber-50 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
+          >
+            واجب
+          </Badge>
+          <span className="truncate text-sm font-semibold text-foreground">
+            {assignment.title}
+          </span>
+        </div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            {assignment.questions.length} سؤال · {assignment.points} درجة
+          </span>
+          {(['mcq', 'essay', 'file'] as const).map((k) => {
+            const count = assignment.questions.filter((q) => q.kind === k).length
+            if (count === 0) return null
+            const Meta = QUESTION_KIND_BADGE[k]
+            const Icon = Meta.icon
+            return (
+              <span key={k} className="inline-flex items-center gap-1">
+                <Icon className="size-3" />
+                {count} {Meta.label}
+              </span>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
