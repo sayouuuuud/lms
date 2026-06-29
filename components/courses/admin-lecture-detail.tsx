@@ -30,7 +30,6 @@ import {
   type AdminLecture,
   type AdminLesson,
   type AdminExam,
-  type BranchOption,
   updateLecture,
   createLesson,
   updateLesson,
@@ -43,11 +42,9 @@ const textareaClass =
 export function AdminLectureDetail({
   lecture,
   exam,
-  branchOptions,
 }: {
   lecture: AdminLecture
   exam: AdminExam | null
-  branchOptions: BranchOption[]
 }) {
   const router = useRouter()
 
