@@ -19,14 +19,23 @@ export type Section = {
   lessons: Lesson[]
   /** واجب أو اختبار الوحدة، يظهر بعد دروسها مباشرةً ضمن محتوى الكورس */
   assignment?: Assignment
+  /**
+   * قائمة المحتوى المرتّبة (دروس وواجبات متداخلة) كما رتّبها الأدمن.
+   * عند وجودها تُستخدم للعرض بدلاً من `lessons` + `assignment`.
+   */
+  items?: CourseItem[]
 }
 
 export type AssignmentStatus = 'لم يبدأ' | 'قيد التنفيذ' | 'تم التسليم' | 'مصحّح'
 
 export type AssignmentType = 'تسليم' | 'اختبار'
 
+/** نوع السؤال: اختيار من متعدد، مقالي، أو رفع ملف */
+export type QuestionKind = 'mcq' | 'essay' | 'file'
+
 export type QuizQuestion = {
   id: string
+  kind: QuestionKind
   question: string
   options: string[]
   correctIndex: number
@@ -46,11 +55,11 @@ export type Assignment = {
   score?: number
   status: AssignmentStatus
   attachments: { name: string; size: string }[]
-  /** أسئلة الاختبار، تُستخدم فقط عندما يكون النوع "اختبار" */
+  /** أسئلة الواجب (اختيار/مقالي/رفع ملف) */
   questions?: QuizQuestion[]
 }
 
-/** عنصر موحّد في تدفّق محتوى الكورس: درس ثم (اختيارياً) واجب/اختبار الوحدة */
+/** عنصر موحّد في تدفّق محتوى الكورس: درس أو واجب */
 export type CourseItem =
   | { kind: 'lesson'; lesson: Lesson; sectionId: string }
   | { kind: 'assignment'; assignment: Assignment; sectionId: string }
@@ -225,24 +234,28 @@ export const assignments: Assignment[] = [
     questions: [
       {
         id: 'q1',
+        kind: 'mcq',
         question: 'ما هي الأداة المستخدمة لإدارة الحالة داخل المكوّن في React؟',
         options: ['useState', 'useFetch', 'useRouter', 'useStyle'],
         correctIndex: 0,
       },
       {
         id: 'q2',
+        kind: 'mcq',
         question: 'ماذا تُعيد دالة المكوّن (Functional Component) في React؟',
         options: ['كائن CSS', 'عنصر JSX', 'سلسلة نصية فقط', 'دالة أخرى'],
         correctIndex: 1,
       },
       {
         id: 'q3',
+        kind: 'mcq',
         question: 'أي خطّاف (Hook) يُستخدم لمشاركة الحالة بين عدة مكوّنات دون تمريرها يدوياً؟',
         options: ['useEffect', 'useMemo', 'useContext', 'useRef'],
         correctIndex: 2,
       },
       {
         id: 'q4',
+        kind: 'mcq',
         question: 'متى يُنفَّذ الكود داخل useEffect بمصفوفة اعتماديات فارغة []؟',
         options: [
           'عند كل إعادة رسم',
@@ -365,27 +378,41 @@ export function getCourseAssignments(courseId: string): Assignment[] {
   return assignments.filter((a) => a.courseId === courseId)
 }
 
-/** تدفّق محتوى الكورس مرتّباً: دروس كل وحدة يتبعها واجب/اختبار الوحدة إن وُجد */
-export function getCourseItems(course: CourseDetail): CourseItem[] {
-  const items: CourseItem[] = []
-  for (const section of course.sections) {
-    for (const lesson of section.lessons) {
-      items.push({ kind: 'lesson', lesson, sectionId: section.id })
-    }
-    if (section.assignment) {
-      items.push({
-        kind: 'assignment',
-        assignment: section.assignment,
-        sectionId: section.id,
-      })
-    }
+/** عناصر الوحدة مرتّبة (دروس وواجبات متداخلة كما رتّبها الأدمن) */
+export function getSectionItems(section: Section): CourseItem[] {
+  // Prefer the explicit ordered list when present (real lecture data).
+  if (section.items && section.items.length > 0) return section.items
+  const items: CourseItem[] = section.lessons.map((lesson) => ({
+    kind: 'lesson' as const,
+    lesson,
+    sectionId: section.id,
+  }))
+  if (section.assignment) {
+    items.push({
+      kind: 'assignment',
+      assignment: section.assignment,
+      sectionId: section.id,
+    })
   }
   return items
 }
 
-/** هل اكتملت كل دروس الوحدة التي يتبعها هذا الواجب؟ (شرط فتح الواجب) */
+/** تدفّق محتوى الكورس مرتّباً عبر كل الوحدات */
+export function getCourseItems(course: CourseDetail): CourseItem[] {
+  return course.sections.flatMap((section) => getSectionItems(section))
+}
+
+/**
+ * هل الواجب مفتوح؟ يصبح مفتوحاً عندما تكتمل كل الدروس التي تسبقه في الترتيب.
+ */
 export function isAssignmentUnlocked(course: CourseDetail, assignmentId: string): boolean {
-  const section = course.sections.find((s) => s.assignment?.id === assignmentId)
-  if (!section) return true
-  return section.lessons.every((l) => l.completed)
+  const items = getCourseItems(course)
+  const index = items.findIndex(
+    (it) => it.kind === 'assignment' && it.assignment.id === assignmentId,
+  )
+  if (index === -1) return true
+  // كل الدروس التي تسبق الواجب يجب أن تكون مكتملة.
+  return items
+    .slice(0, index)
+    .every((it) => it.kind !== 'lesson' || it.lesson.completed)
 }

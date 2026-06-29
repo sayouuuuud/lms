@@ -22,7 +22,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   getCourseLessons,
-  getCourseAssignments,
+  getCourseItems,
+  getSectionItems,
   type CourseDetail,
   type Lesson,
   type Section,
@@ -45,9 +46,15 @@ function CurriculumSection({
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false)
-  const { title, lessons, assignment } = section
-  const done = lessons.filter((l) => l.completed).length
-  const assignmentLocked = !lessons.every((l) => l.completed)
+  const items = getSectionItems(section)
+  const lessonItems = items.filter((it) => it.kind === 'lesson')
+  const assignmentCount = items.length - lessonItems.length
+  const done = lessonItems.filter(
+    (it) => it.kind === 'lesson' && it.lesson.completed,
+  ).length
+
+  // A lesson/assignment is locked until all lessons before it are completed.
+  let prevLessonsDone = true
 
   return (
     <div className="overflow-hidden rounded-xl border border-border">
@@ -63,101 +70,103 @@ function CurriculumSection({
               open && 'rotate-180',
             )}
           />
-          <span className="text-sm font-bold text-foreground">{title}</span>
+          <span className="text-sm font-bold text-foreground">{section.title}</span>
         </div>
         <span className="shrink-0 text-xs text-muted-foreground">
-          {done}/{lessons.length} درس{assignment ? ' • مهمة' : ''}
+          {done}/{lessonItems.length} درس
+          {assignmentCount > 0 ? ` • ${assignmentCount} واجب` : ''}
         </span>
       </button>
 
       {open && (
         <ul className="divide-y divide-border">
-          {lessons.map((lesson) => {
-            const Icon = lessonIcon(lesson)
+          {items.map((item) => {
+            if (item.kind === 'lesson') {
+              const lesson = item.lesson
+              const locked = lesson.locked || !prevLessonsDone
+              prevLessonsDone = prevLessonsDone && lesson.completed
+              const Icon = locked ? Lock : lessonIcon(lesson)
+              const content = (
+                <div
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-3 transition-colors',
+                    locked ? 'cursor-not-allowed opacity-60' : 'hover:bg-secondary/40',
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      'size-5 shrink-0',
+                      lesson.completed
+                        ? 'text-primary'
+                        : locked
+                          ? 'text-muted-foreground'
+                          : 'text-foreground',
+                    )}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {lesson.title}
+                    </p>
+                    <span className="text-xs text-muted-foreground">درس · {lesson.type}</span>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {lesson.duration}
+                  </span>
+                </div>
+              )
+              return (
+                <li key={lesson.id}>
+                  {locked ? (
+                    content
+                  ) : (
+                    <Link href={`/student/courses/${courseId}/lessons/${lesson.id}`}>
+                      {content}
+                    </Link>
+                  )}
+                </li>
+              )
+            }
+
+            // Assignment item
+            const assignment = item.assignment
+            const locked = !prevLessonsDone
+            const qCount = assignment.questions?.length ?? 0
             const content = (
               <div
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 transition-colors',
-                  lesson.locked
-                    ? 'cursor-not-allowed opacity-60'
-                    : 'hover:bg-secondary/40',
+                  locked ? 'cursor-not-allowed opacity-60' : 'hover:bg-primary/5',
                 )}
               >
-                <Icon
-                  className={cn(
-                    'size-5 shrink-0',
-                    lesson.completed
-                      ? 'text-primary'
-                      : lesson.locked
-                        ? 'text-muted-foreground'
-                        : 'text-foreground',
-                  )}
-                />
+                {locked ? (
+                  <Lock className="size-5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ClipboardList className="size-5 shrink-0 text-primary" />
+                )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {lesson.title}
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {assignment.title}
                   </p>
-                  <span className="text-xs text-muted-foreground">{lesson.type}</span>
+                  <span className="text-xs text-muted-foreground">
+                    واجب{qCount > 0 ? ` · ${qCount} سؤال` : ''}
+                    {locked && ' • أكمل الدروس السابقة لفتحه'}
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {lesson.duration}
+                <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                  {assignment.points} نقطة
                 </span>
               </div>
             )
             return (
-              <li key={lesson.id}>
-                {lesson.locked ? (
+              <li key={assignment.id}>
+                {locked ? (
                   content
                 ) : (
-                  <Link href={`/student/courses/${courseId}/lessons/${lesson.id}`}>
-                    {content}
-                  </Link>
+                  <Link href={`/student/assignments/${assignment.id}`}>{content}</Link>
                 )}
               </li>
             )
           })}
-
-          {assignment && (
-            <li>
-              {(() => {
-                const content = (
-                  <div
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-3 transition-colors',
-                      assignmentLocked
-                        ? 'cursor-not-allowed opacity-60'
-                        : 'hover:bg-primary/5',
-                    )}
-                  >
-                    {assignmentLocked ? (
-                      <Lock className="size-5 shrink-0 text-muted-foreground" />
-                    ) : assignment.type === 'اختبار' ? (
-                      <ClipboardList className="size-5 shrink-0 text-primary" />
-                    ) : (
-                      <FileText className="size-5 shrink-0 text-primary" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {assignment.title}
-                      </p>
-                      <span className="text-xs text-muted-foreground">
-                        {assignment.type === 'اختبار' ? 'اختبار الوحدة' : 'واجب الوحدة'}
-                        {assignmentLocked && ' • أكمل دروس الوحدة لفتحه'}
-                      </span>
-                    </div>
-                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
-                      {assignment.points} نقطة
-                    </span>
-                  </div>
-                )
-                return assignmentLocked ? (
-                  content
-                ) : (
-                  <Link href={`/student/assignments/${assignment.id}`}>{content}</Link>
-                )
-              })()}
-            </li>
-          )}
         </ul>
       )}
     </div>
@@ -169,7 +178,9 @@ export function CourseOverview({ course }: { course: CourseDetail }) {
   const allLessons = getCourseLessons(course)
   const nextLesson =
     allLessons.find((l) => !l.completed && !l.locked) ?? allLessons[0]
-  const courseAssignments = getCourseAssignments(course.id)
+  const courseAssignments = getCourseItems(course)
+    .filter((it) => it.kind === 'assignment')
+    .map((it) => (it as Extract<typeof it, { kind: 'assignment' }>).assignment)
 
   const meta = [
     { icon: Star, label: `${course.rating} تقييم` },
@@ -340,7 +351,7 @@ export function CourseOverview({ course }: { course: CourseDetail }) {
                           {a.title}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          التسليم: {a.dueDate}
+                          {a.questions?.length ?? 0} سؤال · {a.points} نقطة
                         </p>
                       </div>
                     </Link>

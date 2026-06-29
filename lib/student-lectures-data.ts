@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import type {
   Assignment,
   CourseDetail,
+  CourseItem,
   Lesson,
+  QuestionKind,
   Section,
 } from '@/lib/student-courses-data'
 
@@ -23,8 +25,10 @@ type AssignmentRow = {
   description: string | null
   instructions: string[] | null
   points: number | null
+  sort_order?: number | null
   assignment_questions: {
     id: string
+    kind: string | null
     question: string
     options: string[]
     correct_index: number
@@ -56,11 +60,28 @@ type LectureRow = {
   assignments?: AssignmentRow[]
 }
 
+// Maps a lesson DB row to the portal Lesson shape.
+function mapOneLesson(l: LectureRow['lessons'][number]): Lesson {
+  return {
+    id: l.slug,
+    title: l.title,
+    type: 'فيديو',
+    duration: l.duration ?? '',
+    completed: false,
+    locked: false,
+    videoUrl: l.video_url || FALLBACK_VIDEO,
+    description:
+      l.description ||
+      'درس مشروح بالفيديو خطوة بخطوة مع أمثلة محلولة وتطبيقات على المسائل.',
+  }
+}
+
 function mapAssignment(row: AssignmentRow, courseSlug: string): Assignment {
   const questions = [...(row.assignment_questions ?? [])]
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     .map((q) => ({
       id: q.id,
+      kind: ((q.kind as QuestionKind) ?? 'mcq') as QuestionKind,
       question: q.question,
       options: q.options ?? [],
       correctIndex: q.correct_index,
@@ -85,34 +106,41 @@ function lectureImage(slug: string) {
   return `/lessons/${slug}.png`
 }
 
-function mapLessons(rows: LectureRow['lessons']): Lesson[] {
-  return [...rows]
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-    .map((l) => ({
-      id: l.slug,
-      title: l.title,
-      type: 'فيديو' as const,
-      duration: l.duration ?? '',
-      // The student bought the lecture, so every lesson is accessible.
-      completed: false,
-      locked: false,
-      videoUrl: l.video_url || FALLBACK_VIDEO,
-      description:
-        l.description ||
-        'درس مشروح بالفيديو خطوة بخطوة مع أمثلة محلولة وتطبيقات على المسائل.',
-    }))
-}
-
 function toCourseDetail(row: LectureRow): CourseDetail {
-  const lessons = mapLessons(row.lessons)
-  // The lecture's exam (assignment of type 'اختبار') appears after its lessons.
-  const exam = (row.assignments ?? []).find((a) => a.type === 'اختبار')
+  const sectionId = `${row.slug}-s1`
+
+  // Build one ordered content list interleaving lessons and assignments by
+  // their shared sort_order (the order the admin arranged them in).
+  const ordered = [
+    ...[...row.lessons].map((l) => ({
+      sort: l.sort_order ?? 0,
+      item: {
+        kind: 'lesson' as const,
+        lesson: mapOneLesson(l),
+        sectionId,
+      } satisfies CourseItem,
+    })),
+    ...[...(row.assignments ?? [])].map((a) => ({
+      sort: a.sort_order ?? 0,
+      item: {
+        kind: 'assignment' as const,
+        assignment: mapAssignment(a, row.slug),
+        sectionId,
+      } satisfies CourseItem,
+    })),
+  ].sort((a, b) => a.sort - b.sort)
+
+  const items: CourseItem[] = ordered.map((o) => o.item)
+  const lessons: Lesson[] = items
+    .filter((it): it is Extract<CourseItem, { kind: 'lesson' }> => it.kind === 'lesson')
+    .map((it) => it.lesson)
+
   const sections: Section[] = [
     {
-      id: `${row.slug}-s1`,
+      id: sectionId,
       title: 'محتوى المحاضرة',
       lessons,
-      assignment: exam ? mapAssignment(exam, row.slug) : undefined,
+      items,
     },
   ]
   return {
@@ -143,8 +171,8 @@ function toCourseDetail(row: LectureRow): CourseDetail {
 }
 
 const ASSIGNMENT_SELECT = `
-  assignments ( id, code, type, title, description, instructions, points,
-    assignment_questions ( id, question, options, correct_index, position ) )
+  assignments ( id, code, type, title, description, instructions, points, sort_order,
+    assignment_questions ( id, kind, question, options, correct_index, position ) )
 `
 
 const LECTURE_SELECT = `
@@ -235,8 +263,8 @@ export async function getPurchasedAssignment(
   const { data: a, error } = await supabase
     .from('assignments')
     .select(
-      `id, code, type, title, description, instructions, points, lecture_id,
-       assignment_questions ( id, question, options, correct_index, position )`,
+      `id, code, type, title, description, instructions, points, sort_order, lecture_id,
+       assignment_questions ( id, kind, question, options, correct_index, position )`,
     )
     .eq('id', assignmentId)
     .maybeSingle()
@@ -249,7 +277,11 @@ export async function getPurchasedAssignment(
   // Resolve the parent lecture (for slug + course context).
   const courses = await getPurchasedCourses()
   const course = courses.find((c) =>
-    c.sections.some((s) => s.assignment?.id === assignmentId),
+    c.sections.some((s) =>
+      (s.items ?? []).some(
+        (it) => it.kind === 'assignment' && it.assignment.id === assignmentId,
+      ),
+    ),
   )
 
   const assignment = mapAssignment(a as unknown as AssignmentRow, course?.id ?? '')
