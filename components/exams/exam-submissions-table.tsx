@@ -26,9 +26,9 @@ export function ExamSubmissionsTable({
 
   if (submissions.length === 0) {
     return (
-      <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed">
+      <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed font-sans">
         <Inbox className="size-8 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-medium">لا توجد إجابات</h3>
+        <h3 className="text-lg font-medium font-sans">لا توجد إجابات</h3>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">
           لم يقم أي طالب بتقديم هذا الاختبار حتى الآن. ستظهر إجابات الطلاب هنا فور تقديمها.
         </p>
@@ -37,9 +37,9 @@ export function ExamSubmissionsTable({
   }
 
   return (
-    <Card>
+    <Card className="font-sans">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>إجابات الطلاب</CardTitle>
+        <CardTitle className="font-sans">إجابات الطلاب</CardTitle>
         <div className="relative w-full max-w-sm">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
