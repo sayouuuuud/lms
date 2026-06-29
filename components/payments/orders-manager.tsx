@@ -162,9 +162,6 @@ export function OrdersManager({ initialOrders }: { initialOrders: AdminOrder[] }
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-2xl font-bold text-foreground">طلبات الاشتراك</h1>
-        <p className="text-sm text-muted-foreground">
-          راجع طلبات الطلاب، شوف المحاضرات المطلوبة، واقبل أو ارفض الطلب أو تواصل مع الطالب.
-        </p>
       </div>
 
       {/* Stats */}
