@@ -61,27 +61,16 @@ export function ImageUploadField({
             onUploadBegin={() => setUploading(true)}
             onClientUploadComplete={(res) => {
               setUploading(false)
-              console.log('[v0] upload response:', res)
-              try {
-                // UploadThing returns an array-like response or single object
-                const fileData = Array.isArray(res) ? res[0] : res
-                const url = fileData?.url || fileData?.serverData?.url
-                if (url) {
-                  onChange(url)
-                  toast.success('تم رفع الصورة')
-                } else {
-                  console.error('[v0] no URL in response:', fileData)
-                  toast.error('لم نتمكن من الحصول على رابط الصورة')
-                }
-              } catch (err) {
-                console.error('[v0] upload complete error:', err)
-                toast.error('خطأ في معالجة الرفع')
+              const url = res?.[0]?.url
+              if (url) {
+                onChange(url)
+                toast.success('تم رفع الصورة')
               }
             }}
             onUploadError={(e) => {
               setUploading(false)
-              console.error('[v0] upload error:', e)
               toast.error(`فشل الرفع: ${e?.message || 'خطأ غير معروف'}`)
+              console.log('[v0] image upload error:', e)
             }}
             appearance={{
               label: 'text-sm text-muted-foreground',
