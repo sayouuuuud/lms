@@ -8,6 +8,7 @@ import { MathLoader } from '@/components/landing/math-loader'
 import { CartProvider } from '@/components/cart/cart-provider'
 import { CartModal } from '@/components/cart/cart-modal'
 import { colorPresets } from '@/lib/color-presets'
+import { getSettings } from '@/app/admin/settings/actions'
 import './globals.css'
 
 
@@ -46,11 +47,23 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // اللون المحفوظ على مستوى الموقع في قاعدة البيانات — مصدر الحقيقة الوحيد
+  // عشان اللون يفضل ثابت عبر أي جهاز أو حساب.
+  let savedColor = 'navy'
+  try {
+    const settings = await getSettings()
+    if (settings?.preferences?.activeColor) {
+      savedColor = settings.preferences.activeColor
+    }
+  } catch {
+    // لو فشل الجلب نكمّل باللون الافتراضي
+  }
+
   return (
     <html
       lang="ar"
@@ -67,7 +80,11 @@ export default function RootLayout({
               if(isDark){document.documentElement.classList.add('dark')}
               
               var presets=${JSON.stringify(colorPresets)};
-              var c=localStorage.getItem('color-preset')||'navy';
+              // القيمة المحفوظة في قاعدة البيانات لها الأولوية (تزامن عبر الأجهزة)،
+              // وبعدها localStorage كنسخة محلية سريعة، وأخيراً الافتراضي.
+              var serverColor=${JSON.stringify(savedColor)};
+              var c=serverColor||localStorage.getItem('color-preset')||'navy';
+              try{localStorage.setItem('color-preset',c)}catch(e){}
               var preset=presets.find(function(p){return p.id===c});
               if(preset){
                 var vals=isDark?preset.dark:preset.light;
