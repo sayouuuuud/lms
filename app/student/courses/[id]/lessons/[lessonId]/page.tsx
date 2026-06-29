@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { LessonPlayer } from '@/components/student/courses/lesson-player'
 import { getPurchasedLesson } from '@/lib/student-lectures-data'
 
@@ -10,6 +10,10 @@ export default async function Page({
   const { id, lessonId } = await params
   const data = await getPurchasedLesson(id, lessonId)
   if (!data) notFound()
+
+  // Sequential gating: a locked lesson can't be opened until the student
+  // completes everything before it. Send them back to the course outline.
+  if (data.lesson.locked) redirect(`/student/courses/${id}`)
 
   return (
     <LessonPlayer

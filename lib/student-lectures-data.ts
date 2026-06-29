@@ -2,6 +2,7 @@ import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import type {
   Assignment,
+  AssignmentStatus,
   CourseDetail,
   CourseItem,
   Lesson,
@@ -64,6 +65,7 @@ type LectureRow = {
 function mapOneLesson(l: LectureRow['lessons'][number]): Lesson {
   return {
     id: l.slug,
+    lessonId: l.id,
     title: l.title,
     type: 'فيديو',
     duration: l.duration ?? '',
@@ -106,7 +108,19 @@ function lectureImage(slug: string) {
   return `/lessons/${slug}.png`
 }
 
-function toCourseDetail(row: LectureRow): CourseDetail {
+// Progress for a single student: which lessons are completed and the status of
+// each assignment (keyed by their database UUIDs).
+type Progress = {
+  completedLessonIds: Set<string>
+  assignmentStatus: Map<string, { status: AssignmentStatus; score: number | null }>
+}
+
+const EMPTY_PROGRESS: Progress = {
+  completedLessonIds: new Set(),
+  assignmentStatus: new Map(),
+}
+
+function toCourseDetail(row: LectureRow, progress: Progress = EMPTY_PROGRESS): CourseDetail {
   const sectionId = `${row.slug}-s1`
 
   // Build one ordered content list interleaving lessons and assignments by
@@ -131,9 +145,33 @@ function toCourseDetail(row: LectureRow): CourseDetail {
   ].sort((a, b) => a.sort - b.sort)
 
   const items: CourseItem[] = ordered.map((o) => o.item)
+
+  // Apply saved progress, then compute sequential locking: an item is locked
+  // until every item before it (lesson or assignment) is completed.
+  let prevDone = true
+  for (const it of items) {
+    if (it.kind === 'lesson') {
+      const done = it.lesson.lessonId
+        ? progress.completedLessonIds.has(it.lesson.lessonId)
+        : false
+      it.lesson.completed = done
+      it.lesson.locked = !prevDone
+      prevDone = prevDone && done
+    } else {
+      const saved = progress.assignmentStatus.get(it.assignment.id)
+      it.assignment.status = saved?.status ?? 'لم يبدأ'
+      if (saved?.score != null) it.assignment.score = saved.score
+      it.assignment.locked = !prevDone
+      const done = saved?.status === 'تم التسليم' || saved?.status === 'مصحّح'
+      prevDone = prevDone && done
+    }
+  }
+
   const lessons: Lesson[] = items
     .filter((it): it is Extract<CourseItem, { kind: 'lesson' }> => it.kind === 'lesson')
     .map((it) => it.lesson)
+
+  const completedLessons = lessons.filter((l) => l.completed).length
 
   const sections: Section[] = [
     {
@@ -149,7 +187,7 @@ function toCourseDetail(row: LectureRow): CourseDetail {
     instructor: 'أ. عبد السلام',
     image: row.image || lectureImage(row.slug),
     category: row.branches?.title ?? 'رياضيات',
-    completedLessons: 0,
+    completedLessons,
     totalLessons: lessons.length,
     nextLesson: lessons[0]?.title ?? '',
     description:
@@ -189,6 +227,38 @@ const LECTURE_SELECT_NO_IMAGE = `
   lessons ( id, slug, title, duration, is_free, sort_order, video_url, description ),
   ${ASSIGNMENT_SELECT}
 `
+
+// Loads the current student's saved progress (completed lessons + assignment
+// statuses) for sequential gating.
+async function getProgress(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<Progress> {
+  const { data, error } = await supabase
+    .from('student_content_progress')
+    .select('item_type, item_id, status, score')
+    .eq('user_id', userId)
+
+  const completedLessonIds = new Set<string>()
+  const assignmentStatus = new Map<
+    string,
+    { status: AssignmentStatus; score: number | null }
+  >()
+
+  if (error || !data) return { completedLessonIds, assignmentStatus }
+
+  for (const row of data as any[]) {
+    if (row.item_type === 'lesson') {
+      completedLessonIds.add(row.item_id)
+    } else if (row.item_type === 'assignment') {
+      assignmentStatus.set(row.item_id, {
+        status: (row.status as AssignmentStatus) ?? 'تم التسليم',
+        score: row.score ?? null,
+      })
+    }
+  }
+  return { completedLessonIds, assignmentStatus }
+}
 
 // Distinct lecture ids the current student has purchased (approved orders).
 async function getPurchasedLectureIds(
@@ -237,7 +307,11 @@ export async function getPurchasedCourses(): Promise<CourseDetail[]> {
   }
 
   if (res.error || !res.data) return []
-  return (res.data as unknown as LectureRow[]).map(toCourseDetail)
+
+  const progress = await getProgress(supabase, user.id)
+  return (res.data as unknown as LectureRow[]).map((row) =>
+    toCourseDetail(row, progress),
+  )
 }
 
 // One purchased lecture by its slug (used by the course-detail page). Returns
@@ -274,17 +348,30 @@ export async function getPurchasedAssignment(
   const ids = await getPurchasedLectureIds(supabase, user.id)
   if (!ids.includes(a.lecture_id)) return undefined
 
-  // Resolve the parent lecture (for slug + course context).
+  // Resolve the parent lecture (for slug + course context). Pull the assignment
+  // straight from the course items so it carries the computed lock + status.
   const courses = await getPurchasedCourses()
-  const course = courses.find((c) =>
-    c.sections.some((s) =>
-      (s.items ?? []).some(
+  let course: CourseDetail | undefined
+  let assignment: Assignment | undefined
+  for (const c of courses) {
+    for (const s of c.sections) {
+      const match = (s.items ?? []).find(
         (it) => it.kind === 'assignment' && it.assignment.id === assignmentId,
-      ),
-    ),
-  )
+      )
+      if (match && match.kind === 'assignment') {
+        course = c
+        assignment = match.assignment
+        break
+      }
+    }
+    if (assignment) break
+  }
 
-  const assignment = mapAssignment(a as unknown as AssignmentRow, course?.id ?? '')
+  // Fallback if not found in items (shouldn't normally happen).
+  if (!assignment) {
+    assignment = mapAssignment(a as unknown as AssignmentRow, course?.id ?? '')
+  }
+
   return { assignment, course }
 }
 
