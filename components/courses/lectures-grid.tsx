@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   Search,
   ChevronDown,
@@ -11,6 +12,8 @@ import {
   Lock,
   Layers,
   GitBranch,
+  ArrowLeft,
+  Film,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -191,6 +194,14 @@ export function LecturesGrid() {
 
                   <div className="flex shrink-0 gap-2">
                     <Button
+                      size="sm"
+                      className="h-8"
+                      render={<Link href={`/admin/courses/${lecture.id}`} />}
+                    >
+                      عرض التفاصيل
+                      <ArrowLeft className="size-4" />
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       className="h-8"
@@ -224,7 +235,10 @@ export function LecturesGrid() {
                           key={lesson.id}
                           className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-2.5"
                         >
-                          <div className="flex items-center gap-3">
+                          <Link
+                            href={`/admin/courses/${lecture.id}/lessons/${lesson.id}`}
+                            className="flex flex-1 items-center gap-3"
+                          >
                             <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-muted-foreground">
                               {i + 1}
                             </span>
@@ -243,12 +257,21 @@ export function LecturesGrid() {
                                 ) : (
                                   <Lock className="size-3 text-muted-foreground" />
                                 )}
+                                {lesson.videoUrl ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
+                                    <Film className="size-3" /> فيديو
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-medium text-rose-500">
+                                    بدون فيديو
+                                  </span>
+                                )}
                               </div>
                               <span className="text-xs text-muted-foreground">
                                 {lesson.duration}
                               </span>
                             </div>
-                          </div>
+                          </Link>
                           <div className="flex shrink-0 gap-1">
                             <Button
                               variant="ghost"
