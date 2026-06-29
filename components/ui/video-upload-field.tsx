@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Film, Loader2, X, Link2 } from 'lucide-react'
+import { Film, Loader2, X, Link2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
-import { UploadButton } from '@/lib/uploadthing'
+import { UploadDropzone } from '@/lib/uploadthing'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
 
 // Reusable video picker for the admin lesson editor. Supports both uploading a
-// video file (UploadThing) and pasting a direct video URL. Stores the final URL
+// video file (UploadThing via drag-drop) and pasting a direct video URL. Stores the final URL
 // as a plain string via `onChange`.
 export function VideoUploadField({
   value,
@@ -56,9 +55,10 @@ export function VideoUploadField({
         )}
       </div>
 
-      {/* Upload button */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <UploadButton
+      {/* Upload via drag-drop or URL */}
+      <div className="space-y-2">
+        {/* Drag-drop zone */}
+        <UploadDropzone
           endpoint="lessonVideo"
           onUploadBegin={() => setUploading(true)}
           onClientUploadComplete={(res) => {
@@ -71,35 +71,35 @@ export function VideoUploadField({
           }}
           onUploadError={(e) => {
             setUploading(false)
-            toast.error('فشل رفع الفيديو. حاول تاني.')
-            console.log('[v0] video upload error:', e.message)
+            toast.error(`فشل الرفع: ${e?.message || 'خطأ غير معروف'}`)
+            console.log('[v0] video upload error:', e)
           }}
           appearance={{
-            button: cn(
-              'h-9 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground',
-              'ut-uploading:cursor-not-allowed ut-uploading:opacity-70',
-            ),
+            label: 'text-sm text-muted-foreground',
             allowedContent: 'text-xs text-muted-foreground',
+            button: 'ut-btn-upload:bg-primary ut-btn-upload:text-primary-foreground ut-btn-upload:hover:bg-primary/90',
           }}
           content={{
-            button: uploading ? (
-              <span className="flex items-center gap-1.5">
-                <Loader2 className="size-3.5 animate-spin" /> جاري الرفع...
-              </span>
-            ) : (
-              'رفع فيديو'
-            ),
+            label: uploading
+              ? 'جاري الرفع... يرجى الانتظار'
+              : 'اسحب الفيديو هنا أو انقر لتحديد ملف',
+            allowedContent: uploading
+              ? ''
+              : 'MP4 أو MOV أو WebM (أقل من 512 MB)',
+            uploadIcon: !uploading ? <Upload className="size-8" /> : <Loader2 className="size-8 animate-spin" />,
           }}
         />
-        <span className="text-xs text-muted-foreground">أو</span>
-        <div className="relative flex-1">
+
+        {/* Direct URL input */}
+        <div className="relative">
           <Link2 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="الصق رابط فيديو مباشر (mp4)"
+            placeholder="أو الصق رابط فيديو مباشر (mp4)"
             className="pr-9"
             dir="ltr"
+            disabled={uploading}
           />
         </div>
       </div>
