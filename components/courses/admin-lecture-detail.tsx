@@ -401,7 +401,7 @@ export function AdminLectureDetail({
           <VideoUploadField
             value={lVideo}
             onChange={setLVideo}
-            hint="ارفع ملف الفيديو أو الصق رابطاً مباشراً. هذا ما سيشاهده الطالب."
+            hint="ارفع ملف الفيديو. هذا ما سيشاهده الطالب."
           />
           <Field label="وصف الدرس">
             <textarea
