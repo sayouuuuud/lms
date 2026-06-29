@@ -9,11 +9,11 @@ export function ExamCharts({ submissions }: { submissions: ExamSubmissionDetail[
   const { distributionData, passFailData } = useMemo(() => {
     // Score Distribution (0-20, 21-40, 41-60, 61-80, 81-100)
     const distribution = [
-      { name: '0-20%', count: 0 },
-      { name: '21-40%', count: 0 },
-      { name: '41-60%', count: 0 },
-      { name: '61-80%', count: 0 },
-      { name: '81-100%', count: 0 },
+      { name: '0-20%', count: 0, color: 'hsl(var(--chart-1))' },
+      { name: '21-40%', count: 0, color: 'hsl(var(--chart-2))' },
+      { name: '41-60%', count: 0, color: 'hsl(var(--chart-3))' },
+      { name: '61-80%', count: 0, color: 'hsl(var(--chart-4))' },
+      { name: '81-100%', count: 0, color: 'hsl(var(--chart-5))' },
     ]
 
     let passed = 0
@@ -35,7 +35,7 @@ export function ExamCharts({ submissions }: { submissions: ExamSubmissionDetail[
     return {
       distributionData: distribution,
       passFailData: [
-        { name: 'ناجح', value: passed, color: 'hsl(var(--success))' },
+        { name: 'ناجح', value: passed, color: 'hsl(var(--chart-2))' },
         { name: 'راسب', value: failed, color: 'hsl(var(--destructive))' },
       ]
     }
@@ -70,7 +70,7 @@ export function ExamCharts({ submissions }: { submissions: ExamSubmissionDetail[
           <CardDescription>نظرة عامة على مستويات أداء الطلاب في هذا الاختبار</CardDescription>
         </CardHeader>
         <CardContent className="pl-2">
-          <div className="h-[300px] w-full mt-4" style={{ fontFamily: 'var(--font-cairo), sans-serif' }}>
+          <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={distributionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
@@ -78,19 +78,19 @@ export function ExamCharts({ submissions }: { submissions: ExamSubmissionDetail[
                   dataKey="name" 
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontFamily: 'var(--font-cairo), sans-serif' }}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontFamily: 'inherit' }}
                   dy={10}
                 />
                 <YAxis 
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontFamily: 'var(--font-cairo), sans-serif' }}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontFamily: 'inherit' }}
                   allowDecimals={false}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--secondary))', opacity: 0.4 }} />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={50}>
                   {distributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${index + 1}))`} />
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
@@ -105,7 +105,7 @@ export function ExamCharts({ submissions }: { submissions: ExamSubmissionDetail[
           <CardDescription>توزيع الطلاب حسب اجتياز الاختبار</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center" style={{ fontFamily: 'var(--font-cairo), sans-serif' }}>
+          <div className="h-[300px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -124,14 +124,13 @@ export function ExamCharts({ submissions }: { submissions: ExamSubmissionDetail[
                 </Pie>
                 <Tooltip 
                   formatter={(value: number) => [`${value} ${value === 1 ? 'طالب' : 'طلاب'}`, 'العدد']}
-                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--background))', fontFamily: 'var(--font-cairo), sans-serif' }}
-                  itemStyle={{ fontFamily: 'var(--font-cairo), sans-serif' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--background))', fontFamily: 'inherit' }}
                 />
                 <Legend 
                   verticalAlign="bottom" 
                   height={36} 
                   iconType="circle"
-                  formatter={(value) => <span className="text-sm font-medium ml-1" style={{ fontFamily: 'var(--font-cairo), sans-serif' }}>{value}</span>}
+                  formatter={(value) => <span className="text-sm font-medium ml-1 font-sans">{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
