@@ -286,7 +286,7 @@ export function AdminLectureDetail({
           <div>
             <h2 className="text-lg font-bold text-foreground">محتوى المحاضرة</h2>
             <p className="text-sm text-muted-foreground">
-              رتّب الدروس والواجبات بالترتيب الذي سيراه الطالب
+              رتّب الدروس والواجبات بالترتيب الذي سيراه الطالب داخل المحاضرة
             </p>
           </div>
           <div className="flex gap-2">
@@ -482,7 +482,7 @@ function ContentRow({
   onDelete: () => void
 }) {
   return (
-    <Card className="flex items-center gap-3 p-4">
+    <Card className="flex flex-row items-center gap-3 p-3">
       {/* Reorder controls */}
       <div className="flex shrink-0 flex-col">
         <button
