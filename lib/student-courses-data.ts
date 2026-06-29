@@ -4,6 +4,8 @@ export type LessonType = 'فيديو' | 'مقال' | 'تمرين'
 
 export type Lesson = {
   id: string
+  /** المعرّف الحقيقي للدرس في قاعدة البيانات (UUID)، يُستخدم لحفظ التقدّم */
+  lessonId?: string
   title: string
   type: LessonType
   duration: string
@@ -57,6 +59,8 @@ export type Assignment = {
   attachments: { name: string; size: string }[]
   /** أسئلة الواجب (اختيار/مقالي/رفع ملف) */
   questions?: QuizQuestion[]
+  /** مقفول حتى يكمل الطالب كل ما يسبقه في ترتيب المحاضرة */
+  locked?: boolean
 }
 
 /** عنصر موحّد في تدفّق محتوى الكورس: درس أو واجب */

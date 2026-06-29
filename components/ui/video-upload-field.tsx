@@ -1,15 +1,13 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Film, Loader2, X, Link2, Upload } from 'lucide-react'
+import { Film, Loader2, X, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { uploadToStorage } from '@/lib/storage-upload'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
-// Reusable video picker for the admin lesson editor. Supports both uploading a
-// video file directly to Supabase Storage and pasting a direct video URL.
-// Stores the final URL as a plain string via `onChange`.
+// Reusable video picker for the admin lesson editor. Uploads a video file
+// directly to Supabase Storage and stores the resulting URL via `onChange`.
 export function VideoUploadField({
   value,
   onChange,
@@ -112,19 +110,6 @@ export function VideoUploadField({
             </>
           )}
         </button>
-
-        {/* Direct URL input */}
-        <div className="relative">
-          <Link2 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="أو الصق رابط فيديو مباشر (mp4)"
-            className="pr-9"
-            dir="ltr"
-            disabled={uploading}
-          />
-        </div>
       </div>
 
       {hint && (

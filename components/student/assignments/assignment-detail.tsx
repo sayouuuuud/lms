@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ArrowRight,
   Award,
@@ -9,6 +10,7 @@ import {
   ClipboardList,
   FileText,
   ListChecks,
+  Loader2,
   Paperclip,
   Send,
   UploadCloud,
@@ -18,6 +20,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { submitAssignmentProgress } from '@/app/student/progress/actions'
 import type {
   Assignment,
   AssignmentStatus,
@@ -45,6 +48,8 @@ export function AssignmentDetail({
   const questions = assignment.questions ?? []
   const hasQuestions = questions.length > 0
 
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [status, setStatus] = useState<AssignmentStatus>(assignment.status)
   const [answers, setAnswers] = useState<AnswerMap>({})
   const [submitted, setSubmitted] = useState(
@@ -91,17 +96,33 @@ export function AssignmentDetail({
   const setFile = (qid: string, name: string | undefined) =>
     setAnswers((p) => ({ ...p, [qid]: { ...p[qid], file: name } }))
 
+  const persist = (next: 'تم التسليم' | 'مصحّح', score?: number) => {
+    startTransition(async () => {
+      await submitAssignmentProgress(assignment.id, {
+        status: next,
+        score,
+        courseSlug: course?.id,
+      })
+      // Refresh so the next item in the lecture unlocks.
+      router.refresh()
+    })
+  }
+
   const handleSubmitQuestions = () => {
     if (!allAnswered) return
     setSubmitted(true)
     // إذا كانت كل الأسئلة اختيار من متعدد، نصحّح فوراً. غير ذلك ننتظر المدرّب.
-    setStatus(questions.every((q) => q.kind === 'mcq') ? 'مصحّح' : 'تم التسليم')
+    const allMcq = questions.every((q) => q.kind === 'mcq')
+    const next: 'تم التسليم' | 'مصحّح' = allMcq ? 'مصحّح' : 'تم التسليم'
+    setStatus(next)
+    persist(next, allMcq ? mcqScore : undefined)
   }
 
   const handleSubmitFreeform = () => {
     if (!text.trim() && files.length === 0) return
     setSubmitted(true)
     setStatus('تم التسليم')
+    persist('تم التسليم')
   }
 
   const handleFiles = (list: FileList | null) => {
@@ -372,10 +393,14 @@ export function AssignmentDetail({
           {!submitted && (
             <Button
               onClick={handleSubmitQuestions}
-              disabled={!allAnswered}
+              disabled={!allAnswered || isPending}
               className="mt-6 w-fit"
             >
-              <Send className="size-4" />
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
               تسليم الواجب
             </Button>
           )}
@@ -388,7 +413,7 @@ export function AssignmentDetail({
             <div className="flex items-center gap-3 rounded-xl bg-primary/10 p-4 text-primary">
               <CheckCircle2 className="size-6 shrink-0" />
               <div>
-                <p className="text-sm font-semibold">تم تسليم الواجب بنجاح</p>
+                <p className="text-sm font-semibold">تم تس��يم الواجب بنجاح</p>
                 <p className="text-xs">سيتم تصحيحه من قبل المدرّب قريباً.</p>
               </div>
             </div>
@@ -444,10 +469,14 @@ export function AssignmentDetail({
               </div>
               <Button
                 onClick={handleSubmitFreeform}
-                disabled={!text.trim() && files.length === 0}
+                disabled={(!text.trim() && files.length === 0) || isPending}
                 className="w-fit"
               >
-                <Send className="size-4" />
+                {isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Send className="size-4" />
+                )}
                 تسليم الواجب
               </Button>
             </div>

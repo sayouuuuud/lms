@@ -239,7 +239,7 @@ export function AdminLessonDetail({
           <VideoUploadField
             value={video}
             onChange={setVideo}
-            hint="ارفع ملف الفيديو أو الصق رابطاً مباشراً. هذا ما سيشاهده الطالب."
+            hint="ارفع ملف الفيديو. هذا ما سيشاهده الطالب."
           />
           <Field label="وصف الدرس">
             <textarea

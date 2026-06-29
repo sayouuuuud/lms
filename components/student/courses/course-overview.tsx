@@ -53,9 +53,6 @@ function CurriculumSection({
     (it) => it.kind === 'lesson' && it.lesson.completed,
   ).length
 
-  // A lesson/assignment is locked until all lessons before it are completed.
-  let prevLessonsDone = true
-
   return (
     <div className="overflow-hidden rounded-xl border border-border">
       <button
@@ -83,8 +80,7 @@ function CurriculumSection({
           {items.map((item) => {
             if (item.kind === 'lesson') {
               const lesson = item.lesson
-              const locked = lesson.locked || !prevLessonsDone
-              prevLessonsDone = prevLessonsDone && lesson.completed
+              const locked = lesson.locked
               const Icon = locked ? Lock : lessonIcon(lesson)
               const content = (
                 <div
@@ -129,7 +125,7 @@ function CurriculumSection({
 
             // Assignment item
             const assignment = item.assignment
-            const locked = !prevLessonsDone
+            const locked = assignment.locked ?? false
             const qCount = assignment.questions?.length ?? 0
             const content = (
               <div
