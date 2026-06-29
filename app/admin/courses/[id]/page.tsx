@@ -13,5 +13,5 @@ export default async function AdminLecturePage({
   const data = await getLectureDetailAdmin(id)
   if (!data) notFound()
 
-  return <AdminLectureDetail lecture={data.lecture} content={data.content} />
+  return <AdminLectureDetail lecture={data.lecture} exam={data.exam} />
 }
