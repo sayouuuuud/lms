@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   ShoppingCart,
@@ -12,10 +12,13 @@ import {
   CreditCard,
   Tag,
   Tags,
+  UploadCloud,
+  ReceiptText,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCart } from './cart-provider'
 import { createOrder, getCheckoutDefaults } from '@/app/cart-actions'
+import { uploadToStorage } from '@/lib/storage-upload'
 
 function formatEGP(value: number) {
   return new Intl.NumberFormat('ar-EG').format(value)
@@ -58,6 +61,27 @@ export function CartModal() {
   const [method, setMethod] = useState(PAYMENT_METHODS[0])
   const [reference, setReference] = useState('')
   const [note, setNote] = useState('')
+  const [receiptUrl, setReceiptUrl] = useState('')
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  const receiptInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleReceiptFile(file: File | undefined) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast.error('من فضلك ارفع صورة من إيصال التحويل')
+      return
+    }
+    setUploadingReceipt(true)
+    try {
+      const url = await uploadToStorage(file, 'images')
+      setReceiptUrl(url)
+      toast.success('تم رفع صورة التحويل')
+    } catch (e) {
+      toast.error(`فشل الرفع: ${e instanceof Error ? e.message : 'خطأ غير معروف'}`)
+    } finally {
+      setUploadingReceipt(false)
+    }
+  }
 
   useEffect(() => setMounted(true), [])
 
@@ -97,6 +121,10 @@ export function CartModal() {
       toast.error('من فضلك اكتب الاسم ورقم الهاتف')
       return
     }
+    if (!receiptUrl) {
+      toast.error('من فضلك ارفع صورة من إيصال التحويل')
+      return
+    }
     setSubmitting(true)
     const res = await createOrder({
       name,
@@ -104,6 +132,7 @@ export function CartModal() {
       method,
       reference,
       note,
+      receiptUrl,
       couponCode: coupon?.code,
     })
     setSubmitting(false)
@@ -282,6 +311,71 @@ export function CartModal() {
                   className={inputCls}
                   placeholder="رقم تحويل فودافون كاش مثلاً"
                 />
+              </Field>
+
+              <Field label="صورة إيصال التحويل" required>
+                <input
+                  ref={receiptInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleReceiptFile(e.target.files?.[0])}
+                />
+                {receiptUrl ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/40 p-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={receiptUrl || '/placeholder.svg'}
+                      alt="إيصال التحويل"
+                      className="size-16 shrink-0 rounded-lg border border-border object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                        <ReceiptText className="size-4 text-primary" />
+                        تم رفع صورة التحويل
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => receiptInputRef.current?.click()}
+                        className="mt-0.5 text-xs font-medium text-primary hover:underline"
+                      >
+                        تغيير الصورة
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReceiptUrl('')}
+                      className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      aria-label="إزالة الصورة"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={uploadingReceipt}
+                    onClick={() => receiptInputRef.current?.click()}
+                    className="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-5 text-center transition-colors hover:bg-secondary/60 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {uploadingReceipt ? (
+                      <>
+                        <Loader2 className="size-6 animate-spin text-primary" />
+                        <span className="text-sm text-muted-foreground">جاري الرفع...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="size-6 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">
+                          ارفع صورة من تحويل المحفظة أو إنستا باي
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          JPG أو PNG (أقل من 8 MB)
+                        </span>
+                      </>
+                    )}
+                  </button>
+                )}
               </Field>
 
               <Field label="ملاحظة للأدمن (اختياري)">

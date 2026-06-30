@@ -168,6 +168,7 @@ export async function createOrder(input: {
   method: string
   reference?: string
   note?: string
+  receiptUrl?: string
   couponCode?: string
 }) {
   const supabase = await createClient()
@@ -205,6 +206,7 @@ export async function createOrder(input: {
       method: input.method,
       reference: input.reference ?? '',
       note: input.note ?? '',
+      receipt_url: input.receiptUrl ?? null,
       subtotal,
       discount,
       coupon_code: appliedCouponCode,

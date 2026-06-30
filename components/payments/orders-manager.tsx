@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Loader2,
   StickyNote,
+  ReceiptText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
@@ -393,6 +394,33 @@ export function OrdersManager({ initialOrders }: { initialOrders: AdminOrder[] }
               <DetailRow icon={CreditCard} label="وسيلة الدفع" value={preview.method} />
               <DetailRow icon={Hash} label="رقم العملية" value={preview.reference} dir="ltr" mono />
               <DetailRow icon={CalendarDays} label="تاريخ الطلب" value={preview.createdAt} />
+            </div>
+
+            {/* صورة إيصال التحويل */}
+            <div className="mt-4">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                <ReceiptText className="size-3.5" />
+                إيصال التحويل
+              </p>
+              {preview.receiptUrl ? (
+                <a
+                  href={preview.receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block overflow-hidden rounded-xl border border-border transition-opacity hover:opacity-90"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={preview.receiptUrl || '/placeholder.svg'}
+                    alt={`إيصال تحويل الطلب ${preview.code}`}
+                    className="max-h-72 w-full bg-secondary/40 object-contain"
+                  />
+                </a>
+              ) : (
+                <p className="rounded-xl border border-dashed border-border px-4 py-3 text-center text-sm text-muted-foreground">
+                  لم يرفع الطالب صورة للتحويل
+                </p>
+              )}
             </div>
 
             {/* ملاحظة الطالب */}
