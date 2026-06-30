@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   ChartContainer,
@@ -9,15 +10,23 @@ import {
 } from '@/components/ui/chart'
 import { PanelCard } from '@/components/dashboard/panel-card'
 import { studentsGrowth as initialData } from '@/lib/reports-data'
+import { RANGE_OPTIONS } from '@/lib/time-series'
 
 const config = {
   students: { label: 'إجمالي الطلاب', color: 'var(--chart-2)' },
 } satisfies ChartConfig
 
 export function StudentsGrowthChart({ data: inputData }: { data?: any[] }) {
-  const studentsGrowth = inputData || initialData
+  const full = inputData || initialData
+  const [range, setRange] = useState('6')
+  const studentsGrowth = full.slice(-Number(range))
   return (
-    <PanelCard title="نمو إجمالي الطلاب" filter="آخر 6 أشهر">
+    <PanelCard
+      title="نمو إجمالي الطلاب"
+      filterOptions={RANGE_OPTIONS}
+      filterValue={range}
+      onFilterChange={setRange}
+    >
       <ChartContainer config={config} className="h-[260px] w-full">
         <AreaChart data={studentsGrowth} margin={{ left: 4, right: 8, top: 8 }}>
           <defs>

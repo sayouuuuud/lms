@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   ChartContainer,
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/chart'
 import { PanelCard } from '@/components/dashboard/panel-card'
 import { monthlyRevenue as initialData } from '@/lib/reports-data'
+import { RANGE_OPTIONS } from '@/lib/time-series'
 
 const config = {
   revenue: { label: 'الإيرادات الفعلية', color: 'var(--chart-1)' },
@@ -18,9 +20,16 @@ const config = {
 } satisfies ChartConfig
 
 export function RevenueReportChart({ data: inputData }: { data?: any[] }) {
-  const monthlyRevenue = inputData || initialData
+  const full = inputData || initialData
+  const [range, setRange] = useState('6')
+  const monthlyRevenue = full.slice(-Number(range))
   return (
-    <PanelCard title="الإيرادات مقابل المستهدف" filter="آخر 6 أشهر">
+    <PanelCard
+      title="الإيرادات مقابل المستهدف"
+      filterOptions={RANGE_OPTIONS}
+      filterValue={range}
+      onFilterChange={setRange}
+    >
       <ChartContainer config={config} className="h-[260px] w-full">
         <BarChart data={monthlyRevenue} margin={{ left: 4, right: 8, top: 8 }}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />

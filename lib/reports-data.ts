@@ -36,15 +36,14 @@ export type CoursePerformance = {
   category: string
   students: number
   revenue: number
-  completion: number
-  rating: number
+  share: number
 }
 
 export const coursePerformance: CoursePerformance[] = [
-  { title: 'البرمجة باستخدام Python', category: 'البرمجة', students: 1250, revenue: 32450, completion: 78, rating: 4.8 },
-  { title: 'تصميم واجهات المستخدم UI/UX', category: 'التصميم', students: 980, revenue: 24300, completion: 71, rating: 4.7 },
-  { title: 'التسويق الرقمي الشامل', category: 'التسويق', students: 760, revenue: 18600, completion: 64, rating: 4.5 },
-  { title: 'تعلم اللغة الإنجليزية', category: 'اللغات', students: 650, revenue: 15200, completion: 82, rating: 4.9 },
-  { title: 'تحليل البيانات باستخدام Excel', category: 'الأعمال', students: 540, revenue: 12800, completion: 59, rating: 4.4 },
-  { title: 'أساسيات الذكاء الاصطناعي', category: 'البرمجة', students: 430, revenue: 11900, completion: 55, rating: 4.6 },
+  { title: 'البرمجة باستخدام Python', category: 'البرمجة', students: 1250, revenue: 32450, share: 28 },
+  { title: 'تصميم واجهات المستخدم UI/UX', category: 'التصميم', students: 980, revenue: 24300, share: 21 },
+  { title: 'التسويق الرقمي الشامل', category: 'التسويق', students: 760, revenue: 18600, share: 16 },
+  { title: 'تعلم اللغة الإنجليزية', category: 'اللغات', students: 650, revenue: 15200, share: 13 },
+  { title: 'تحليل البيانات باستخدام Excel', category: 'الأعمال', students: 540, revenue: 12800, share: 11 },
+  { title: 'أساسيات الذكاء الاصطناعي', category: 'البرمجة', students: 430, revenue: 11900, share: 10 },
 ]

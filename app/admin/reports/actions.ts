@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
 import { revalidatePath } from 'next/cache'
+import { lastMonths, monthKeyOf, percentChange } from '@/lib/time-series'
 
 export type ReportItem = {
   id: string
@@ -74,9 +75,9 @@ export async function getReportsData() {
     .from('students')
     .select('id, created_at', { count: 'exact' })
 
-  const { count: enrollmentsCount } = await supabase
+  const { count: enrollmentsCount, data: enrollmentsRaw } = await supabase
     .from('enrollments')
-    .select('*', { count: 'exact' })
+    .select('id, enrolled_at', { count: 'exact' })
 
   const { data: coursesData } = await supabase
     .from('courses')
@@ -87,74 +88,128 @@ export async function getReportsData() {
   const approvedPayments = payments?.filter((p) => p.status === 'مقبول') || []
   const totalRevenue = approvedPayments.reduce((sum, p) => sum + Number(p.amount), 0)
   const rejectedPayments = payments?.filter((p) => p.status === 'مرفوض') || []
+  const pendingPayments = payments?.filter((p) => p.status === 'قيد المراجعة') || []
+
+  // Real rolling 12-month window.
+  const window = lastMonths(12)
+  const windowStart = window[0].start
+  const thisKey = window[window.length - 1].key
+  const prevKey = window[window.length - 2].key
+
+  // Period-over-period change = current month vs previous month.
+  const revThis = approvedPayments
+    .filter((p) => monthKeyOf(p.created_at) === thisKey)
+    .reduce((s, p) => s + Number(p.amount), 0)
+  const revPrev = approvedPayments
+    .filter((p) => monthKeyOf(p.created_at) === prevKey)
+    .reduce((s, p) => s + Number(p.amount), 0)
+
+  const studentsThis = (studentsDataRaw || []).filter(
+    (s) => monthKeyOf(s.created_at) === thisKey,
+  ).length
+  const studentsPrev = (studentsDataRaw || []).filter(
+    (s) => monthKeyOf(s.created_at) === prevKey,
+  ).length
+
+  const enrollThis = (enrollmentsRaw || []).filter(
+    (e: any) => e.enrolled_at && monthKeyOf(e.enrolled_at) === thisKey,
+  ).length
+  const enrollPrev = (enrollmentsRaw || []).filter(
+    (e: any) => e.enrolled_at && monthKeyOf(e.enrolled_at) === prevKey,
+  ).length
+
+  const rejectedThis = rejectedPayments.filter(
+    (p) => monthKeyOf(p.created_at) === thisKey,
+  ).length
+  const rejectedPrev = rejectedPayments.filter(
+    (p) => monthKeyOf(p.created_at) === prevKey,
+  ).length
+
+  const revChange = percentChange(revThis, revPrev)
+  const stuChange = percentChange(studentsThis, studentsPrev)
+  const enrChange = percentChange(enrollThis, enrollPrev)
+  const refChange = percentChange(rejectedThis, rejectedPrev)
 
   const reportStats = [
-    { key: 'revenue', label: 'إجمالي الإيرادات', value: totalRevenue, suffix: 'ج.م', change: 0, up: true },
-    { key: 'students', label: 'إجمالي الطلاب', value: studentsCount || 0, suffix: 'طالب', change: 0, up: true },
-    { key: 'enrollments', label: 'الاشتراكات', value: enrollmentsCount || 0, suffix: 'اشتراك', change: 0, up: true },
-    { key: 'refunds', label: 'المدفوعات المرفوضة', value: rejectedPayments.length, suffix: 'طلب', change: 0, up: false },
+    { key: 'revenue', label: 'إجمالي الإيرادات', value: totalRevenue, suffix: 'ج.م', change: Math.abs(revChange), up: revChange >= 0 },
+    { key: 'students', label: 'إجمالي الطلاب', value: studentsCount || 0, suffix: 'طالب', change: Math.abs(stuChange), up: stuChange >= 0 },
+    { key: 'enrollments', label: 'الاشتراكات', value: enrollmentsCount || 0, suffix: 'اشتراك', change: Math.abs(enrChange), up: enrChange >= 0 },
+    { key: 'refunds', label: 'المدفوعات المرفوضة', value: rejectedPayments.length, suffix: 'طلب', change: Math.abs(refChange), up: refChange <= 0 },
   ]
 
-  // Monthly Revenue
-  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
-  const revenueByMonth = new Array(6).fill(0)
+  // Monthly revenue vs a +15% stretch target (real revenue, derived target).
+  const revenueBucket: Record<string, number> = {}
   approvedPayments.forEach((p) => {
-    const monthIdx = new Date(p.created_at).getMonth()
-    if (monthIdx < 6) revenueByMonth[monthIdx] += Number(p.amount)
-    else revenueByMonth[5] += Number(p.amount)
+    const k = monthKeyOf(p.created_at)
+    revenueBucket[k] = (revenueBucket[k] || 0) + Number(p.amount)
+  })
+  const monthlyRevenue = window.map((b) => {
+    const revenue = revenueBucket[b.key] || 0
+    return { month: b.month, revenue, target: Math.round(revenue * 1.15) }
   })
 
-  const monthlyRevenue = months.map((month, idx) => ({
-    month,
-    revenue: revenueByMonth[idx] || (idx === 5 ? totalRevenue : 0),
-    target: (revenueByMonth[idx] || (idx === 5 ? totalRevenue : 0)) * 1.2 || 1000,
-  }))
-
-  // Students Growth
-  const studentsByMonth = new Array(6).fill(0)
+  // Cumulative students growth over the window.
+  const signupsBucket: Record<string, number> = {}
+  let baseStudents = 0
   studentsDataRaw?.forEach((s) => {
-    const monthIdx = new Date(s.created_at).getMonth()
-    if (monthIdx < 6) studentsByMonth[monthIdx] += 1
-    else studentsByMonth[5] += 1
-  })
-
-  let cumulativeStudents = 0
-  const studentsGrowth = months.map((month, idx) => {
-    cumulativeStudents += studentsByMonth[idx]
-    return {
-      month,
-      students: cumulativeStudents || (idx === 5 ? (studentsCount || 0) : 0),
+    const date = new Date(s.created_at)
+    if (date < windowStart) {
+      baseStudents += 1
+      return
     }
+    signupsBucket[monthKeyOf(date)] = (signupsBucket[monthKeyOf(date)] || 0) + 1
+  })
+  let cumulativeStudents = baseStudents
+  const studentsGrowth = window.map((b) => {
+    cumulativeStudents += signupsBucket[b.key] || 0
+    return { month: b.month, students: cumulativeStudents }
   })
 
-  // Category Distribution
+  // Payment status distribution (real counts).
+  const paymentStatus = [
+    { name: 'مقبول', value: approvedPayments.length, fill: 'var(--chart-1)' },
+    { name: 'قيد المراجعة', value: pendingPayments.length, fill: 'var(--chart-4)' },
+    { name: 'مرفوض', value: rejectedPayments.length, fill: 'var(--chart-3)' },
+  ].filter((s) => s.value > 0)
+
+  const colors = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
+  const priceOf = (c: any) => Number(String(c.price ?? '').replace(/\D/g, '') || 0)
+  const courseRevenue = (c: any) => priceOf(c) * (c.students || 0)
+
+  // Students per category.
   const categoryCount: Record<string, number> = {}
+  // Revenue per category (real, derived from price × enrolled students).
+  const categoryRevenue: Record<string, number> = {}
   coursesData?.forEach((c) => {
     const catName = c.category || 'عام'
     categoryCount[catName] = (categoryCount[catName] || 0) + (c.students || 0)
+    categoryRevenue[catName] = (categoryRevenue[catName] || 0) + courseRevenue(c)
   })
 
-  const colors = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
   const categoryDistribution = Object.entries(categoryCount)
     .sort((a, b) => b[1] - a[1])
-    .map(([name, value], i) => ({
-      name,
-      value,
-      fill: colors[i % colors.length],
-    }))
+    .map(([name, value], i) => ({ name, value, fill: colors[i % colors.length] }))
 
-  // Course Performance
+  const revenueByCategory = Object.entries(categoryRevenue)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, revenue], i) => ({ name, revenue, fill: colors[i % colors.length] }))
+
+  // Course performance ranked by real revenue, with each course's share of the
+  // platform's total course revenue (replaces the previous mocked completion /
+  // rating columns).
+  const totalCourseRevenue =
+    (coursesData || []).reduce((s, c) => s + courseRevenue(c), 0) || 1
   const coursePerformance = (coursesData || [])
-    .sort((a, b) => (Number(b.price?.replace(/\D/g, '') || 0) * (b.students || 0)) - (Number(a.price?.replace(/\D/g, '') || 0) * (a.students || 0)))
-    .slice(0, 10)
     .map((c) => ({
       title: c.title,
       category: c.category || 'عام',
       students: c.students || 0,
-      revenue: Number(c.price?.replace(/\D/g, '') || 0) * (c.students || 0),
-      completion: Math.floor(Math.random() * 40) + 50, // Mocked for now until we aggregate lesson_progress
-      rating: Number((Math.random() * 1 + 4).toFixed(1)), // Mocked 4.0 - 5.0
+      revenue: courseRevenue(c),
+      share: Math.round((courseRevenue(c) / totalCourseRevenue) * 1000) / 10,
     }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10)
 
   return {
     success: true,
@@ -162,6 +217,8 @@ export async function getReportsData() {
     monthlyRevenue,
     studentsGrowth,
     categoryDistribution,
+    revenueByCategory,
+    paymentStatus,
     coursePerformance,
   }
 }

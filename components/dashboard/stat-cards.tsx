@@ -1,15 +1,25 @@
-import { Wallet, Video, BookOpen, Users, ShoppingCart, TrendingUp } from 'lucide-react'
+import { Wallet, Video, BookOpen, Users, ShoppingCart, TrendingUp, TrendingDown } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
+// Formats a signed percentage like "+12.5%" / "-3%".
+function pct(n: number) {
+  const sign = n > 0 ? '+' : ''
+  return `${sign}${n}%`
+}
+
 export function StatCards({ stats: inputStats }: { stats?: any }) {
+  const changes = inputStats?.changes || {}
+  const coursesThisMonth = changes.coursesThisMonth || 0
+
   const stats = [
     {
       label: 'إجمالي الإيرادات',
       value: (inputStats?.totalRevenue || 0).toLocaleString(),
       unit: 'ج.م',
-      change: '+0%',
-      sub: 'حقيقي',
+      change: pct(changes.revenue ?? 0),
+      up: (changes.revenue ?? 0) >= 0,
+      sub: 'عن الشهر السابق',
       icon: Wallet,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50 dark:bg-emerald-500/10',
@@ -17,7 +27,9 @@ export function StatCards({ stats: inputStats }: { stats?: any }) {
     {
       label: 'عدد الدروس',
       value: (inputStats?.totalLessons || 0).toLocaleString(),
-      change: '+0',
+      change: 'إجمالي',
+      up: true,
+      neutral: true,
       sub: 'حقيقي',
       icon: Video,
       color: 'text-rose-600',
@@ -26,8 +38,10 @@ export function StatCards({ stats: inputStats }: { stats?: any }) {
     {
       label: 'عدد الكورسات',
       value: (inputStats?.totalCourses || 0).toLocaleString(),
-      change: '+0',
-      sub: 'حقيقي',
+      change: coursesThisMonth > 0 ? `+${coursesThisMonth}` : 'إجمالي',
+      up: true,
+      neutral: coursesThisMonth === 0,
+      sub: coursesThisMonth > 0 ? 'هذا الشهر' : 'حقيقي',
       icon: BookOpen,
       color: 'text-blue-600',
       bg: 'bg-blue-50 dark:bg-blue-500/10',
@@ -35,8 +49,9 @@ export function StatCards({ stats: inputStats }: { stats?: any }) {
     {
       label: 'إجمالي الطلاب',
       value: (inputStats?.totalStudents || 0).toLocaleString(),
-      change: '+0%',
-      sub: 'حقيقي',
+      change: pct(changes.students ?? 0),
+      up: (changes.students ?? 0) >= 0,
+      sub: 'عن الشهر السابق',
       icon: Users,
       color: 'text-primary',
       bg: 'bg-primary/10',
@@ -45,8 +60,9 @@ export function StatCards({ stats: inputStats }: { stats?: any }) {
       label: 'المبيعات اليوم',
       value: (inputStats?.salesToday || 0).toLocaleString(),
       unit: 'ج.م',
-      change: '+0%',
-      sub: 'حقيقي',
+      change: pct(changes.sales ?? 0),
+      up: (changes.sales ?? 0) >= 0,
+      sub: 'عن أمس',
       icon: ShoppingCart,
       color: 'text-amber-600',
       bg: 'bg-amber-50 dark:bg-amber-500/10',
@@ -80,8 +96,22 @@ export function StatCards({ stats: inputStats }: { stats?: any }) {
             )}
           </div>
           <div className="mt-2 flex items-center gap-1.5 text-xs">
-            <span className="flex items-center gap-0.5 font-semibold text-emerald-600">
-              <TrendingUp className="size-3.5" />
+            <span
+              className={cn(
+                'flex items-center gap-0.5 font-semibold',
+                stat.neutral
+                  ? 'text-muted-foreground'
+                  : stat.up
+                    ? 'text-emerald-600'
+                    : 'text-rose-600',
+              )}
+            >
+              {!stat.neutral &&
+                (stat.up ? (
+                  <TrendingUp className="size-3.5" />
+                ) : (
+                  <TrendingDown className="size-3.5" />
+                ))}
               {stat.change}
             </span>
             <span className="text-muted-foreground">{stat.sub}</span>

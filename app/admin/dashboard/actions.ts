@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
+import { lastMonths, monthKeyOf, percentChange } from '@/lib/time-series'
 
 export async function getDashboardData() {
   const supabase = await createClient()
@@ -34,42 +35,69 @@ export async function getDashboardData() {
   const approvedPayments = payments?.filter((p) => p.status === 'مقبول') || []
   const totalRevenue = approvedPayments.reduce((sum, p) => sum + Number(p.amount), 0)
 
-  // Zero-fill arrays for charts (Jan-Jun for mockup consistency)
-  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
-  
-  // Real revenue data (we will put everything in the current month or distribute based on actual dates)
-  // Since this is a newly seeded DB, most things are in the current month. Let's just create a dynamic distribution based on real dates.
-  const revenueByMonth = new Array(6).fill(0)
-  approvedPayments.forEach((p) => {
-    const date = new Date(p.created_at)
-    // Map month (0-11) to our array (0-5) if possible, else just put in the latest
-    const monthIdx = date.getMonth()
-    if (monthIdx < 6) revenueByMonth[monthIdx] += Number(p.amount)
-    else revenueByMonth[5] += Number(p.amount) // Fallback for later months in this mockup
-  })
+  // Real rolling 12-month series, bucketed by the actual calendar month each
+  // payment / signup happened in. Charts slice the last 3/6/12 client-side.
+  const window = lastMonths(12)
+  const windowStart = window[0].start
 
-  const revenueData = months.map((month, idx) => ({
-    month,
-    revenue: revenueByMonth[idx] || (idx === 5 ? totalRevenue : 0), // If no revenue, at least show current month total if it's the last one
+  // Revenue per month.
+  const revenueBucket: Record<string, number> = {}
+  approvedPayments.forEach((p) => {
+    const k = monthKeyOf(p.created_at)
+    revenueBucket[k] = (revenueBucket[k] || 0) + Number(p.amount)
+  })
+  const revenueData = window.map((b) => ({
+    month: b.month,
+    revenue: revenueBucket[b.key] || 0,
   }))
 
-  // Same for students
-  const studentsByMonth = new Array(6).fill(0)
+  // Cumulative students. Seed with everyone who joined before the window so the
+  // running total is accurate, then add each month's new signups.
+  const signupsBucket: Record<string, number> = {}
+  let baseStudents = 0
   latestStudentsData?.forEach((s) => {
     const date = new Date(s.created_at)
-    const monthIdx = date.getMonth()
-    if (monthIdx < 6) studentsByMonth[monthIdx] += 1
-    else studentsByMonth[5] += 1
+    if (date < windowStart) {
+      baseStudents += 1
+      return
+    }
+    const k = monthKeyOf(date)
+    signupsBucket[k] = (signupsBucket[k] || 0) + 1
+  })
+  let cumulativeStudents = baseStudents
+  const studentsData = window.map((b) => {
+    cumulativeStudents += signupsBucket[b.key] || 0
+    return { month: b.month, students: cumulativeStudents }
   })
 
-  let cumulativeStudents = 0
-  const studentsData = months.map((month, idx) => {
-    cumulativeStudents += studentsByMonth[idx]
-    return {
-      month,
-      students: cumulativeStudents || (idx === 5 ? studentsCount : 0),
-    }
-  })
+  // Real period-over-period changes (this month vs last month) for the stat
+  // cards, plus today-vs-yesterday for daily sales.
+  const thisKey = window[window.length - 1].key
+  const prevKey = window[window.length - 2].key
+  const revThisMonth = revenueBucket[thisKey] || 0
+  const revPrevMonth = revenueBucket[prevKey] || 0
+  const stuThisMonth = signupsBucket[thisKey] || 0
+  const stuPrevMonth = signupsBucket[prevKey] || 0
+
+  const today = new Date().toDateString()
+  const yesterday = new Date(Date.now() - 86400000).toDateString()
+  const salesYesterday = approvedPayments
+    .filter((p) => new Date(p.created_at).toDateString() === yesterday)
+    .reduce((s, p) => s + Number(p.amount), 0)
+  const salesToday = approvedPayments
+    .filter((p) => new Date(p.created_at).toDateString() === today)
+    .reduce((s, p) => s + Number(p.amount), 0)
+
+  const coursesThisMonth = (latestCoursesData || []).filter(
+    (c) => monthKeyOf(c.created_at) === thisKey,
+  ).length
+
+  const changes = {
+    revenue: percentChange(revThisMonth, revPrevMonth),
+    students: percentChange(stuThisMonth, stuPrevMonth),
+    sales: percentChange(salesToday, salesYesterday),
+    coursesThisMonth,
+  }
 
   // Top Courses
   const topCourses = (latestCoursesData || [])
@@ -127,7 +155,8 @@ export async function getDashboardData() {
       totalStudents: studentsCount || 0,
       totalCourses: coursesCount || 0,
       totalLessons: lessonsCount || 0,
-      salesToday: approvedPayments.filter((p) => new Date(p.created_at).toDateString() === new Date().toDateString()).reduce((sum, p) => sum + Number(p.amount), 0),
+      salesToday,
+      changes,
     },
     revenueData,
     studentsData,
