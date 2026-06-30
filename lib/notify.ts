@@ -14,6 +14,10 @@ type NotifyInput = {
   description?: string
   studentId?: string | null
   grade?: string | null
+  // Optional audience targeting (consistent with calendar events).
+  stageId?: string | null
+  branchId?: string | null
+  lectureId?: string | null
 }
 
 function genCode() {
@@ -37,13 +41,19 @@ export async function createNotification(input: NotifyInput) {
     // grade column is optional (added by the migration); include only when set
     // so the insert still works before the migration runs.
     if (input.grade) row.grade = input.grade
+    if (input.stageId) row.stage_id = input.stageId
+    if (input.branchId) row.branch_id = input.branchId
+    if (input.lectureId) row.lecture_id = input.lectureId
 
     let { error } = await admin.from('notifications').insert(row)
 
-    // If the optional `grade` column doesn't exist yet (migration not run),
-    // retry without it so the notification is still delivered as a broadcast.
-    if (error && /grade/.test(error.message) && 'grade' in row) {
+    // If an optional targeting column doesn't exist yet (migration not run),
+    // retry without the optional columns so the notification is still delivered.
+    if (error && /(grade|stage_id|branch_id|lecture_id)/.test(error.message)) {
       delete row.grade
+      delete row.stage_id
+      delete row.branch_id
+      delete row.lecture_id
       ;({ error } = await admin.from('notifications').insert(row))
     }
 

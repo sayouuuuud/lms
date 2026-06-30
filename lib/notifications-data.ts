@@ -28,101 +28,43 @@ export const notificationTypeFilters: {
   { value: 'نظام', label: 'النظام' },
 ]
 
-export const notificationRecords: NotificationRecord[] = [
-  {
-    id: 'NOTI-2051',
-    type: 'طالب',
-    title: 'طالب جديد انضم للمنصة',
-    description: 'محمد إبراهيم سجّل حسابًا جديدًا واشترك في كورس أساسيات البرمجة.',
-    time: 'منذ 5 دقائق',
-    read: false,
-  },
-  {
-    id: 'NOTI-2050',
-    type: 'دفع',
-    title: 'تم استلام دفعة جديدة',
-    description: 'دفعة بقيمة 1,200 ج.م من فاطمة الزهراء مقابل كورس تطوير الويب.',
-    time: 'منذ 22 دقيقة',
-    read: false,
-  },
-  {
-    id: 'NOTI-2049',
-    type: 'اختبار',
-    title: 'تم إنهاء اختبار',
-    description: 'أنهى 48 طالبًا اختبار "أساسيات JavaScript" بمتوسط درجات 76%.',
-    time: 'منذ ساعة',
-    read: false,
-  },
-  {
-    id: 'NOTI-2048',
-    type: 'رسالة',
-    title: 'رسالة جديدة من طالب',
-    description: 'أرسل أحمد سمير استفسارًا حول موعد بدء كورس قواعد البيانات.',
-    time: 'منذ ساعتين',
-    read: false,
-  },
-  {
-    id: 'NOTI-2047',
-    type: 'كورس',
-    title: 'كورس وصل للحد الأقصى',
-    description: 'كورس "تصميم واجهات المستخدم" وصل إلى 200 طالب مسجّل.',
-    time: 'منذ 4 ساعات',
-    read: true,
-  },
-  {
-    id: 'NOTI-2046',
-    type: 'دفع',
-    title: 'فشل في عملية دفع',
-    description: 'لم تكتمل عملية الدفع الخاصة بـ سارة محمود بسبب رفض البطاقة.',
-    time: 'منذ 6 ساعات',
-    read: true,
-  },
-  {
-    id: 'NOTI-2045',
-    type: 'نظام',
-    title: 'تحديث للنظام',
-    description: 'تم تحديث المنصة إلى الإصدار 2.4.0 مع تحسينات في الأداء.',
-    time: 'أمس',
-    read: true,
-  },
-  {
-    id: 'NOTI-2044',
-    type: 'طالب',
-    title: 'طالب أكمل كورسًا',
-    description: 'أكملت ليلى حسن كورس "مقدمة في الذكاء الاصطناعي" وحصلت على الشهادة.',
-    time: 'أمس',
-    read: true,
-  },
-  {
-    id: 'NOTI-2043',
-    type: 'اختبار',
-    title: 'تم نشر اختبار جديد',
-    description: 'تم نشر اختبار "هياكل البيانات المتقدمة" وأصبح متاحًا للطلاب.',
-    time: 'منذ يومين',
-    read: true,
-  },
-  {
-    id: 'NOTI-2042',
-    type: 'رسالة',
-    title: 'رد على تذكرة دعم',
-    description: 'تم الرد على تذكرة الدعم رقم #1284 الخاصة بمشكلة تسجيل الدخول.',
-    time: 'منذ يومين',
-    read: true,
-  },
-  {
-    id: 'NOTI-2041',
-    type: 'كورس',
-    title: 'مراجعة جديدة على كورس',
-    description: 'حصل كورس "تطوير تطبيقات الموبايل" على تقييم 5 نجوم من طالب.',
-    time: 'منذ 3 أيام',
-    read: true,
-  },
-  {
-    id: 'NOTI-2040',
-    type: 'نظام',
-    title: 'نسخة احتياطية مكتملة',
-    description: 'تم إنشاء نسخة احتياطية كاملة لبيانات المنصة بنجاح.',
-    time: 'منذ 3 أيام',
-    read: true,
-  },
-]
+// Builds a live Arabic relative-time label from an ISO timestamp, e.g.
+// "الآن" / "منذ 5 دقائق" / "منذ ساعتين" / "أمس" / "منذ 3 أيام". Computed at read
+// time so ordering by created_at always matches the displayed label.
+export function formatRelativeArabic(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) return ''
+  const diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000))
+
+  if (diffSec < 60) return 'الآن'
+
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) {
+    if (diffMin === 1) return 'منذ دقيقة'
+    if (diffMin === 2) return 'منذ دقيقتين'
+    if (diffMin <= 10) return `منذ ${diffMin} دقائق`
+    return `منذ ${diffMin} دقيقة`
+  }
+
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) {
+    if (diffHr === 1) return 'منذ ساعة'
+    if (diffHr === 2) return 'منذ ساعتين'
+    if (diffHr <= 10) return `منذ ${diffHr} ساعات`
+    return `منذ ${diffHr} ساعة`
+  }
+
+  const diffDay = Math.floor(diffHr / 24)
+  if (diffDay === 1) return 'أمس'
+  if (diffDay === 2) return 'منذ يومين'
+  if (diffDay <= 10) return `منذ ${diffDay} أيام`
+  if (diffDay < 30) return `منذ ${diffDay} يومًا`
+
+  // Older than a month → show an absolute date.
+  return new Date(iso).toLocaleDateString('ar-EG', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}

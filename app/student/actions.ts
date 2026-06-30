@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentStudent } from '@/lib/auth-guard'
 import { getPurchasedCourses } from '@/lib/student-lectures-data'
 import type { Invoice, InvoiceStatus, PaymentMethod } from '@/lib/student-billing-data'
+import { formatRelativeArabic } from '@/lib/notifications-data'
 
 // ── Billing ──────────────────────────────────────────────────────
 
@@ -325,7 +326,7 @@ export async function getStudentAnnouncements() {
       id: n.code,
       title: n.title,
       text: n.description,
-      time: new Date(n.created_at).toLocaleDateString('ar-EG'),
+      time: formatRelativeArabic(n.created_at),
       course: 'منصة',
     }
   })
@@ -355,7 +356,8 @@ export async function getStudentNotifications() {
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
-  // The student's grade matches the stage slug (sec-1/sec-2/sec-3).
+  // The student's audience: their grade/stage, the branches and lectures they
+  // are enrolled in. Used to decide which targeted notifications they receive.
   const { data: profile } = await supabase
     .from('profiles')
     .select('grade')
@@ -363,30 +365,62 @@ export async function getStudentNotifications() {
     .single()
   const grade = profile?.grade as string | undefined
 
-  // Own + broadcast.
-  const filters = [`student_id.eq.${student.id}`, 'student_id.is.null']
+  let stageId: string | null = null
+  if (grade) {
+    const { data: stage } = await supabase
+      .from('stages')
+      .select('id')
+      .eq('slug', grade)
+      .single()
+    stageId = stage?.id ?? null
+  }
+
+  const { data: enrollments } = await supabase
+    .from('enrollments')
+    .select('course_id')
+    .eq('student_id', student.id)
+  const lectureIds = (enrollments ?? []).map((e: any) => e.course_id)
+
+  let branchIds: string[] = []
+  if (lectureIds.length > 0) {
+    const { data: lectures } = await supabase
+      .from('lectures')
+      .select('branch_id')
+      .in('id', lectureIds)
+    branchIds = Array.from(
+      new Set((lectures ?? []).map((l: any) => l.branch_id).filter(Boolean)),
+    )
+  }
+
+  // Pull the student's own notifications plus everything not aimed at a single
+  // student (broadcasts + audience-targeted), then filter the audience in JS.
   const { data: notifs } = await supabase
     .from('notifications')
     .select('*')
-    .or(filters.join(','))
+    .or(`student_id.eq.${student.id},student_id.is.null`)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(100)
 
-  let rows = notifs ?? []
+  const lectureSet = new Set(lectureIds)
+  const branchSet = new Set(branchIds)
 
-  // Grade-targeted (column may not exist yet → ignore errors).
-  if (grade) {
-    const { data: gradeNotifs } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('grade', grade)
-      .order('created_at', { ascending: false })
-      .limit(50)
-    if (gradeNotifs?.length) {
-      const seen = new Set(rows.map((r: any) => r.id))
-      rows = [...rows, ...gradeNotifs.filter((r: any) => !seen.has(r.id))]
-    }
-  }
+  const rows = (notifs ?? []).filter((n: any) => {
+    // Always show the student's own notifications.
+    if (n.student_id && n.student_id === student.id) return true
+    if (n.student_id) return false
+
+    const hasTargeting =
+      n.stage_id || n.branch_id || n.lecture_id || n.grade
+    // Untargeted = global broadcast → everyone sees it.
+    if (!hasTargeting) return true
+
+    if (n.lecture_id && lectureSet.has(n.lecture_id)) return true
+    if (n.branch_id && branchSet.has(n.branch_id)) return true
+    if (n.stage_id && stageId && n.stage_id === stageId) return true
+    // Backward-compat with the legacy grade-slug column.
+    if (n.grade && grade && n.grade === grade) return true
+    return false
+  })
 
   // Read state from notification_reads (best-effort).
   let readIds = new Set<string>()
@@ -407,10 +441,7 @@ export async function getStudentNotifications() {
     type: mapNotifType(n.type),
     title: n.title,
     text: n.description,
-    time: new Date(n.created_at).toLocaleDateString('ar-EG', {
-      day: 'numeric',
-      month: 'long',
-    }),
+    time: formatRelativeArabic(n.created_at),
     read: readIds.has(n.id),
   }))
 }

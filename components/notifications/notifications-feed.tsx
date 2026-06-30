@@ -61,10 +61,18 @@ const typeStyles: Record<
   },
 }
 
+export type NotificationTargets = {
+  stages: { id: string; title: string; sort_order: number }[]
+  branches: { id: string; stage_id: string; title: string; sort_order: number }[]
+  lectures: { id: string; branch_id: string; title: string; sort_order: number }[]
+}
+
 export function NotificationsFeed({
-  initialNotifications
+  initialNotifications,
+  targets,
 }: {
   initialNotifications: NotificationRecord[]
+  targets: NotificationTargets
 }) {
   const router = useRouter()
   const [items, setItems] = useState<NotificationRecord[]>(initialNotifications)
@@ -141,6 +149,7 @@ export function NotificationsFeed({
 
       {composing && (
         <ComposeAnnouncementModal
+          targets={targets}
           onClose={() => setComposing(false)}
           onSent={() => {
             setComposing(false)
@@ -299,24 +308,41 @@ export function NotificationsFeed({
   )
 }
 
-const GRADE_OPTIONS = [
-  { value: 'all', label: 'كل الطلاب' },
-  { value: 'sec-1', label: 'الصف الأول الثانوي' },
-  { value: 'sec-2', label: 'الصف الثاني الثانوي' },
-  { value: 'sec-3', label: 'الصف الثالث الثانوي' },
-]
-
 function ComposeAnnouncementModal({
+  targets,
   onClose,
   onSent,
 }: {
+  targets: NotificationTargets
   onClose: () => void
   onSent: () => void
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [grade, setGrade] = useState('all')
+  const [stageId, setStageId] = useState('')
+  const [branchId, setBranchId] = useState('')
+  const [lectureId, setLectureId] = useState('')
   const [sending, setSending] = useState(false)
+
+  const branches = useMemo(
+    () => targets.branches.filter((b) => b.stage_id === stageId),
+    [targets.branches, stageId],
+  )
+  const lectures = useMemo(
+    () => targets.lectures.filter((l) => l.branch_id === branchId),
+    [targets.lectures, branchId],
+  )
+
+  // A short human description of who will receive the announcement.
+  const audienceLabel = useMemo(() => {
+    if (lectureId)
+      return targets.lectures.find((l) => l.id === lectureId)?.title ?? 'محاضرة محددة'
+    if (branchId)
+      return `طلاب ${targets.branches.find((b) => b.id === branchId)?.title ?? 'الفرع'}`
+    if (stageId)
+      return `طلاب ${targets.stages.find((s) => s.id === stageId)?.title ?? 'السنة'}`
+    return 'كل الطلاب'
+  }, [stageId, branchId, lectureId, targets])
 
   async function submit() {
     if (!title.trim()) {
@@ -324,7 +350,13 @@ function ComposeAnnouncementModal({
       return
     }
     setSending(true)
-    const res = await sendAnnouncement({ title, description, grade })
+    const res = await sendAnnouncement({
+      title,
+      description,
+      stageId: stageId || null,
+      branchId: branchId || null,
+      lectureId: lectureId || null,
+    })
     setSending(false)
     if (res.error) {
       toast.error(res.error)
@@ -345,7 +377,7 @@ function ComposeAnnouncementModal({
         onClick={onClose}
         className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
       />
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-border bg-background p-6 shadow-2xl">
+      <div className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-border bg-background p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">إرسال إشعار للطلاب</h2>
           <button
@@ -379,20 +411,86 @@ function ComposeAnnouncementModal({
           className="mb-4 w-full resize-none rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-right text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background"
         />
 
-        <label className="mb-1.5 block text-right text-sm font-semibold text-foreground">
-          إرسال إلى
-        </label>
-        <select
-          value={grade}
-          onChange={(e) => setGrade(e.target.value)}
-          className={`${inputCls} mb-5 text-right`}
-        >
-          {GRADE_OPTIONS.map((g) => (
-            <option key={g.value} value={g.value}>
-              {g.label}
-            </option>
-          ))}
-        </select>
+        {/* Optional audience targeting (year → branch → lecture). */}
+        <div className="mb-5 space-y-3 rounded-2xl border border-border bg-secondary/20 p-4">
+          <div className="text-right">
+            <p className="text-sm font-semibold text-foreground">
+              تخصيص المستهدفين (اختياري)
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              لو سيبتها فاضية، الإشعار هيوصل لكل الطلاب.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-right text-xs font-semibold text-muted-foreground">
+              السنة الدراسية
+            </label>
+            <select
+              value={stageId}
+              onChange={(e) => {
+                setStageId(e.target.value)
+                setBranchId('')
+                setLectureId('')
+              }}
+              className={`${inputCls} text-right`}
+            >
+              <option value="">كل السنوات</option>
+              {targets.stages.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {stageId && (
+            <div>
+              <label className="mb-1.5 block text-right text-xs font-semibold text-muted-foreground">
+                الفرع
+              </label>
+              <select
+                value={branchId}
+                onChange={(e) => {
+                  setBranchId(e.target.value)
+                  setLectureId('')
+                }}
+                className={`${inputCls} text-right`}
+              >
+                <option value="">كل الفروع</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {branchId && (
+            <div>
+              <label className="mb-1.5 block text-right text-xs font-semibold text-muted-foreground">
+                المحاضرة
+              </label>
+              <select
+                value={lectureId}
+                onChange={(e) => setLectureId(e.target.value)}
+                className={`${inputCls} text-right`}
+              >
+                <option value="">كل المحاضرات</option>
+                {lectures.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <p className="text-right text-xs text-muted-foreground">
+            سيصل إلى: <span className="font-semibold text-primary">{audienceLabel}</span>
+          </p>
+        </div>
 
         <div className="flex justify-start gap-2">
           <Button onClick={submit} disabled={sending}>
