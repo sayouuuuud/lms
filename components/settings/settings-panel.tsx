@@ -115,8 +115,8 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
   const settings = initialSettings || {
     profile: { firstName: 'محمد', lastName: 'أحمد', email: 'mohamed@platform.com', phone: '+20 100 123 4567', bio: 'مدير منصة تعليمية متخصصة في الدورات التقنية.' },
     notifications: { emailNotif: true, pushNotif: true, smsNotif: false, marketingNotif: false, weeklyReport: true },
-    security: { twoFactor: true },
-    preferences: { darkMode: false, autoPublish: false, activeColor: 'navy' as PresetId, language: 'العربية', currency: 'جنيه مصري (EGP)' }
+    security: { requireEmailVerification: true, allowRegistrations: true },
+    preferences: { darkMode: false, autoPublish: false, activeColor: 'navy' as PresetId }
   }
 
   const [firstName, setFirstName] = useState(settings.profile.firstName)
@@ -142,6 +142,11 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
   // Email verification on signup (defaults to ON when not previously saved).
   const [requireEmailVerification, setRequireEmailVerification] = useState(
     settings.security?.requireEmailVerification !== false,
+  )
+
+  // Whether new students can register (defaults to ON when not previously saved).
+  const [allowRegistrations, setAllowRegistrations] = useState(
+    settings.security?.allowRegistrations !== false,
   )
 
   // Password change fields.
@@ -177,8 +182,8 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
       const newSettings = {
         profile: { firstName, lastName, email, phone, bio },
         notifications: { emailNotif, pushNotif, smsNotif, marketingNotif, weeklyReport },
-        security: { twoFactor: true, requireEmailVerification },
-        preferences: { darkMode, autoPublish, activeColor, language: settings.preferences.language, currency: settings.preferences.currency }
+        security: { requireEmailVerification, allowRegistrations },
+        preferences: { darkMode, autoPublish, activeColor }
       }
       
       const res = await updateSettings(newSettings)
@@ -406,10 +411,10 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
               </div>
               <div className="rounded-xl border border-border bg-muted/40 p-4">
                 <ToggleSwitch
-                  checked={true}
-                  onChange={() => {}}
-                  label="المصادقة الثنائية"
-                  description="طبقة حماية إضافية عند تسجيل الدخول"
+                  checked={allowRegistrations}
+                  onChange={setAllowRegistrations}
+                  label="السماح بتسجيل طلاب جدد"
+                  description="لما يكون مفعّل، أي طالب يقدر ينشئ حساب جديد. قفله يوقف التسجيل تمامًا (مفيد وقت إغلاق القبول)."
                 />
               </div>
               <div className="flex justify-start gap-3 pt-1">
@@ -481,23 +486,6 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
               </p>
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <FieldLabel>اللغة</FieldLabel>
-                <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                  <option>العربية</option>
-                  <option>English</option>
-                </select>
-              </div>
-              <div>
-                <FieldLabel>العملة</FieldLabel>
-                <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-right text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                  <option>جنيه مصري (EGP)</option>
-                  <option>ريال سعودي (SAR)</option>
-                  <option>دولار أمريكي (USD)</option>
-                </select>
-              </div>
-            </div>
             <div className="flex justify-start pt-4">
               <Button onClick={handleSave} disabled={isPending}>حفظ التفضيلات</Button>
             </div>

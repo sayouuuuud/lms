@@ -1,6 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendActivationCode } from '@/lib/email'
-import { isEmailVerificationRequired } from '@/lib/settings-data'
+import {
+  areRegistrationsAllowed,
+  isEmailVerificationRequired,
+} from '@/lib/settings-data'
 import { NextRequest, NextResponse } from 'next/server'
 
 type Body = {
@@ -31,6 +34,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: 'البريد الإلكتروني وكلمة السر مطلوبان.' },
       { status: 400 },
+    )
+  }
+
+  // Respect the admin's "allow registrations" switch.
+  if (!(await areRegistrationsAllowed())) {
+    return NextResponse.json(
+      { error: 'التسجيل مغلق حاليًا. تواصل مع إدارة المنصة.' },
+      { status: 403 },
     )
   }
 
