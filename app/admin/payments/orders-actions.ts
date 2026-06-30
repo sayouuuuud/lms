@@ -23,6 +23,7 @@ export type AdminOrder = {
   method: string
   reference: string
   note: string
+  receiptUrl: string
   total: number
   status: OrderStatus
   createdAt: string
@@ -48,7 +49,7 @@ export async function getOrders(): Promise<AdminOrder[]> {
     .from('orders')
     .select(
       `id, code, student_id, student_name, student_email, student_phone,
-       method, reference, note, total, status, created_at,
+       method, reference, note, receipt_url, total, status, created_at,
        order_items ( lecture_title, branch_title, stage_title, price )`,
     )
     .order('created_at', { ascending: false })
@@ -65,6 +66,7 @@ export async function getOrders(): Promise<AdminOrder[]> {
     method: row.method,
     reference: row.reference,
     note: row.note,
+    receiptUrl: row.receipt_url ?? '',
     total: Number(row.total),
     status: row.status as OrderStatus,
     createdAt: formatDate(row.created_at),
