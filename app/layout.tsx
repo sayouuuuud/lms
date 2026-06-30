@@ -8,7 +8,7 @@ import { MathLoader } from '@/components/landing/math-loader'
 import { CartProvider } from '@/components/cart/cart-provider'
 import { CartModal } from '@/components/cart/cart-modal'
 import { colorPresets } from '@/lib/color-presets'
-import { getSettings } from '@/app/admin/settings/actions'
+import { getSiteColor } from '@/app/admin/settings/actions'
 import './globals.css'
 
 
@@ -52,14 +52,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  // اللون المحفوظ على مستوى الموقع في قاعدة البيانات — مصدر الحقيقة الوحيد
-  // عشان اللون يفضل ثابت عبر أي جهاز أو حساب.
+  // اللون المحفوظ على مستوى الموقع — يُقرأ من جدول عام (site_theme) يقدر أي زائر
+  // أو حساب يقراه، فيفضل ثابت عبر كل الأجهزة وحتى قبل تسجيل الدخول.
   let savedColor = 'navy'
   try {
-    const settings = await getSettings()
-    if (settings?.preferences?.activeColor) {
-      savedColor = settings.preferences.activeColor
-    }
+    savedColor = await getSiteColor()
   } catch {
     // لو فشل الجلب نكمّل باللون الافتراضي
   }
