@@ -7,21 +7,24 @@ import {
   ArrowRight,
   Check,
   CheckCheck,
+  Headset,
+  LifeBuoy,
   Loader2,
-  MessageSquare,
-  Paperclip,
   Plus,
   Search,
   Send,
-  Smile,
   X,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { type Conversation } from '@/lib/student-messages-data'
-import { sendStudentMessage, startConversation } from '@/app/student/messages/actions'
+import { type Conversation, type TicketStatus } from '@/lib/student-messages-data'
+import {
+  sendStudentMessage,
+  startConversation,
+  markTicketRead,
+} from '@/app/student/messages/actions'
 
 export function StudentMessagesPage({
   initialConversations,
@@ -40,21 +43,23 @@ export function StudentMessagesPage({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return conversations
-    return conversations.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.course.toLowerCase().includes(q),
-    )
+    return conversations.filter((c) => c.subject.toLowerCase().includes(q))
   }, [conversations, query])
 
   const active = conversations.find((c) => c.id === activeId) ?? conversations[0]
+  const totalUnread = conversations.reduce((a, c) => a + c.unread, 0)
 
   const selectConversation = (id: string) => {
     setActiveId(id)
     setShowChatMobile(true)
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)),
-    )
+    const convo = conversations.find((c) => c.id === id)
+    if (convo && convo.unread > 0) {
+      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)))
+      startTransition(async () => {
+        await markTicketRead(id)
+        router.refresh()
+      })
+    }
   }
 
   const sendMessage = () => {
@@ -67,14 +72,10 @@ export function StudentMessagesPage({
           ? {
               ...c,
               lastTime: 'الآن',
+              status: 'open',
               messages: [
                 ...c.messages,
-                {
-                  id: `${c.id}-${c.messages.length + 1}`,
-                  fromMe: true,
-                  text,
-                  time: 'الآن',
-                },
+                { id: `${c.id}-${c.messages.length + 1}`, fromMe: true, text, time: 'الآن' },
               ],
             }
           : c,
@@ -82,37 +83,33 @@ export function StudentMessagesPage({
     )
     setDraft('')
     startTransition(async () => {
-      await sendStudentMessage(convoId, text)
+      const res = await sendStudentMessage(convoId, text)
+      if (res?.error) toast.error(res.error)
+      else router.refresh()
     })
   }
 
-  const totalUnread = conversations.reduce((a, c) => a + c.unread, 0)
-
+  // Empty state — no tickets yet.
   if (conversations.length === 0) {
     return (
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">الرسائل</h1>
-          <p className="text-sm text-muted-foreground">
-            تواصل مع فريق الدعم والإدارة بخصوص طلباتك واشتراكاتك.
-          </p>
-        </div>
+        <PageIntro totalUnread={0} onNew={() => setNewOpen(true)} />
         <Card className="flex min-h-[420px] flex-col items-center justify-center gap-4 p-8 text-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <MessageSquare className="size-7" />
+            <LifeBuoy className="size-7" />
           </div>
-          <h2 className="text-lg font-bold text-foreground">ابدأ محادثة مع المدرّس</h2>
+          <h2 className="text-lg font-bold text-foreground">لا توجد تذاكر بعد</h2>
           <p className="max-w-sm text-sm text-muted-foreground">
-            ابدأ محادثة مع الأستاذ عبد السلام وفريق الدعم بخصوص اشتراكاتك أو أي استفسار.
+            عندك استفسار أو مشكلة؟ افتح تذكرة دعم وتواصل مباشرةً مع الأستاذ عبد السلام.
           </p>
           <Button onClick={() => setNewOpen(true)} className="mt-2">
             <Plus className="size-4" />
-            محادثة جديدة
+            تذكرة دعم جديدة
           </Button>
         </Card>
 
         {newOpen && (
-          <NewConversationModal
+          <NewTicketModal
             onClose={() => setNewOpen(false)}
             onCreated={() => {
               setNewOpen(false)
@@ -126,28 +123,10 @@ export function StudentMessagesPage({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-foreground">الرسائل</h1>
-          <p className="text-sm text-muted-foreground">
-            تواصل مع محاضريك وزملائك وفريق الدعم.
-            {totalUnread > 0 && (
-              <span className="mr-1 font-semibold text-primary">
-                {' '}
-                لديك {totalUnread} رسائل غير مقروءة.
-              </span>
-            )}
-          </p>
-        </div>
-        <Button onClick={() => setNewOpen(true)}>
-          <Plus className="size-4" />
-          محادثة جديدة
-        </Button>
-      </div>
+      <PageIntro totalUnread={totalUnread} onNew={() => setNewOpen(true)} />
 
-      <Card className="grid h-[calc(100vh-13rem)] min-h-[520px] grid-cols-1 gap-0 overflow-hidden p-0 md:grid-cols-[320px_1fr]">
-        {/* Conversations list */}
+      <Card className="grid h-[calc(100vh-15rem)] min-h-[520px] grid-cols-1 gap-0 overflow-hidden p-0 md:grid-cols-[320px_1fr]">
+        {/* Tickets list */}
         <div
           className={cn(
             'flex min-h-0 flex-col border-l border-border',
@@ -161,7 +140,7 @@ export function StudentMessagesPage({
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="ابحث في المحادثات..."
+                placeholder="ابحث في التذاكر..."
                 className="h-10 w-full rounded-xl border border-border bg-secondary/60 pr-10 pl-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card"
               />
             </div>
@@ -170,7 +149,7 @@ export function StudentMessagesPage({
           <div className="min-h-0 flex-1 overflow-y-auto scrollbar-hide">
             {filtered.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                لا توجد محادثات مطابقة.
+                لا توجد تذاكر مطابقة.
               </p>
             ) : (
               filtered.map((c) => {
@@ -184,29 +163,25 @@ export function StudentMessagesPage({
                       c.id === activeId && 'bg-primary/5',
                     )}
                   >
-                    <div className="relative shrink-0">
-                      <Avatar className="size-11">
-                        <AvatarImage src={c.avatar} alt={c.name} />
-                        <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-                          {c.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      {c.online && (
-                        <span className="absolute bottom-0 left-0 size-3 rounded-full border-2 border-card bg-emerald-500" />
-                      )}
-                    </div>
+                    <Avatar className="size-11 shrink-0">
+                      <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+                        {c.initials}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="truncate text-sm font-bold text-foreground">
-                          {c.name}
+                          {c.subject}
                         </span>
                         <span className="shrink-0 text-[11px] text-muted-foreground">
                           {c.lastTime}
                         </span>
                       </div>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {last.fromMe ? 'أنتِ: ' : ''}
-                        {last.text}
+                      <p className="mt-0.5 flex items-center gap-1.5">
+                        <StatusDot status={c.status} />
+                        <span className="truncate text-xs text-muted-foreground">
+                          {last ? `${last.fromMe ? 'أنت: ' : ''}${last.text}` : c.name}
+                        </span>
                       </p>
                     </div>
                     {c.unread > 0 && (
@@ -228,43 +203,40 @@ export function StudentMessagesPage({
             showChatMobile ? 'flex' : 'hidden md:flex',
           )}
         >
-          {/* Chat header */}
+          {/* Header */}
           <div className="flex items-center gap-3 border-b border-border bg-card px-4 py-3">
             <Button
               variant="ghost"
               size="icon"
               className="shrink-0 text-muted-foreground md:hidden"
               onClick={() => setShowChatMobile(false)}
-              aria-label="الرجوع للمحادثات"
+              aria-label="الرجوع للتذاكر"
             >
               <ArrowRight className="size-5" />
             </Button>
-            <div className="relative shrink-0">
-              <Avatar className="size-10">
-                <AvatarImage src={active.avatar} alt={active.name} />
-                <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
-                  {active.initials}
-                </AvatarFallback>
-              </Avatar>
-              {active.online && (
-                <span className="absolute bottom-0 left-0 size-2.5 rounded-full border-2 border-card bg-emerald-500" />
-              )}
-            </div>
+            <Avatar className="size-10 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-sm font-semibold text-primary">
+                {active.initials}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-foreground">{active.name}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {active.online ? 'متصل الآن' : active.role} · {active.course}
-              </p>
+              <p className="truncate text-xs text-muted-foreground">{active.role}</p>
             </div>
+            <StatusBadge status={active.status} />
+          </div>
+
+          {/* Subject strip */}
+          <div className="border-b border-border bg-card/60 px-4 py-2">
+            <p className="truncate text-xs text-muted-foreground">
+              الموضوع: <span className="font-semibold text-foreground">{active.subject}</span>
+            </p>
           </div>
 
           {/* Messages */}
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto scrollbar-hide p-4">
             {active.messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn('flex', msg.fromMe ? 'justify-start' : 'justify-end')}
-              >
+              <div key={msg.id} className={cn('flex', msg.fromMe ? 'justify-start' : 'justify-end')}>
                 <div
                   className={cn(
                     'max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm',
@@ -296,33 +268,22 @@ export function StudentMessagesPage({
           {/* Composer */}
           <div className="border-t border-border bg-card p-3">
             <div className="flex items-end gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0 text-muted-foreground hover:text-foreground"
-                aria-label="إرفاق ملف"
-              >
-                <Paperclip className="size-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hidden shrink-0 text-muted-foreground hover:text-foreground sm:flex"
-                aria-label="إيموجي"
-              >
-                <Smile className="size-5" />
-              </Button>
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (
+                    e.key === 'Enter' &&
+                    !e.shiftKey &&
+                    !e.nativeEvent.isComposing &&
+                    e.keyCode !== 229
+                  ) {
                     e.preventDefault()
                     sendMessage()
                   }
                 }}
                 rows={1}
-                placeholder="اكتب رسالتك..."
+                placeholder="اكتب رسالتك للأستاذ..."
                 className="max-h-28 min-h-[44px] flex-1 resize-none rounded-xl border border-border bg-secondary/60 px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card"
               />
               <Button
@@ -340,7 +301,7 @@ export function StudentMessagesPage({
       </Card>
 
       {newOpen && (
-        <NewConversationModal
+        <NewTicketModal
           onClose={() => setNewOpen(false)}
           onCreated={() => {
             setNewOpen(false)
@@ -352,7 +313,57 @@ export function StudentMessagesPage({
   )
 }
 
-function NewConversationModal({
+function PageIntro({ totalUnread, onNew }: { totalUnread: number; onNew: () => void }) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-col gap-1">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+          <Headset className="size-6 text-primary" />
+          تذاكر الدعم
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          تواصل مباشرةً مع الأستاذ عبد السلام بخصوص اشتراكاتك أو أي استفسار.
+          {totalUnread > 0 && (
+            <span className="mr-1 font-semibold text-primary"> لديك {totalUnread} ردود جديدة.</span>
+          )}
+        </p>
+      </div>
+      <Button onClick={onNew}>
+        <Plus className="size-4" />
+        تذكرة جديدة
+      </Button>
+    </div>
+  )
+}
+
+function StatusDot({ status }: { status: TicketStatus }) {
+  return (
+    <span
+      className={cn(
+        'size-2 shrink-0 rounded-full',
+        status === 'open' ? 'bg-emerald-500' : 'bg-muted-foreground/40',
+      )}
+      aria-hidden
+    />
+  )
+}
+
+function StatusBadge({ status }: { status: TicketStatus }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold',
+        status === 'open'
+          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+          : 'bg-muted text-muted-foreground',
+      )}
+    >
+      {status === 'open' ? 'مفتوحة' : 'مغلقة'}
+    </span>
+  )
+}
+
+function NewTicketModal({
   onClose,
   onCreated,
 }: {
@@ -375,7 +386,7 @@ function NewConversationModal({
       toast.error(res.error)
       return
     }
-    toast.success('تم إرسال رسالتك لفريق الدعم')
+    toast.success('تم فتح التذكرة وإرسالها للأستاذ')
     onCreated()
   }
 
@@ -389,7 +400,7 @@ function NewConversationModal({
       />
       <div className="relative z-10 w-full max-w-md rounded-3xl border border-border bg-background p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-foreground">محادثة جديدة</h2>
+          <h2 className="text-lg font-bold text-foreground">تذكرة دعم جديدة</h2>
           <button
             type="button"
             onClick={onClose}
@@ -400,9 +411,7 @@ function NewConversationModal({
           </button>
         </div>
 
-        <label className="mb-1.5 block text-sm font-semibold text-foreground">
-          الموضوع
-        </label>
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">الموضوع</label>
         <input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
@@ -410,14 +419,12 @@ function NewConversationModal({
           className="mb-4 h-11 w-full rounded-xl border border-border bg-secondary/50 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background"
         />
 
-        <label className="mb-1.5 block text-sm font-semibold text-foreground">
-          رسالتك
-        </label>
+        <label className="mb-1.5 block text-sm font-semibold text-foreground">رسالتك</label>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={4}
-          placeholder="اكتب رسالتك لفريق الدعم..."
+          placeholder="اكتب استفسارك للأستاذ عبد السلام..."
           className="mb-4 w-full resize-none rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-background"
         />
 
