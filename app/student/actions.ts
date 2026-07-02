@@ -599,46 +599,67 @@ export async function getStudentAssignments() {
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
+  // Step 1: get lecture IDs the student is enrolled in.
   const { data: enrollments } = await supabase
     .from('enrollments')
     .select('course_id')
     .eq('student_id', student.id)
-  
+
   if (!enrollments || enrollments.length === 0) return []
-  const courseIds = enrollments.map((e: any) => e.course_id)
+  const lectureIds = enrollments.map((e: any) => e.course_id)
 
-  const { data: assignments } = await supabase
+  // Step 2: fetch all assignments for those lectures (all types).
+  const { data: rows } = await supabase
     .from('assignments')
-    .select(`
-      id,
-      code,
-      title,
-      type,
-      due_date,
-      points,
-      courses (title)
-    `)
-    .eq('type', 'تسليم')
-    .in('course_id', courseIds)
+    .select('id, code, title, type, due_date, points, description, instructions, lecture_id, lectures:lecture_id(title)')
+    .in('lecture_id', lectureIds)
+    .order('due_date', { ascending: true })
 
-  if (!assignments) return []
+  if (!rows || rows.length === 0) return []
+  const assignmentIds = rows.map((a: any) => a.id)
 
+  // Step 3: fetch this student's submissions for those assignments.
   const { data: submissions } = await supabase
     .from('assignment_submissions')
-    .select('*')
+    .select('assignment_id, status, score, submitted_at')
     .eq('student_id', student.id)
+    .in('assignment_id', assignmentIds)
 
-  return assignments.map((a: any) => {
-    const sub = submissions?.find((s: any) => s.assignment_id === a.id)
-    
+  const subMap = new Map(
+    (submissions ?? []).map((s: any) => [s.assignment_id, s]),
+  )
+
+  return rows.map((a: any) => {
+    const sub = subMap.get(a.id)
+    const dueDate = a.due_date
+      ? new Date(a.due_date).toLocaleDateString('ar-EG', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })
+      : '—'
+
+    const status: import('@/lib/student-types').AssignmentStatus =
+      sub?.status === 'مصحّح'
+        ? 'مصحّح'
+        : sub?.status === 'تم التسليم'
+          ? 'تم التسليم'
+          : 'لم يبدأ'
+
     return {
-      id: a.code,
+      id: a.code ?? a.id,
+      courseId: a.lecture_id,
       title: a.title,
-      course: a.courses?.title || 'عام',
-      status: sub?.status || 'لم يبدأ',
-      score: sub?.score || null,
-      totalPoints: a.points || 10,
-      dueDate: new Date(a.due_date || new Date()).toLocaleDateString('ar-EG'),
+      type: (a.type === 'اختبار' ? 'اختبار' : 'تسليم') as 'اختبار' | 'تسليم',
+      description: a.description ?? '',
+      instructions: a.instructions ?? [],
+      dueDate,
+      points: a.points ?? 10,
+      score: sub?.score ?? null,
+      status,
+      attachments: [] as { name: string; size: string }[],
+      // lectureTitle for display in the card (no courseId in this table)
+      lectureTitle: (a.lectures as any)?.title ?? '',
     }
   })
 }

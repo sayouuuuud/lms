@@ -35,11 +35,12 @@ export async function markLessonComplete(lessonId: string, courseSlug?: string) 
   return { success: true }
 }
 
-// Records an assignment submission for the current student. For all-MCQ
-// assignments we store the computed score and mark it graded; otherwise it is
-// marked submitted and awaits manual grading.
+// Records an assignment submission for the current student.
+// Writes to assignment_submissions (the real table) keyed by the assignment's
+// UUID. For all-MCQ assignments the score is stored immediately and status is
+// set to 'مصحّح'; otherwise it is 'تم التسليم' and awaits manual grading.
 export async function submitAssignmentProgress(
-  assignmentId: string,
+  assignmentCode: string,
   payload: { status: 'تم التسليم' | 'مصحّح'; score?: number; courseSlug?: string },
 ) {
   const supabase = await createClient()
@@ -48,26 +49,40 @@ export async function submitAssignmentProgress(
   } = await supabase.auth.getUser()
   if (!user) return { error: 'يجب تسجيل الدخول.' }
 
+  // Resolve the student row.
+  const { data: studentRow } = await supabase
+    .from('students')
+    .select('id')
+    .eq('user_id', user.id)
+    .single()
+  if (!studentRow) return { error: 'لم يتم العثور على بيانات الطالب.' }
+
+  // Resolve assignment UUID from its code.
+  const { data: asgRow } = await supabase
+    .from('assignments')
+    .select('id')
+    .eq('code', assignmentCode)
+    .single()
+  if (!asgRow) return { error: 'الواجب غير موجود.' }
+
   const { error } = await supabase
-    .from('student_content_progress')
+    .from('assignment_submissions')
     .upsert(
       {
-        user_id: user.id,
-        item_type: 'assignment',
-        item_id: assignmentId,
+        assignment_id: asgRow.id,
+        student_id: studentRow.id,
         status: payload.status,
         score: payload.score ?? null,
-        updated_at: new Date().toISOString(),
+        submitted_at: new Date().toISOString(),
       },
-      { onConflict: 'user_id,item_type,item_id' },
+      { onConflict: 'assignment_id,student_id' },
     )
 
   if (error) {
-    console.log('[v0] submitAssignmentProgress error:', error.message)
     return { error: 'تعذّر حفظ التسليم.' }
   }
 
   if (payload.courseSlug) revalidatePath(`/student/courses/${payload.courseSlug}`)
-  revalidatePath('/student/courses')
+  revalidatePath('/student/assignments')
   return { success: true }
 }

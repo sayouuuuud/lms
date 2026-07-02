@@ -19,12 +19,23 @@ import {
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import {
-  assignments,
-  courseDetails,
-  type Assignment,
-  type AssignmentStatus,
-} from '@/lib/student-courses-data'
+import type { AssignmentStatus } from '@/lib/student-types'
+
+// Shape returned by getStudentAssignments() server action.
+type AssignmentListItem = {
+  id: string
+  courseId: string
+  lectureTitle: string
+  title: string
+  type: 'تسليم' | 'اختبار'
+  description: string
+  instructions: string[]
+  dueDate: string
+  points: number
+  score: number | null
+  status: AssignmentStatus
+  attachments: { name: string; size: string }[]
+}
 
 type Filter = 'all' | AssignmentStatus
 
@@ -35,8 +46,6 @@ const filters: { key: Filter; label: string }[] = [
   { key: 'تم التسليم', label: 'تم التسليم' },
   { key: 'مصحّح', label: 'مصحّحة' },
 ]
-
-const courseTitleById = new Map(courseDetails.map((c) => [c.id, c.title]))
 
 const statusConfig: Record<
   AssignmentStatus,
@@ -68,11 +77,11 @@ const statusConfig: Record<
   },
 }
 
-function AssignmentCard({ assignment }: { assignment: Assignment }) {
+function AssignmentCard({ assignment }: { assignment: AssignmentListItem }) {
   const cfg = statusConfig[assignment.status] ?? statusConfig['لم يبدأ']
   const StatusIcon = cfg.icon
   const isQuiz = assignment.type === 'اختبار'
-  const courseTitle = courseTitleById.get(assignment.courseId) ?? ''
+  const courseTitle = assignment.lectureTitle
   const percent =
     assignment.score != null
       ? Math.round((assignment.score / assignment.points) * 100)
@@ -135,12 +144,12 @@ function AssignmentCard({ assignment }: { assignment: Assignment }) {
             {isQuiz ? (
               <>
                 <ClipboardList className="size-3.5" />
-                {assignment.questions?.length ?? 0} أسئلة
+                اختبار
               </>
             ) : (
               <>
                 <FileText className="size-3.5" />
-                {assignment.attachments?.length ?? 0} مرفقات
+                تسليم
               </>
             )}
           </span>
@@ -184,7 +193,7 @@ function AssignmentCard({ assignment }: { assignment: Assignment }) {
   )
 }
 
-export function StudentAssignmentsPage({ assignments = [] }: { assignments?: any[] }) {
+export function StudentAssignmentsPage({ assignments = [] }: { assignments?: AssignmentListItem[] }) {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
 
@@ -192,11 +201,10 @@ export function StudentAssignmentsPage({ assignments = [] }: { assignments?: any
     const q = query.trim().toLowerCase()
     return assignments.filter((a) => {
       const matchesStatus = filter === 'all' || a.status === filter
-      const courseTitle = (courseTitleById.get(a.courseId) ?? '').toLowerCase()
       const matchesQuery =
         q === '' ||
         a.title.toLowerCase().includes(q) ||
-        courseTitle.includes(q) ||
+        a.lectureTitle.toLowerCase().includes(q) ||
         a.type.toLowerCase().includes(q)
       return matchesStatus && matchesQuery
     })
@@ -207,13 +215,14 @@ export function StudentAssignmentsPage({ assignments = [] }: { assignments?: any
   ).length
   const submitted = assignments.filter((a) => a.status === 'تم التسليم').length
   const graded = assignments.filter((a) => a.status === 'مصحّح')
+  const gradedWithScore = graded.filter((a) => a.score !== null && a.points > 0)
   const avgScore =
-    graded.length > 0
+    gradedWithScore.length > 0
       ? Math.round(
-          graded.reduce(
+          gradedWithScore.reduce(
             (acc, a) => acc + ((a.score ?? 0) / a.points) * 100,
             0,
-          ) / graded.length,
+          ) / gradedWithScore.length,
         )
       : 0
 
