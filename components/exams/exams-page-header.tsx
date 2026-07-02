@@ -44,7 +44,7 @@ export function ExamsPageHeader() {
           <Download className="size-4" />
           تصدير البيانات
         </Button>
-        <Button render={<Link href="/exams/create" />}>
+        <Button render={<Link href="/admin/exams/create" />}>
           <FilePlus2 className="size-4" />
           إنشاء اختبار
         </Button>

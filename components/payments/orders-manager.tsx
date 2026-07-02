@@ -155,7 +155,7 @@ export function OrdersManager({ initialOrders }: { initialOrders: AdminOrder[] }
       return
     }
     toast.success('تم فتح محادثة مع الطالب')
-    router.push('/messages')
+    router.push('/admin/messages')
   }
 
   return (

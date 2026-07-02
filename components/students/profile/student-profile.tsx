@@ -102,7 +102,7 @@ export function StudentProfileView({ profile }: { profile: StudentProfile }) {
     <div className="space-y-6">
       {/* Back link */}
       <Link
-        href="/students"
+        href="/admin/students"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowRight className="size-4" />

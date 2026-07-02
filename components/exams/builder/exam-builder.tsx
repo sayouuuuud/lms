@@ -260,7 +260,7 @@ export function ExamBuilder() {
             حفظ كمسودة
           </Button>
           <Link
-            href="/exams"
+            href="/admin/exams"
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             <ArrowRight className="size-4" />

@@ -212,7 +212,7 @@ export function StudentsTable() {
                 variant="outline"
                 size="sm"
                 className="flex-1 border-border bg-card"
-                onClick={() => router.push('/messages')}
+                onClick={() => router.push('/admin/messages')}
               >
                 <Mail className="size-3.5" />
                 مراسلة
