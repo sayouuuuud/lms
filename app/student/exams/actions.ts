@@ -48,6 +48,8 @@ export type StudentExam = {
 
 // Loads a published exam for the student to take or review. Correct answers /
 // model answers are ONLY included in the review payload after submission.
+// Also enforces branch targeting: student must belong to the exam's branch
+// (or the exam is a broadcast with branch_id = null).
 export async function getStudentExam(code: string): Promise<StudentExam | null> {
   const supabase = await createClient()
   const student = await getCurrentStudent(supabase)
@@ -55,11 +57,31 @@ export async function getStudentExam(code: string): Promise<StudentExam | null> 
 
   const { data: exam } = await supabase
     .from('exams')
-    .select('id, code, title, course, description, duration, pass_mark, status')
+    .select('id, code, title, course, description, duration, pass_mark, status, branch_id')
     .eq('code', code)
     .single()
 
   if (!exam || exam.status !== 'منشور') return null
+
+  // Enforce branch targeting — same logic as getStudentExams() in actions.ts.
+  if (exam.branch_id) {
+    const { data: enrollments } = await supabase
+      .from('enrollments')
+      .select('course_id')
+      .eq('student_id', student.id)
+    const lectureIds = (enrollments ?? []).map((e: any) => e.course_id)
+
+    let enrolled = false
+    if (lectureIds.length > 0) {
+      const { data: lectures } = await supabase
+        .from('lectures')
+        .select('branch_id')
+        .in('id', lectureIds)
+        .eq('branch_id', exam.branch_id)
+      enrolled = (lectures ?? []).length > 0
+    }
+    if (!enrolled) return null
+  }
 
   const { data: questions } = await supabase
     .from('exam_questions')
@@ -154,12 +176,31 @@ export async function submitExam(code: string, answers: SubmitAnswer[]) {
 
   const { data: exam } = await supabase
     .from('exams')
-    .select('id, code, pass_mark, status')
+    .select('id, code, pass_mark, status, branch_id')
     .eq('code', code)
     .single()
 
   if (!exam || exam.status !== 'منشور') {
     return { success: false, error: 'الاختبار غير متاح.' }
+  }
+
+  // Enforce branch targeting before accepting any submission.
+  if (exam.branch_id) {
+    const { data: enrollments } = await supabase
+      .from('enrollments')
+      .select('course_id')
+      .eq('student_id', student.id)
+    const lectureIds = (enrollments ?? []).map((e: any) => e.course_id)
+    let enrolled = false
+    if (lectureIds.length > 0) {
+      const { data: lectures } = await supabase
+        .from('lectures')
+        .select('branch_id')
+        .in('id', lectureIds)
+        .eq('branch_id', exam.branch_id)
+      enrolled = (lectures ?? []).length > 0
+    }
+    if (!enrolled) return { success: false, error: 'غير مسموح لك بتسليم هذا الاختبار.' }
   }
 
   // Prevent duplicate submissions.
