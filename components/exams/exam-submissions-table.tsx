@@ -1,16 +1,20 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Search, Inbox } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Search, Inbox, ClipboardCheck, Hourglass } from 'lucide-react'
 import type { ExamSubmissionDetail } from '@/app/admin/exams/[id]/actions'
 
 export function ExamSubmissionsTable({
   submissions,
+  examCode,
 }: {
   submissions: ExamSubmissionDetail[]
+  examCode: string
 }) {
   const [query, setQuery] = useState('')
 
@@ -61,11 +65,13 @@ export function ExamSubmissionsTable({
                 <th className="px-6 py-3 font-medium">تاريخ التسليم</th>
                 <th className="px-6 py-3 font-medium">الدرجة</th>
                 <th className="px-6 py-3 font-medium">الحالة</th>
+                <th className="px-6 py-3 font-medium">التصحيح</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {filtered.map((sub) => {
-                const percentage = (sub.score / sub.total) * 100
+                const pending = sub.gradingStatus === 'pending'
+                const percentage = sub.total > 0 ? (sub.score / sub.total) * 100 : 0
                 const isPassed = percentage >= 50
 
                 return (
@@ -85,15 +91,40 @@ export function ExamSubmissionsTable({
                       {sub.submittedAt}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-semibold">{sub.score}</span>
-                        <span className="text-muted-foreground text-xs">/ {sub.total}</span>
-                      </div>
+                      {pending ? (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      ) : (
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-semibold">{sub.score}</span>
+                          <span className="text-muted-foreground text-xs">/ {sub.total}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={isPassed ? 'default' : 'destructive'} className={isPassed ? 'bg-success/15 text-success hover:bg-success/20 shadow-none' : 'shadow-none'}>
-                        {isPassed ? 'ناجح' : 'راسب'}
-                      </Badge>
+                      {pending ? (
+                        <Badge variant="secondary" className="gap-1 shadow-none">
+                          <Hourglass className="size-3" />
+                          بانتظار التصحيح
+                        </Badge>
+                      ) : (
+                        <Badge variant={isPassed ? 'default' : 'destructive'} className={isPassed ? 'bg-success/15 text-success hover:bg-success/20 shadow-none' : 'shadow-none'}>
+                          {isPassed ? 'ناجح' : 'راسب'}
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Button
+                        size="sm"
+                        variant={pending ? 'default' : 'outline'}
+                        render={
+                          <Link
+                            href={`/admin/exams/${examCode}/submissions/${sub.id}`}
+                          />
+                        }
+                      >
+                        <ClipboardCheck className="size-4" />
+                        {pending ? 'تصحيح' : 'مراجعة'}
+                      </Button>
                     </td>
                   </tr>
                 )
@@ -101,7 +132,7 @@ export function ExamSubmissionsTable({
               
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                  <td colSpan={6} className="py-12 text-center text-muted-foreground">
                     لا توجد نتائج تطابق بحثك.
                   </td>
                 </tr>

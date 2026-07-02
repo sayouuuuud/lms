@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/auth-guard'
 
@@ -19,6 +20,7 @@ export type ExamSubmissionDetail = {
   score: number
   total: number
   status: string
+  gradingStatus: 'graded' | 'pending'
   submittedAt: string
 }
 
@@ -74,6 +76,7 @@ export async function getExamDetails(code: string): Promise<ExamDetailsData | nu
       score,
       total,
       status,
+      grading_status,
       submitted_at,
       students (
         id,
@@ -92,6 +95,7 @@ export async function getExamDetails(code: string): Promise<ExamDetailsData | nu
     score: s.score,
     total: s.total,
     status: s.status,
+    gradingStatus: (s.grading_status ?? 'graded') as 'graded' | 'pending',
     submittedAt: new Date(s.submitted_at).toLocaleString('ar-EG', {
       year: 'numeric',
       month: 'short',
@@ -128,4 +132,200 @@ export async function getExamDetails(code: string): Promise<ExamDetailsData | nu
     questions,
     submissions,
   }
+}
+
+// ── Grading a single submission ──────────────────────────────────
+
+export type GradingAnswer = {
+  answerId: string
+  questionId: string
+  questionText: string
+  questionType: 'mcq' | 'essay' | 'file'
+  points: number
+  awardedPoints: number
+  isCorrect: boolean | null
+  needsManual: boolean
+  selectedOption: string | null
+  answerText: string | null
+  fileUrl: string | null
+  correctAnswer: string | null
+  modelAnswer: string | null
+}
+
+export type GradingSubmission = {
+  id: string
+  examCode: string
+  examTitle: string
+  passMark: number
+  studentName: string
+  studentCode: string
+  score: number
+  total: number
+  autoScore: number
+  status: string
+  gradingStatus: 'graded' | 'pending'
+  answers: GradingAnswer[]
+}
+
+// Loads a single submission with all answers + question keys for grading.
+export async function getSubmissionForGrading(
+  submissionId: string,
+): Promise<GradingSubmission | null> {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) return null
+
+  const { data: submission } = await supabase
+    .from('exam_submissions')
+    .select(`
+      id, exam_id, score, total, auto_score, status, grading_status,
+      students ( name, code ),
+      exams ( code, title, pass_mark )
+    `)
+    .eq('id', submissionId)
+    .single()
+
+  if (!submission) return null
+
+  const { data: answers } = await supabase
+    .from('exam_answers')
+    .select('id, question_id, awarded_points, is_correct, needs_manual, selected_option, answer_text, file_url')
+    .eq('submission_id', submissionId)
+
+  const { data: questions } = await supabase
+    .from('exam_questions')
+    .select('id, question_text, question_type, points, correct_answer, model_answer, order_index')
+    .eq('exam_id', (submission as any).exam_id)
+    .order('order_index', { ascending: true })
+
+  const qMap = new Map((questions ?? []).map((q: any) => [q.id, q]))
+
+  const mappedAnswers: GradingAnswer[] = (answers ?? []).map((a: any) => {
+    const q = qMap.get(a.question_id)
+    return {
+      answerId: a.id,
+      questionId: a.question_id,
+      questionText: q?.question_text ?? '',
+      questionType: (q?.question_type ?? 'mcq') as 'mcq' | 'essay' | 'file',
+      points: q?.points ?? 0,
+      awardedPoints: a.awarded_points ?? 0,
+      isCorrect: a.is_correct,
+      needsManual: a.needs_manual ?? false,
+      selectedOption: a.selected_option ?? null,
+      answerText: a.answer_text ?? null,
+      fileUrl: a.file_url ?? null,
+      correctAnswer: q?.correct_answer ?? null,
+      modelAnswer: q?.model_answer ?? null,
+    }
+  })
+
+  // Preserve question order.
+  mappedAnswers.sort((x, y) => {
+    const ox = qMap.get(x.questionId)?.order_index ?? 0
+    const oy = qMap.get(y.questionId)?.order_index ?? 0
+    return ox - oy
+  })
+
+  const s: any = submission
+  return {
+    id: s.id,
+    examCode: s.exams?.code ?? '',
+    examTitle: s.exams?.title ?? '',
+    passMark: s.exams?.pass_mark ?? 50,
+    studentName: s.students?.name ?? 'غير معروف',
+    studentCode: s.students?.code ?? '-',
+    score: s.score ?? 0,
+    total: s.total ?? 0,
+    autoScore: s.auto_score ?? 0,
+    status: s.status ?? '',
+    gradingStatus: (s.grading_status ?? 'graded') as 'graded' | 'pending',
+    answers: mappedAnswers,
+  }
+}
+
+// Applies manual grades to essay/file answers, recomputes the final score and
+// marks the submission graded.
+export async function gradeSubmission(
+  submissionId: string,
+  manualGrades: { answerId: string; awardedPoints: number }[],
+) {
+  const supabase = await createClient()
+  if (!(await requireAdmin(supabase))) {
+    return { success: false, error: 'غير مصرح لك' }
+  }
+
+  const { data: submission } = await supabase
+    .from('exam_submissions')
+    .select('id, exam_id, total, exams ( code, pass_mark )')
+    .eq('id', submissionId)
+    .single()
+
+  if (!submission) return { success: false, error: 'التسليم غير موجود' }
+
+  const { data: answers } = await supabase
+    .from('exam_answers')
+    .select('id, question_id, awarded_points, needs_manual')
+    .eq('submission_id', submissionId)
+
+  // Fetch max points per question for clamping.
+  const questionIds = (answers ?? []).map((a: any) => a.question_id)
+  const { data: questions } = await supabase
+    .from('exam_questions')
+    .select('id, points')
+    .in('id', questionIds.length ? questionIds : ['00000000-0000-0000-0000-000000000000'])
+
+  const pointsMap = new Map((questions ?? []).map((q: any) => [q.id, q.points ?? 0]))
+  const gradeMap = new Map(manualGrades.map((g) => [g.answerId, g.awardedPoints]))
+
+  let autoScore = 0
+  let manualScore = 0
+
+  for (const a of answers ?? []) {
+    const maxPoints = pointsMap.get((a as any).question_id) ?? 0
+    if ((a as any).needs_manual) {
+      const raw = gradeMap.has((a as any).id)
+        ? gradeMap.get((a as any).id)!
+        : (a as any).awarded_points ?? 0
+      const awarded = Math.max(0, Math.min(maxPoints, Math.round(raw)))
+      manualScore += awarded
+      // Persist the manual grade for this answer.
+      await supabase
+        .from('exam_answers')
+        .update({ awarded_points: awarded, is_correct: awarded >= maxPoints })
+        .eq('id', (a as any).id)
+    } else {
+      autoScore += (a as any).awarded_points ?? 0
+    }
+  }
+
+  const s: any = submission
+  const total = s.total ?? 0
+  const score = autoScore + manualScore
+  const percent = total > 0 ? Math.round((score / total) * 100) : 0
+  const passMark = s.exams?.pass_mark ?? 50
+  const status = percent >= passMark ? 'ناجح' : 'راسب'
+
+  const { error: updateError } = await supabase
+    .from('exam_submissions')
+    .update({
+      auto_score: autoScore,
+      manual_score: manualScore,
+      score,
+      status,
+      grading_status: 'graded',
+    })
+    .eq('id', submissionId)
+
+  if (updateError) {
+    console.log('[v0] gradeSubmission update error:', updateError.message)
+    return { success: false, error: 'تعذر حفظ الدرجات' }
+  }
+
+  const examCode = s.exams?.code
+  if (examCode) {
+    revalidatePath(`/admin/exams/${examCode}`)
+    revalidatePath(`/student/exams/${examCode}`)
+  }
+  revalidatePath('/student/exams')
+
+  return { success: true, score, total, status }
 }

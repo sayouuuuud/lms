@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ArrowRight, ListChecks, Plus, Save, Send } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ArrowRight, ListChecks, Loader2, Plus, Save, Send } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import {
   type Question,
   type QuestionType,
 } from '@/lib/exam-builder'
+import { saveExam } from '@/app/admin/exams/actions'
 import { QuestionCard } from './question-card'
 import { QuestionTypePicker } from './question-type-picker'
 
@@ -31,6 +33,8 @@ export function ExamBuilder() {
   })
   const [questions, setQuestions] = useState<Question[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const router = useRouter()
 
   const updateMeta = (patch: Partial<ExamMeta>) => setMeta((m) => ({ ...m, ...patch }))
 
@@ -83,11 +87,34 @@ export function ExamBuilder() {
     return true
   }
 
-  const handleSave = (publish: boolean) => {
+  const handleSave = async (publish: boolean) => {
     if (!validate()) return
-    toast.success(
-      publish ? 'تم نشر الاختبار بنجاح' : 'تم حفظ الاختبار كمسودة',
-    )
+    setSaving(true)
+    try {
+      const result = await saveExam({
+        meta,
+        questions: questions.map((q) => ({
+          type: q.type,
+          contentMode: q.contentMode,
+          text: q.text,
+          imageUrl: q.imageUrl,
+          points: q.points,
+          options: q.options,
+          correctOptionId: q.correctOptionId,
+          modelAnswer: q.modelAnswer,
+        })),
+        publish,
+      })
+      if (!result.success) {
+        toast.error(result.error || 'تعذر حفظ الاختبار')
+        return
+      }
+      toast.success(publish ? 'تم نشر الاختبار بنجاح' : 'تم حفظ الاختبار كمسودة')
+      router.push('/admin/exams')
+      router.refresh()
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -260,12 +287,17 @@ export function ExamBuilder() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <Button type="button" onClick={() => handleSave(true)}>
-            <Send className="size-4" />
+          <Button type="button" onClick={() => handleSave(true)} disabled={saving}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
             نشر الاختبار
           </Button>
-          <Button type="button" variant="outline" onClick={() => handleSave(false)}>
-            <Save className="size-4" />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleSave(false)}
+            disabled={saving}
+          >
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             حفظ كمسودة
           </Button>
           <Link

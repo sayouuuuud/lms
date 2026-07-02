@@ -522,52 +522,51 @@ export async function getStudentExams() {
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('course_id')
-    .eq('student_id', student.id)
-  
-  if (!enrollments || enrollments.length === 0) return []
-  const courseIds = enrollments.map((e: any) => e.course_id)
+  // Students see every published exam (exams aren't targeted by course).
+  const { data: exams } = await supabase
+    .from('exams')
+    .select('id, code, title, course, duration, pass_mark, questions, status, created_at')
+    .eq('status', 'منشور')
+    .order('created_at', { ascending: false })
 
-  const { data: assignments } = await supabase
-    .from('assignments')
-    .select(`
-      id,
-      code,
-      title,
-      type,
-      due_date,
-      points,
-      courses (title)
-    `)
-    .eq('type', 'اختبار')
-    .in('course_id', courseIds)
+  if (!exams || exams.length === 0) return []
+  const examIds = exams.map((e: any) => e.id)
 
-  if (!assignments) return []
-
+  // The student's own submissions for those exams.
   const { data: submissions } = await supabase
-    .from('assignment_submissions')
-    .select('*')
+    .from('exam_submissions')
+    .select('exam_id, score, total, status, grading_status, submitted_at')
     .eq('student_id', student.id)
+    .in('exam_id', examIds)
 
-  return assignments.map((a: any) => {
-    const sub = submissions?.find((s: any) => s.assignment_id === a.id)
-    const isCompleted = sub && sub.status === 'مصحّح'
-    
+  return exams.map((e: any) => {
+    const sub = submissions?.find((s: any) => s.exam_id === e.id)
+    const pending = sub?.grading_status === 'pending'
+    const graded = sub && sub.grading_status === 'graded'
+
+    // status drives the list filters: مكتمل once submitted, متاح otherwise.
+    const status = sub ? 'مكتمل' : 'متاح'
+    const totalPoints = sub?.total ?? 0
+
     return {
-      id: a.code,
-      title: a.title,
-      course: a.courses?.title || 'عام',
-      category: 'اختبار وحدة',
-      status: isCompleted ? 'مكتمل' : 'متاح',
-      questions: Array(10).fill({}),
-      durationMinutes: 30,
-      totalPoints: a.points || 10,
-      passingPercent: 50,
-      score: isCompleted ? sub.score : null,
-      date: new Date(a.due_date || new Date()).toLocaleDateString('ar-EG'),
-      time: '—'
+      id: e.code,
+      title: e.title,
+      course: e.course || 'عام',
+      category: 'اختبار',
+      status,
+      pending,
+      questions: Array(e.questions || 0).fill({}),
+      durationMinutes: e.duration || 30,
+      totalPoints: totalPoints || 0,
+      passingPercent: e.pass_mark ?? 50,
+      // Only expose a score once grading is fully done.
+      score: graded ? (sub.score ?? 0) : null,
+      date: pending
+        ? 'قيد التصحيح'
+        : sub
+          ? 'تم التسليم'
+          : 'متاح الآن',
+      time: '—',
     }
   })
 }

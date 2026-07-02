@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { ExamDetail } from '@/components/student/exams/exam-detail'
-import { getExam } from '@/lib/student-exams-data'
+import { getStudentExam } from '../actions'
 
 export default async function Page({
   params,
@@ -8,10 +8,8 @@ export default async function Page({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const exam = getExam(id)
+  const exam = await getStudentExam(id)
   if (!exam) notFound()
 
-  return (
-    <ExamDetail exam={exam} />
-  )
+  return <ExamDetail exam={exam} />
 }

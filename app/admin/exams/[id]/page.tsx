@@ -76,7 +76,7 @@ export default function ExamDetailsPage({
 
         {activeTab === 'submissions' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <ExamSubmissionsTable submissions={exam.submissions} />
+            <ExamSubmissionsTable submissions={exam.submissions} examCode={exam.code} />
           </motion.div>
         )}
         
