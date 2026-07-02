@@ -73,6 +73,7 @@ export function AdminLectureDetail({
   const [editOpen, setEditOpen] = useState(false)
   const [title, setTitle] = useState(lecture.title)
   const [description, setDescription] = useState(lecture.description)
+  const [instructor, setInstructor] = useState(lecture.instructor ?? '')
   const [price, setPrice] = useState(String(lecture.price))
   const [oldPrice, setOldPrice] = useState(
     lecture.oldPrice != null ? String(lecture.oldPrice) : '',
@@ -86,6 +87,7 @@ export function AdminLectureDetail({
       branchId: lecture.branchId,
       title: title.trim(),
       description: description.trim(),
+      instructor: instructor.trim() || null,
       price: Number(price) || 0,
       oldPrice: oldPrice ? Number(oldPrice) : null,
       badge: badge.trim() || null,
@@ -104,6 +106,7 @@ export function AdminLectureDetail({
   const [lTitle, setLTitle] = useState('')
   const [lDuration, setLDuration] = useState('')
   const [lIsFree, setLIsFree] = useState(false)
+  const [lContentType, setLContentType] = useState<'فيديو' | 'مقال' | 'تمرين'>('فيديو')
   const [lVideo, setLVideo] = useState('')
   const [lDesc, setLDesc] = useState('')
 
@@ -112,6 +115,7 @@ export function AdminLectureDetail({
     setLTitle('')
     setLDuration('')
     setLIsFree(false)
+    setLContentType('فيديو')
     setLVideo('')
     setLDesc('')
     setLessonOpen(true)
@@ -122,6 +126,7 @@ export function AdminLectureDetail({
     setLTitle(lesson.title)
     setLDuration(lesson.duration)
     setLIsFree(lesson.isFree)
+    setLContentType(lesson.contentType ?? 'فيديو')
     setLVideo(lesson.videoUrl ?? '')
     setLDesc(lesson.description ?? '')
     setLessonOpen(true)
@@ -134,6 +139,7 @@ export function AdminLectureDetail({
       title: lTitle.trim(),
       duration: lDuration.trim(),
       isFree: lIsFree,
+      contentType: lContentType,
       videoUrl: lVideo || null,
       description: lDesc.trim() || null,
     }
@@ -344,6 +350,13 @@ export function AdminLectureDetail({
               className={textareaClass}
             />
           </Field>
+          <Field label="اسم المدرّس">
+            <Input
+              value={instructor}
+              onChange={(e) => setInstructor(e.target.value)}
+              placeholder="مثال: أ. محمد عبد السلام"
+            />
+          </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="السعر (ج)">
               <Input
@@ -390,14 +403,27 @@ export function AdminLectureDetail({
               autoFocus
             />
           </Field>
-          <Field label="المدة">
-            <Input
-              value={lDuration}
-              onChange={(e) => setLDuration(e.target.value)}
-              placeholder="14:30"
-              dir="ltr"
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="المدة">
+              <Input
+                value={lDuration}
+                onChange={(e) => setLDuration(e.target.value)}
+                placeholder="14:30"
+                dir="ltr"
+              />
+            </Field>
+            <Field label="نوع المحتوى">
+              <select
+                value={lContentType}
+                onChange={(e) => setLContentType(e.target.value as typeof lContentType)}
+                className="w-full rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:bg-card"
+              >
+                <option value="فيديو">فيديو</option>
+                <option value="مقال">مقال</option>
+                <option value="تمرين">تمرين</option>
+              </select>
+            </Field>
+          </div>
           <VideoUploadField
             value={lVideo}
             onChange={setLVideo}
@@ -574,11 +600,10 @@ function LessonRowBody({ lecture, lesson }: { lecture: string; lesson: AdminLess
           ) : (
             <Lock className="size-3 text-muted-foreground" />
           )}
-          {lesson.videoUrl ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
-              <Film className="size-3" /> فيديو
-            </span>
-          ) : (
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-primary">
+            <Film className="size-3" /> {lesson.contentType ?? 'فيديو'}
+          </span>
+          {lesson.contentType === 'فيديو' && !lesson.videoUrl && (
             <span className="text-[10px] font-medium text-rose-500">بدون فيديو</span>
           )}
         </div>

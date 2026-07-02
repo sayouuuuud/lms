@@ -43,6 +43,8 @@ type LectureRow = {
   title: string
   description: string | null
   image?: string | null
+  instructor?: string | null
+  studentsCount?: number
   branches: {
     title: string | null
     image: string | null
@@ -57,17 +59,23 @@ type LectureRow = {
     sort_order: number | null
     video_url: string | null
     description: string | null
+    content_type: string | null
   }[]
   assignments?: AssignmentRow[]
 }
 
 // Maps a lesson DB row to the portal Lesson shape.
 function mapOneLesson(l: LectureRow['lessons'][number]): Lesson {
+  const validTypes = ['فيديو', 'مقال', 'تمرين'] as const
+  const rawType = l.content_type ?? 'فيديو'
+  const type = (validTypes as readonly string[]).includes(rawType)
+    ? (rawType as (typeof validTypes)[number])
+    : 'فيديو'
   return {
     id: l.slug,
     lessonId: l.id,
     title: l.title,
-    type: 'فيديو',
+    type,
     duration: l.duration ?? '',
     completed: false,
     locked: false,
@@ -184,7 +192,7 @@ function toCourseDetail(row: LectureRow, progress: Progress = EMPTY_PROGRESS): C
   return {
     id: row.slug,
     title: row.title,
-    instructor: 'أ. عبد السلام',
+    instructor: row.instructor?.trim() || 'أ. عبد السلام',
     image: row.image || lectureImage(row.slug),
     category: row.branches?.title ?? 'رياضيات',
     completedLessons,
@@ -194,7 +202,7 @@ function toCourseDetail(row: LectureRow, progress: Progress = EMPTY_PROGRESS): C
       row.description ??
       'محاضرة متكاملة تشرح الموضوع من الأساس مع تمارين وحلول نموذجية.',
     rating: 4.9,
-    studentsCount: 0,
+    studentsCount: row.studentsCount ?? 0,
     durationHours: Math.max(1, Math.round(lessons.length * 0.4)),
     level: row.branches?.stages?.title ?? 'الثانوية العامة',
     lastUpdated: '',
@@ -214,17 +222,17 @@ const ASSIGNMENT_SELECT = `
 `
 
 const LECTURE_SELECT = `
-  id, slug, title, description, image,
+  id, slug, title, description, image, instructor,
   branches:branch_id ( title, image, stages:stage_id ( title ) ),
-  lessons ( id, slug, title, duration, is_free, sort_order, video_url, description ),
+  lessons ( id, slug, title, duration, is_free, sort_order, video_url, description, content_type ),
   ${ASSIGNMENT_SELECT}
 `
 
 // Same projection without the optional `image` column (pre-migration fallback).
 const LECTURE_SELECT_NO_IMAGE = `
-  id, slug, title, description,
+  id, slug, title, description, instructor,
   branches:branch_id ( title, image, stages:stage_id ( title ) ),
-  lessons ( id, slug, title, duration, is_free, sort_order, video_url, description ),
+  lessons ( id, slug, title, duration, is_free, sort_order, video_url, description, content_type ),
   ${ASSIGNMENT_SELECT}
 `
 
@@ -308,9 +316,29 @@ export async function getPurchasedCourses(): Promise<CourseDetail[]> {
 
   if (res.error || !res.data) return []
 
+  // Count distinct approved students per lecture in a single query.
+  const lectureIds = (res.data as any[]).map((r) => r.id)
+  const { data: countRows } = await supabase
+    .from('order_items')
+    .select('lecture_id, orders!inner(student_id, status)')
+    .in('lecture_id', lectureIds)
+    .eq('orders.status', 'approved')
+
+  const studentCountMap = new Map<string, Set<string>>()
+  for (const row of countRows ?? []) {
+    const sid = (row as any).orders?.student_id
+    if (!sid) continue
+    const s = studentCountMap.get(row.lecture_id) ?? new Set<string>()
+    s.add(sid)
+    studentCountMap.set(row.lecture_id, s)
+  }
+
   const progress = await getProgress(supabase, user.id)
   return (res.data as unknown as LectureRow[]).map((row) =>
-    toCourseDetail(row, progress),
+    toCourseDetail(
+      { ...row, studentsCount: studentCountMap.get(row.id)?.size ?? 0 },
+      progress,
+    ),
   )
 }
 

@@ -12,6 +12,7 @@ export type AdminLesson = {
   title: string
   duration: string
   isFree: boolean
+  contentType: 'فيديو' | 'مقال' | 'تمرين'
   sortOrder: number
   videoUrl: string | null
   description: string | null
@@ -22,6 +23,7 @@ export type AdminLecture = {
   slug: string
   title: string
   description: string
+  instructor: string | null
   price: number
   oldPrice: number | null
   badge: string | null
@@ -46,6 +48,7 @@ export type LectureInput = {
   branchId: string
   title: string
   description: string
+  instructor?: string | null
   price: number
   oldPrice: number | null
   badge: string | null
@@ -57,6 +60,7 @@ export type LessonInput = {
   title: string
   duration: string
   isFree: boolean
+  contentType?: 'فيديو' | 'مقال' | 'تمرين'
   videoUrl?: string | null
   description?: string | null
 }
@@ -111,7 +115,7 @@ export async function getLecturesAdmin(): Promise<AdminLecture[]> {
       .order('sort_order', { ascending: true }),
     supabase
       .from('lessons')
-      .select('id, lecture_id, slug, title, duration, is_free, sort_order, video_url, description')
+      .select('id, lecture_id, slug, title, duration, is_free, sort_order, video_url, description, content_type')
       .order('sort_order', { ascending: true }),
   ])
 
@@ -138,12 +142,14 @@ export async function getLecturesAdmin(): Promise<AdminLecture[]> {
   const lessonsByLecture = new Map<string, AdminLesson[]>()
   for (const row of lessonsRes.data ?? []) {
     const list = lessonsByLecture.get(row.lecture_id) ?? []
+    const ct = row.content_type
     list.push({
       id: row.id,
       slug: row.slug,
       title: row.title,
       duration: row.duration,
       isFree: row.is_free,
+      contentType: (ct === 'مقال' || ct === 'تمرين' ? ct : 'فيديو') as AdminLesson['contentType'],
       sortOrder: row.sort_order,
       videoUrl: row.video_url ?? null,
       description: row.description ?? null,
@@ -158,6 +164,7 @@ export async function getLecturesAdmin(): Promise<AdminLecture[]> {
       slug: row.slug,
       title: row.title,
       description: row.description,
+      instructor: (row as any).instructor ?? null,
       price: Number(row.price),
       oldPrice: row.old_price != null ? Number(row.old_price) : null,
       badge: row.badge,
@@ -214,6 +221,7 @@ export async function createLecture(input: LectureInput) {
     slug: slugify(input.title),
     title: input.title,
     description: input.description,
+    instructor: input.instructor?.trim() || null,
     price: input.price,
     old_price: input.oldPrice,
     badge: input.badge,
@@ -317,6 +325,7 @@ export async function updateLecture(id: string, input: LectureInput) {
     branch_id: input.branchId,
     title: input.title,
     description: input.description,
+    instructor: input.instructor?.trim() || null,
     price: input.price,
     old_price: input.oldPrice,
     badge: input.badge,
@@ -414,6 +423,7 @@ export async function createLesson(lectureId: string, input: LessonInput) {
     title: input.title,
     duration: input.duration,
     is_free: input.isFree,
+    content_type: input.contentType ?? 'فيديو',
     sort_order: sortOrder,
     video_url: input.videoUrl ?? null,
     description: input.description ?? null,
@@ -436,6 +446,7 @@ export async function updateLesson(id: string, input: LessonInput) {
     title: input.title,
     duration: input.duration,
     is_free: input.isFree,
+    content_type: input.contentType ?? 'فيديو',
   }
   if (input.videoUrl !== undefined) patch.video_url = input.videoUrl
   if (input.description !== undefined) patch.description = input.description
@@ -490,7 +501,7 @@ export async function getLectureDetailAdmin(
       .single(),
     supabase
       .from('lessons')
-      .select('id, slug, title, duration, is_free, sort_order, video_url, description')
+      .select('id, slug, title, duration, is_free, sort_order, video_url, description, content_type')
       .eq('lecture_id', id)
       .order('sort_order', { ascending: true }),
   ])
@@ -501,6 +512,7 @@ export async function getLectureDetailAdmin(
     slug: row.slug,
     title: row.title,
     description: row.description,
+    instructor: (row as any).instructor ?? null,
     price: Number(row.price),
     oldPrice: row.old_price != null ? Number(row.old_price) : null,
     badge: row.badge,
@@ -511,16 +523,20 @@ export async function getLectureDetailAdmin(
     branchTitle: branch?.title ?? '',
     stageId: branch?.stage_id ?? '',
     stageTitle: branch?.stages?.title ?? '',
-    lessons: (lessonsRes.data ?? []).map((l) => ({
-      id: l.id,
-      slug: l.slug,
-      title: l.title,
-      duration: l.duration,
-      isFree: l.is_free,
-      sortOrder: l.sort_order,
-      videoUrl: l.video_url ?? null,
-      description: l.description ?? null,
-    })),
+    lessons: (lessonsRes.data ?? []).map((l) => {
+      const ct = (l as any).content_type
+      return {
+        id: l.id,
+        slug: l.slug,
+        title: l.title,
+        duration: l.duration,
+        isFree: l.is_free,
+        contentType: (ct === 'مقال' || ct === 'تمرين' ? ct : 'فيديو') as AdminLesson['contentType'],
+        sortOrder: l.sort_order,
+        videoUrl: l.video_url ?? null,
+        description: l.description ?? null,
+      }
+    }),
   }
 
   // Build the unified, ordered content list (lessons + assignments).
@@ -559,7 +575,7 @@ export async function getLessonDetailAdmin(
 
   const { data: row, error } = await supabase
     .from('lessons')
-    .select('id, slug, lecture_id, title, duration, is_free, sort_order, video_url, description')
+    .select('id, slug, lecture_id, title, duration, is_free, sort_order, video_url, description, content_type')
     .eq('id', lessonId)
     .single()
 
@@ -572,22 +588,26 @@ export async function getLessonDetailAdmin(
     supabase.from('lectures').select('id, title, image').eq('id', row.lecture_id).single(),
     supabase
       .from('lessons')
-      .select('id, slug, title, duration, is_free, sort_order, video_url, description')
+      .select('id, slug, title, duration, is_free, sort_order, video_url, description, content_type')
       .eq('lecture_id', row.lecture_id)
       .order('sort_order', { ascending: true }),
   ])
 
   const lecture = lectureRes.data as any
-  const map = (l: any): AdminLesson => ({
-    id: l.id,
-    slug: l.slug,
-    title: l.title,
-    duration: l.duration,
-    isFree: l.is_free,
-    sortOrder: l.sort_order,
-    videoUrl: l.video_url ?? null,
-    description: l.description ?? null,
-  })
+  const map = (l: any): AdminLesson => {
+    const ct = l.content_type
+    return {
+      id: l.id,
+      slug: l.slug,
+      title: l.title,
+      duration: l.duration,
+      isFree: l.is_free,
+      contentType: (ct === 'مقال' || ct === 'تمرين' ? ct : 'فيديو') as AdminLesson['contentType'],
+      sortOrder: l.sort_order,
+      videoUrl: l.video_url ?? null,
+      description: l.description ?? null,
+    }
+  }
 
   return {
     lesson: map(row),
