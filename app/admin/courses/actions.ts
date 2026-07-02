@@ -638,8 +638,10 @@ export type AdminAssignment = {
   code: string
   title: string
   description: string
+  type: 'تسليم' | 'اختبار'
   instructions: string[]
   points: number
+  dueDate: string | null
   sortOrder: number
   questions: AdminAssignmentQuestion[]
 }
@@ -647,7 +649,9 @@ export type AdminAssignment = {
 export type AssignmentInput = {
   title: string
   description: string
+  type: 'تسليم' | 'اختبار'
   points: number
+  dueDate?: string | null
   questions: AdminAssignmentQuestion[]
 }
 
@@ -663,7 +667,7 @@ async function getLectureAssignments(
   const { data: rows } = await supabase
     .from('assignments')
     .select(
-      'id, code, title, description, instructions, points, sort_order, ' +
+      'id, code, type, title, description, instructions, points, due_date, sort_order, ' +
         'assignment_questions ( id, kind, question, options, correct_index, position )',
     )
     .eq('lecture_id', lectureId)
@@ -672,10 +676,12 @@ async function getLectureAssignments(
   return (rows ?? []).map((a: any) => ({
     id: a.id,
     code: a.code,
+    type: (a.type === 'اختبار' ? 'اختبار' : 'تسليم') as AdminAssignment['type'],
     title: a.title,
     description: a.description ?? '',
     instructions: (a.instructions as string[]) ?? [],
     points: a.points ?? 0,
+    dueDate: a.due_date ?? null,
     sortOrder: a.sort_order ?? 0,
     questions: [...(a.assignment_questions ?? [])]
       .sort((x: any, y: any) => (x.position ?? 0) - (y.position ?? 0))
@@ -729,11 +735,12 @@ export async function createAssignment(lectureId: string, input: AssignmentInput
     .insert({
       code: assignmentCode(),
       lecture_id: lectureId,
-      type: 'تسليم',
+      type: input.type ?? 'تسليم',
       title: input.title,
       description: input.description,
       instructions: [],
       points: input.points,
+      due_date: input.dueDate || null,
       sort_order: sortOrder,
     })
     .select('id')
@@ -752,6 +759,7 @@ export async function createAssignment(lectureId: string, input: AssignmentInput
 
   revalidatePath(`/admin/courses/${lectureId}`)
   revalidatePath('/courses')
+  revalidatePath('/student')
   return { success: true }
 }
 
@@ -762,9 +770,11 @@ export async function updateAssignment(id: string, input: AssignmentInput) {
   const { error } = await supabase
     .from('assignments')
     .update({
+      type: input.type ?? 'تسليم',
       title: input.title,
       description: input.description,
       points: input.points,
+      due_date: input.dueDate || null,
     })
     .eq('id', id)
 
@@ -779,7 +789,9 @@ export async function updateAssignment(id: string, input: AssignmentInput) {
     return { error: 'تعذّر حفظ أسئلة الواجب.' }
   }
 
+  revalidatePath('/admin/courses')
   revalidatePath('/courses')
+  revalidatePath('/student')
   return { success: true }
 }
 
@@ -794,6 +806,7 @@ export async function deleteAssignment(id: string) {
     return { error: 'تعذّر حذف الواجب.' }
   }
   revalidatePath('/courses')
+  revalidatePath('/student')
   return { success: true }
 }
 

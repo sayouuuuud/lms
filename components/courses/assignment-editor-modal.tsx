@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import {
   type AdminAssignment,
   type AdminAssignmentQuestion,
+  type AssignmentInput,
   type QuestionKind,
   createAssignment,
   updateAssignment,
@@ -64,7 +65,9 @@ export function AssignmentEditorModal({
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [type, setType] = useState<'تسليم' | 'اختبار'>('تسليم')
   const [points, setPoints] = useState('10')
+  const [dueDate, setDueDate] = useState('')
   const [questions, setQuestions] = useState<AdminAssignmentQuestion[]>([])
   const [saving, setSaving] = useState(false)
 
@@ -75,7 +78,9 @@ export function AssignmentEditorModal({
     setSyncedFor(syncKey)
     setTitle(assignment?.title ?? '')
     setDescription(assignment?.description ?? '')
+    setType(assignment?.type ?? 'تسليم')
     setPoints(String(assignment?.points ?? 10))
+    setDueDate(assignment?.dueDate ?? '')
     setQuestions(
       assignment && assignment.questions.length > 0
         ? assignment.questions.map((q) => ({ ...q, options: [...q.options] }))
@@ -158,10 +163,12 @@ export function AssignmentEditorModal({
     if (err) return toast.error(err)
 
     setSaving(true)
-    const input = {
+    const input: AssignmentInput = {
       title: title.trim(),
       description: description.trim(),
+      type,
       points: Number(points) || 0,
+      dueDate: dueDate || null,
       questions: questions.map((q) => ({
         ...q,
         question: q.question.trim(),
@@ -202,8 +209,30 @@ export function AssignmentEditorModal({
           <Field label="الدرجة">
             <Input
               type="number"
+              min={0}
               value={points}
               onChange={(e) => setPoints(e.target.value)}
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="النوع">
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as typeof type)}
+              className="w-full rounded-xl border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:bg-card"
+            >
+              <option value="تسليم">تسليم</option>
+              <option value="اختبار">اختبار</option>
+            </select>
+          </Field>
+          <Field label="تاريخ التسليم (اختياري)">
+            <Input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              dir="ltr"
             />
           </Field>
         </div>
