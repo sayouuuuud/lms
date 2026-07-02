@@ -12,12 +12,18 @@ export type StudentProfileInfo = {
   name: string
   email: string
   phone: string
-  avatarUrl: string
+  avatarUrl: string | null
   initials: string
   /** الكود مثل STD-1035 */
   code: string
-  gender: 'ذكر' | 'أنثى'
+  gender?: 'ذكر' | 'أنثى'
   stageTitle: string
+  /** مرادف لـ stageTitle — مستخدم في بعض الـ components */
+  level?: string
+  status?: string
+  joinedAt?: string | null
+  colorPreset?: string
+  notifPrefs?: Record<string, boolean>
 }
 
 // ---------------------------------------------------------------------------

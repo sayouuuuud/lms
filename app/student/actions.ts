@@ -106,27 +106,7 @@ export async function resubmitPayment(
 // ── Portal data ──────────────────────────────────────────────────
 // (updateStudentProfile lives further down, near the other profile helpers.)
 
-export async function getStudentProfile() {
-  const supabase = await createClient()
-  const student = await getCurrentStudent(supabase)
-  if (!student) return null
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', student.user_id)
-    .single()
-
-  return {
-    ...student,
-    profile,
-    name: profile?.full_name || student.name || 'طالب',
-    email: profile?.email || 'student@platform.com',
-    initials: (profile?.full_name || student.name || 'ط').substring(0, 2),
-    level: student.level || 'طالب',
-    gender: 'غير محدد' // From mock data if needed
-  }
-}
 
 // The student's courses are the lectures they purchased (approved orders),
 // drawn from the same public catalog shown on the landing page. This keeps the
@@ -626,38 +606,7 @@ export async function getStudentAssignments() {
   })
 }
 
-// ── Profile update (student settings) ────────────────────────────
-export async function updateStudentProfile(input: {
-  fullName: string
-  phone: string
-}) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return { error: 'لازم تسجّل دخول.' }
 
-  const fullName = input.fullName.trim()
-  const phone = input.phone.trim()
-  if (!fullName) return { error: 'الاسم مطلوب.' }
-
-  // Update the profile row (source of truth for name/phone).
-  const { error: profileErr } = await supabase
-    .from('profiles')
-    .update({ full_name: fullName, phone })
-    .eq('id', user.id)
-  if (profileErr) return { error: profileErr.message }
-
-  // Keep the students row in sync when it exists.
-  await supabase
-    .from('students')
-    .update({ name: fullName, phone })
-    .eq('user_id', user.id)
-
-  revalidatePath('/student/settings')
-  revalidatePath('/student', 'layout')
-  return { success: true }
-}
 
 export async function getAvailableStagesMinimal() {
   const supabase = await createClient()
@@ -688,25 +637,7 @@ export async function setStudentGrade(grade: string) {
   return { success: true }
 }
 
-export async function updateStudentPreferences(colorPreset: string, notifPrefs: any) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'لازم تسجّل دخول.' }
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ 
-      color_preset: colorPreset,
-      notif_prefs: notifPrefs
-    })
-    .eq('id', user.id)
-
-  if (error) return { error: error.message }
-  
-  revalidatePath('/student/settings')
-  revalidatePath('/student', 'layout')
-  return { success: true }
-}
 
 // Returns the last 7 days of learning activity for the current student.
 // Days with no recorded activity are filled in with 0 hours so the chart
@@ -750,6 +681,129 @@ function buildEmptyWeek() {
       hours: 0,
     }
   })
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+
+// Returns the current student's profile combining profiles + students + stage.
+export async function getStudentProfile() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const [{ data: profile }, { data: student }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('full_name, email, phone, avatar_url, color_preset, notif_prefs, grade')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('students')
+      .select('id, code, name, phone, avatar, stage_id, status, joined_at, stages:stage_id(title)')
+      .eq('user_id', user.id)
+      .single(),
+  ])
+
+  if (!profile && !student) return null
+
+  const displayName = student?.name || profile?.full_name || ''
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase()
+
+  const stageRow = student?.stages as any
+  const stageTitle = stageRow?.title ?? profile?.grade ?? ''
+
+  return {
+    name: displayName,
+    email: user.email ?? profile?.email ?? '',
+    phone: student?.phone || profile?.phone || '',
+    avatarUrl: student?.avatar || profile?.avatar_url || null,
+    initials,
+    level: stageTitle,
+    stageTitle,
+    status: student?.status ?? 'نشط',
+    joinedAt: student?.joined_at ?? null,
+    code: student?.code ?? '',
+    colorPreset: profile?.color_preset ?? 'navy',
+    notifPrefs: (profile?.notif_prefs as Record<string, boolean>) ?? {},
+  }
+}
+
+// Updates profile fields in both `profiles` and `students` tables atomically.
+// `avatarUrl` is the public URL of the file already uploaded to Supabase Storage.
+export async function updateStudentProfile({
+  fullName,
+  phone,
+  avatarUrl,
+}: {
+  fullName: string
+  phone?: string
+  avatarUrl?: string | null
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'يجب تسجيل الدخول.' }
+
+  const trimmedName = fullName.trim()
+  if (!trimmedName) return { error: 'الاسم مطلوب.' }
+
+  // Build patch objects — only include avatarUrl if explicitly passed.
+  const profilePatch: Record<string, string> = {
+    full_name: trimmedName,
+    ...(phone !== undefined && { phone: phone.trim() }),
+    ...(avatarUrl !== undefined && avatarUrl !== null && { avatar_url: avatarUrl }),
+  }
+  const studentPatch: Record<string, string> = {
+    name: trimmedName,
+    ...(phone !== undefined && { phone: phone.trim() }),
+    ...(avatarUrl !== undefined && avatarUrl !== null && { avatar: avatarUrl }),
+  }
+
+  const [profileRes, studentRes] = await Promise.all([
+    supabase.from('profiles').update(profilePatch).eq('id', user.id),
+    supabase
+      .from('students')
+      .update(studentPatch)
+      .eq('user_id', user.id),
+  ])
+
+  if (profileRes.error) return { error: profileRes.error.message }
+  if (studentRes.error) return { error: studentRes.error.message }
+
+  revalidatePath('/student')
+  revalidatePath('/student/settings')
+  return { success: true }
+}
+
+// Saves theme preferences (color preset + notification toggles) to `profiles`.
+export async function updateStudentPreferences(
+  colorPreset: string,
+  notifPrefs: Record<string, boolean>,
+) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'يجب تسجيل الدخول.' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ color_preset: colorPreset, notif_prefs: notifPrefs })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/student/settings')
+  return { success: true }
 }
 
 export async function trackStudentDevice() {

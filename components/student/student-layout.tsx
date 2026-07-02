@@ -16,7 +16,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Determine the color from the database profile or fallback to local storage / default
-    const dbPreset = profile?.profile?.color_preset
+    const dbPreset = profile?.colorPreset
     const localPreset = typeof window !== 'undefined' ? localStorage.getItem('color-preset') : null
     const colorToApply = dbPreset || localPreset || 'navy'
     applyColorPreset(colorToApply)

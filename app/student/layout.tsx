@@ -26,18 +26,22 @@ export default async function StudentLayout({ children }: { children: ReactNode 
     ])
 
   // Fallback profile if not found
-  const defaultProfile = {
-    id: '',
+  const defaultProfile: import('@/lib/student-types').StudentProfileInfo = {
     name: 'طالب غير مسجل',
     email: '',
+    phone: '',
+    avatarUrl: null,
     initials: 'ط',
+    code: '',
+    stageTitle: '',
     level: '',
-    gender: 'غير محدد'
   }
+
+  const resolvedProfile = profile ?? defaultProfile
 
   return (
     <StudentProvider data={{
-      profile: profile || defaultProfile,
+      profile: resolvedProfile,
       enrolledCourses,
       schedule,
       grades,
@@ -45,7 +49,7 @@ export default async function StudentLayout({ children }: { children: ReactNode 
       activity
     }}>
       <LayoutComponent>{children}</LayoutComponent>
-      {profile?.profile && !profile.profile.grade && (
+      {profile && !profile.stageTitle && (
         <ForceGradeSelection stages={stages} />
       )}
     </StudentProvider>

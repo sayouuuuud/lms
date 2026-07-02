@@ -21,6 +21,7 @@ import { ToggleSwitch } from '@/components/settings/toggle-switch'
 import { useStudent } from '@/components/student/student-context'
 import { useTheme } from '@/components/theme-provider'
 import { createClient } from '@/lib/supabase/client'
+import { AvatarImage } from '@/components/ui/avatar'
 import { updateStudentProfile, updateStudentPreferences } from '@/app/student/actions'
 import { colorPresets, applyColorPreset, type PresetId } from '@/lib/color-presets'
 
@@ -59,13 +60,55 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
   )
 
   // password fields
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    studentProfile.avatarUrl ?? null,
+  )
+  const [isUploading, setIsUploading] = useState(false)
+
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('حجم الصورة لا يجب أن يتجاوز 2 ميجابايت.')
+      return
+    }
+    setIsUploading(true)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop() ?? 'jpg'
+      const path = `avatars/${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(path, file, { upsert: true })
+      if (uploadError) throw uploadError
+      const { data: urlData } = supabase.storage.from('media').getPublicUrl(path)
+      const publicUrl = urlData.publicUrl
+      setAvatarUrl(publicUrl)
+      const res = await updateStudentProfile({
+        fullName: `${firstName} ${lastName}`.trim(),
+        phone,
+        avatarUrl: publicUrl,
+      })
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success('تم تحديث صورة الحساب')
+        router.refresh()
+      }
+    } catch {
+      toast.error('تعذّر رفع الصورة، حاول مرة أخرى.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   function handleProfileSave() {
     const fullName = `${firstName} ${lastName}`.trim()
     startTransition(async () => {
-      const res = await updateStudentProfile({ fullName, phone })
+      const res = await updateStudentProfile({ fullName, phone, avatarUrl })
       if (res?.error) {
         toast.error(res.error)
       } else {
@@ -184,17 +227,35 @@ export function StudentSettingsPanel({ profile: initProfile }: { profile?: any }
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="size-20 ring-2 ring-primary/30">
+                  {avatarUrl && (
+                    <AvatarImage src={avatarUrl} alt={studentProfile.name ?? ''} />
+                  )}
                   <AvatarFallback className="bg-primary/15 text-xl font-semibold text-primary">
                     {studentProfile.initials}
                   </AvatarFallback>
                 </Avatar>
-                <button
-                  type="button"
-                  className="absolute -bottom-1 -left-1 flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow"
+                <label
+                  htmlFor="avatar-upload"
+                  className={cn(
+                    'absolute -bottom-1 -left-1 flex size-7 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition-opacity',
+                    isUploading && 'opacity-50 pointer-events-none',
+                  )}
                   aria-label="تغيير الصورة"
                 >
-                  <Camera className="size-3.5" />
-                </button>
+                  {isUploading ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="size-3.5" />
+                  )}
+                </label>
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={handleAvatarChange}
+                  disabled={isUploading}
+                />
               </div>
               <div className="text-right">
                 <p className="text-base font-semibold text-foreground">
