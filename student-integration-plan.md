@@ -1,7 +1,35 @@
 # خطة تكامل بوابة الطالب مع الباك إند الحقيقي
 
 > مبنية على `student-account-audit.md` + فحص مباشر للسكيمة الحية في Supabase بتاريخ 2026-07-02.
-> **تصحيحات على الـ audit بعد فحص السكيمة الحية:** `assignments.due_date` موجود فعلًا (نوعه `text`)، جدول `notifications` موجود بكامل آلية الاستهداف (`student_id`, `stage_id`, `branch_id`, `lecture_id`) مع جدول `notification_reads`، و`profiles.avatar_url` موجود. الناقص فعليًا: جدول `announcements`، عمود `lessons.content_type`، عمود `lectures.instructor`، وجدول نشاط التعلّم.
+> **تصحيحات على الـ audit بعد فحص السكيمة الحية:** `assignments.due_date` موجود فعلًا (نوعه `text`)، جدول `notifications` موجود بكامل آلية الاستهداف (`student_id`, `stage_id`, `branch_id`, `lecture_id`) مع جدول `notification_reads`، و`profiles.avatar_url` موجود. الناقص فعليًا: عمود `lessons.content_type`، عمود `lectures.instructor`، وجدول نشاط التعلّم.
+>
+> **قرار معماري (مراجعة التكامل مع الأدمن):** لا يوجد جدول `announcements` جديد. الأدمن عنده بالفعل `sendAnnouncement()` + `getNotificationTargets()` يكتبان في `notifications` باستهداف رباعي — قسم "الإعلانات" في داشبورد الطالب يقرأ من `notifications` نفسها. أي إضافة جدول جديد هنا ازدواجية لنظام شغال.
+
+---
+
+## 0. علاقة الخطة بأكونت الأدمن (مش شاردة عنه)
+
+الخطة **متكاملة مع الأدمن عبر قاعدة البيانات** — كل تدفق للطالب له طرف كتابة موجود فعلًا في الأدمن:
+
+| التدفق | جانب الأدمن (موجود بالفعل) | جانب الطالب (في هذه الخطة) |
+|---|---|---|
+| الامتحانات | `createExam` بـ`branchId` | `getStudentExams()` بفلترة فروع السنة — M7/M8 |
+| الإعلانات/الإشعارات | `sendAnnouncement()` + `getNotificationTargets()` → `notifications` | قراءة من `notifications` — M4/M5/M6 |
+| المدفوعات | `updateOrderStatus` قبول/رفض | `getStudentInvoices()` + فتح المحتوى — موجود |
+| الرسائل | `replyToConversation` | `getStudentConversations()` — موجود |
+| التقويم | `createEvent` بـ`stage/branch/lecture` | `getStudentFullSchedule()` — موجود |
+| المحاضرات | CRUD كامل | `getPurchasedCourses()` — M9 تحسينات فقط |
+
+**فجوة تكامل حقيقية واحدة: الواجبات.** لا يوجد أي أكشن أو واجهة أدمن لإدارة `assignments` — البيانات الحالية seed فقط. القرار: M10 يُنفَّذ على مرحلتين — (أ) قراءة الطالب من الجداول الموجودة، (ب) مهمة منفصلة M14 لبناء إدارة الواجبات في الأدمن (أكبر شغل UI في الخطة).
+
+### شغل UI المطلوب (محدود ومحدد)
+
+**في الأدمن:**
+1. حقل "اسم المدرّس" في مودال إضافة/تعديل المحاضرة (لأن `LectureInput` مفيهوش instructor) — ضمن M9.
+2. اختيار "نوع الدرس" (فيديو/مقال/تمرين) في مودال الدرس (لأن `LessonInput` مفيهوش content_type) — ضمن M9.
+3. صفحة/مودال إدارة الواجبات (إنشاء واجب + أسئلته وربطه بمحاضرة) — M14.
+
+**في الطالب:** لا صفحات جديدة. المطلوب فقط: ربط الصفحات الموجودة بالأكشنز + **Empty states** بدل الـ mock fallbacks (داشبورد، امتحانات، إشعارات، واجبات) + توصيل زرار رفع الصورة في الإعدادات بنفس نمط الأدمن (M12).
 
 ---
 
@@ -12,10 +40,9 @@
 | النطاق | الأدمن يكتب في | الطالب يقرأ من | آلية الانعكاس |
 |---|---|---|---|
 | الكورسات/المحاضرات | `lectures`, `lessons`, `branches`, `stages` | نفس الجداول عبر `getPurchasedCourses()` مقيّدة بـ`orders.status='approved'` | `revalidatePath('/student')` في أكشن الأدمن + قراءة server-side عند كل زيارة |
-| الواجبات | `assignments`, `assignment_questions` | نفس الجداول مع `student_content_progress` للحالة | نفس الآلية |
+| الواجبات | `assignments`, `assignment_questions` (بعد M14) | نفس الجداول مع `student_content_progress` للحالة | نفس الآلية |
 | الامتحانات | `exams`, `exam_questions` (بـ`branch_id`) | `getStudentExam(code)` + قائمة جديدة `getStudentExams()` مفلترة بـ`students.stage_id` → فروع السنة | الامتحان المنشور (`status='منشور'`) يظهر فورًا لطلاب السنة |
-| الإشعارات | `notifications` (استهداف: طالب محدد / سنة / فرع / محاضرة) | استعلام واحد يجمع الاستهدافات + `notification_reads` لحالة القراءة | إدراج صف واحد يظهر لكل المستهدفين |
-| الإعلانات | جدول جديد `announcements` (يكتبه الأدمن) | `getStudentAnnouncements()` مفلترة بالسنة | إدراج → ظهور مباشر |
+| الإشعارات والإعلانات | `notifications` عبر `sendAnnouncement()` (استهداف: طالب محدد / سنة / فرع / محاضرة) | استعلام واحد يجمع الاستهدافات + `notification_reads` لحالة القراءة | إدراج صف واحد يظهر لكل المستهدفين |
 | الفواتير | الأدمن يغيّر `payments.status` / `orders.status` | `getStudentInvoices()` (موجود) | تغيير status → انعكاس فوري + فتح المحتوى عند `approved` |
 | الرسائل | الأدمن يرد في `messages.chat_history` | `getStudentConversations()` (موجود) | jsonb append + عدّادات `unread` |
 | الجدول | `calendar_events` (بـ`stage_id`/`branch_id`/`lecture_id`) | `getStudentFullSchedule()` (موجود) | إدراج → ظهور لطلاب السنة/الفرع |
@@ -47,17 +74,6 @@ alter table public.assignments
 ### 2.2 جداول ناقصة
 
 ```sql
--- إعلانات المنصة (يكتبها الأدمن، تستهدف سنة أو الكل)
-create table if not exists public.announcements (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  body text not null,
-  course text,                        -- تسمية اختيارية للعرض
-  stage_id uuid references public.stages(id) on delete cascade, -- null = للجميع
-  created_by uuid references public.profiles(id),
-  created_at timestamptz not null default now()
-);
-
 -- نشاط التعلّم اليومي (مصدر رسم الـ 7 أيام)
 create table if not exists public.learning_activity (
   id uuid primary key default gen_random_uuid(),
@@ -68,16 +84,15 @@ create table if not exists public.learning_activity (
 );
 ```
 
+> **ملاحظة:** جدول `announcements` أُلغي من الخطة — الإعلانات تُقرأ من `notifications` الموجود (انظر القرار المعماري أعلاه).
+
 ### 2.3 فهارس + RLS
 
 ```sql
-create index if not exists announcements_stage_idx on public.announcements(stage_id);
 create index if not exists learning_activity_student_idx on public.learning_activity(student_id, activity_date);
 
-alter table public.announcements enable row level security;
 alter table public.learning_activity enable row level security;
--- سياسات: قراءة الإعلانات للمصادَقين (مفلترة بالسنة في الاستعلام)،
--- كتابة الإعلانات للأدمن فقط، وكل طالب يقرأ/يكتب نشاطه فقط.
+-- سياسة: كل طالب يقرأ/يكتب نشاطه فقط (student_id → students.user_id = auth.uid()).
 ```
 
 ---
@@ -95,7 +110,7 @@ type StudentData = {
   enrolledCourses: CourseProgress[]    // بدل any[]
   schedule: ScheduleItem[]
   grades: GradeItem[]
-  announcements: Announcement[]
+  announcements: Announcement[]        // مشتقة من notifications
   activity: ActivityDay[]              // { day: string; hours: number }
   notifications: Notification[]
 }
@@ -113,7 +128,7 @@ type StudentData = {
 |---|---|---|
 | `getStudentNotifications()` | `app/student/notifications/actions.ts` | `notifications` حيث (`student_id = me` OR `stage_id = my_stage` OR `branch_id in (فروع سنتي)` OR `lecture_id in (محاضراتي المشتراة)`) LEFT JOIN `notification_reads` لحساب `read` per-student، ترتيب تنازلي بـ`created_at` |
 | `markNotificationRead(id)` / `markAllNotificationsRead()` | نفس الملف | upsert في `notification_reads (notification_id, student_id)` |
-| `getStudentAnnouncements()` | `app/student/actions.ts` | `announcements` حيث `stage_id is null OR stage_id = my_stage`، آخر 5 |
+| `getStudentAnnouncements()` | `app/student/actions.ts` | آخر 5 صفوف من `notifications` بنفس فلتر الاستهداف الرباعي (بدون شرط قراءة) — **لا جدول جديد** |
 | `getStudentExams()` | `app/student/exams/actions.ts` | `exams` حيث `status='منشور'` و(`branch_id in (فروع سنتي)` أو `branch_id is null`) LEFT JOIN `exam_submissions` (لِـme) لاشتقاق `ExamStatus`: مكتمل (له submission) / متاح / قادم |
 | `getStudentLearningActivity()` | `app/student/actions.ts` | `learning_activity` آخر 7 أيام لِـme، مع ملء الأيام الفارغة بصفر |
 | `recordLearningActivity(minutes)` | `app/student/progress/actions.ts` | upsert على `(student_id, current_date)` بجمع الدقائق — يُستدعى من `markLessonComplete` داخليًا وليس من الـ UI |
@@ -129,21 +144,23 @@ type StudentData = {
 | `getStudentUpcomingSchedule()` | لا تغيير جوهري — تأكيد تغطية النوع `'مباشر'` |
 | dashboard في `app/student/page.tsx` | حذف كل fallbacks للـ mock: البيانات الفارغة تعرض empty state حقيقي |
 
-### 4.3 أكشنز أدمن مكمّلة (للتدفق ثنائي الاتجاه)
+### 4.3 جانب الأدمن المكمّل
 
-| الأكشن | الغرض |
+| البند | الحالة |
 |---|---|
-| `createAnnouncement({title, body, stageId?})` في `app/admin/*/actions.ts` | إدراج في `announcements` + `revalidatePath('/student')` |
-| `sendNotification({title, description, target})` | موجود جزئيًا في نظام الإشعارات الحالي — التأكد من دعم الاستهدافات الأربعة |
+| إعلانات/إشعارات | **لا شغل مطلوب** — `sendAnnouncement()` + `getNotificationTargets()` موجودان ويدعمان الاستهدافات الأربعة |
+| مودال المحاضرة | إضافة حقل `instructor` إلى `LectureInput` + الحفظ (ضمن M9) |
+| مودال الدرس | إضافة اختيار `content_type` إلى `LessonInput` + الحفظ (ضمن M9) |
+| إدارة الواجبات | **غير موجودة إطلاقًا** — تُبنى في M14: أكشنز CRUD لـ`assignments`/`assignment_questions` + واجهة (صفحة أو مودال داخل تفاصيل المحاضرة) |
 
 ---
 
 ## 5. المهام المصغرة (جاهزة لـ Sonnet)
 
-> كل مهمة معزولة، ملف أو ملفان كحد أقصى، بترتيب تنفيذ إلزامي (كل مهمة تبني على اللي قبلها).
+> كل مهمة معزولة، ملف أو ملفان كحد أقصى (عدا M14)، بترتيب تنفيذ إلزامي (كل مهمة تبني على اللي قبلها).
 
 **M1 — Migration (SQL فقط، بدون ملفات كود)**
-نفّذ SQL القسم 2 كاملًا: عمودا `lessons.content_type` و`lectures.instructor`، تحويل `assignments.due_date` لـ`date`، جدولا `announcements` و`learning_activity`، الفهارس وسياسات RLS.
+نفّذ SQL القسم 2 كاملًا: عمودا `lessons.content_type` و`lectures.instructor`، تحويل `assignments.due_date` لـ`date`، جدول `learning_activity`، الفهارس وسياسات RLS. (لا جدول announcements.)
 
 **M2 — `lib/student-types.ts` (ملف جديد)**
 انقل كل الأنواع من ملفات `lib/student-*-data.ts` السبعة إلى ملف أنواع واحد بدون أي بيانات. أضف `ActivityDay` و`StudentProfileInfo`. عدّل ملفات الـ mock لتعمل re-export للأنواع من الملف الجديد (سطر واحد لكل ملف).
@@ -158,7 +175,7 @@ type StudentData = {
 اربط صفحة إشعارات الطالب بأكشنز M4 واحذف الاستيراد من `student-notifications-data.ts`.
 
 **M6 — `app/student/actions.ts`: الإعلانات + النشاط**
-أضف `getStudentAnnouncements()` و`getStudentLearningActivity()`. عدّل `getStudentProfile()` لإرجاع `stageTitle`.
+أضف `getStudentAnnouncements()` (قراءة من `notifications` بفلتر الاستهداف — أعد استخدام منطق M4) و`getStudentLearningActivity()`. عدّل `getStudentProfile()` لإرجاع `stageTitle`.
 
 **M7 — `app/student/exams/actions.ts`: قائمة الامتحانات**
 أضف `getStudentExams()` (فلترة بفروع سنة الطالب + اشتقاق الحالة من submissions) حسب 4.1.
@@ -166,23 +183,23 @@ type StudentData = {
 **M8 — صفحة الامتحانات**
 اربط `app/student/exams/page.tsx` بـ`getStudentExams()` واحذف الاستيراد من `student-exams-data.ts`.
 
-**M9 — `lib/student-lectures-data.ts`**
-ثلاثة إصلاحات: `content_type` من DB، `instructor` من `lectures` مع fallback، `studentsCount` بالعد الحقيقي من `order_items`/`orders`.
+**M9 — المحاضرات: بيانات حقيقية + حقول الأدمن**
+(أ) في `lib/student-lectures-data.ts`: `content_type` من DB، `instructor` من `lectures` مع fallback، `studentsCount` بالعد الحقيقي من `order_items`/`orders`. (ب) في الأدمن: حقل "اسم المدرّس" في مودال المحاضرة واختيار "نوع الدرس" في مودال الدرس، مع تحديث `LectureInput`/`LessonInput` وأكشنز الحفظ.
 
 **M10 — `app/student/assignments/actions.ts` (ملف جديد) + صفحة الواجبات**
-اكتب `getStudentAssignments()` واربط صفحة الواجبات بها بدل الـ mock.
+اكتب `getStudentAssignments()` واربط صفحة الواجبات بها بدل الـ mock، مع empty state (البيانات ستظل seed حتى تنفيذ M14).
 
 **M11 — `app/student/progress/actions.ts`**
 أضف `recordLearningActivity()` واستدعها داخل `markLessonComplete()` (تقدير الدقائق من `lessons.duration`).
 
 **M12 — `app/student/settings/actions.ts` (ملف جديد) + ربط صفحة الإعدادات**
-اكتب `updateStudentProfile()` واربط حفظ الإعدادات بها (الاسم/الهاتف/الصورة — الصورة عبر `uploadToStorage` الموجودة).
+اكتب `updateStudentProfile()` واربط حفظ الإعدادات بها (الاسم/الهاتف/الصورة — الصورة عبر `uploadToStorage` بنفس نمط أفاتار الأدمن المنفَّذ سابقًا).
 
 **M13 — الداشبورد `app/student/page.tsx`**
-احذف كل الـ mock fallbacks؛ كل قسم يقرأ أكشنه الحقيقي، والأقسام الفارغة تعرض empty state.
+احذف كل الـ mock fallbacks؛ كل قسم يقرأ أكشنه الحقيقي (الإعلانات من M6)، والأقسام الفارغة تعرض empty state.
 
-**M14 — أكشن أدمن للإعلانات**
-`createAnnouncement()` في أكشنز الأدمن + عنصر إدخال في اللوحة (أبسط نقطة موجودة مناسبة) مع `revalidatePath('/student')`.
+**M14 — إدارة الواجبات في الأدمن (أكبر مهمة UI)**
+أكشنز CRUD في أكشنز الأدمن: `createAssignment`/`updateAssignment`/`deleteAssignment` + أسئلة الواجب، وواجهة إدارة (الأنسب: تبويب/قسم داخل صفحة تفاصيل المحاضرة في الأدمن) مع `revalidatePath('/student')`. هذه هي الفجوة الوحيدة التي كان الطالب سيقرأ فيها من جداول لا يكتب فيها أحد.
 
 **M15 — تنظيف نهائي**
 احذف محتوى البيانات من `lib/student-data.ts`, `student-exams-data.ts`, `student-notifications-data.ts`, `student-billing-data.ts`, `student-schedule-data.ts` (إبقاء re-exports للأنواع فقط أو حذف الملفات إن لم يعد لها مستورد). شغّل `tsc --noEmit` وأصلح أي استيراد مكسور.
@@ -193,5 +210,7 @@ type StudentData = {
 
 - `grep -r "student-.*-data'" app components` لا يُرجع أي استيراد لبيانات mock (أنواع فقط إن بقيت).
 - لا يوجد `any` في `StudentData`.
-- إعلان/إشعار/امتحان يضيفه الأدمن يظهر لطالب السنة المستهدفة دون أي تدخل.
+- إعلان يرسله الأدمن عبر `sendAnnouncement()` يظهر في داشبورد وإشعارات طالب السنة المستهدفة دون أي تدخل.
+- امتحان ينشره الأدمن بفرع من فروع سنة الطالب يظهر في قائمة امتحاناته.
+- واجب ينشئه الأدمن (بعد M14) يظهر في صفحة واجبات طلاب المحاضرة المشتراة.
 - طالب بلا مشتريات يرى empty states وليس بيانات وهمية.
