@@ -1,14 +1,17 @@
 import { SettingsPageHeader } from '@/components/settings/settings-page-header'
 import { SettingsPanel } from '@/components/settings/settings-panel'
-import { getSettings } from './actions'
+import { getSettings, getAdminProfile } from './actions'
 
 export default async function SettingsPage() {
-  const initialSettings = await getSettings()
+  const [initialSettings, adminProfile] = await Promise.all([
+    getSettings(),
+    getAdminProfile(),
+  ])
 
   return (
     <div className="space-y-6">
       <SettingsPageHeader />
-      <SettingsPanel initialSettings={initialSettings} />
+      <SettingsPanel initialSettings={initialSettings} adminProfile={adminProfile} />
     </div>
   )
 }
