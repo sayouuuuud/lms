@@ -217,6 +217,48 @@ export type Announcement = {
 // Billing
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Course content utilities (pure — no mock data dependency)
+// ---------------------------------------------------------------------------
+
+/** عناصر الوحدة مرتّبة: دروس وواجبات متداخلة كما رتّبها الأدمن */
+export function getSectionItems(section: Section): CourseItem[] {
+  if (section.items && section.items.length > 0) return section.items
+  const items: CourseItem[] = section.lessons.map((lesson) => ({
+    kind: 'lesson' as const,
+    lesson,
+    sectionId: section.id,
+  }))
+  if (section.assignment) {
+    items.push({ kind: 'assignment', assignment: section.assignment, sectionId: section.id })
+  }
+  return items
+}
+
+/** تدفّق محتوى الكورس كاملاً عبر كل الوحدات */
+export function getCourseItems(course: CourseDetail): CourseItem[] {
+  return course.sections.flatMap((section) => getSectionItems(section))
+}
+
+/** جميع دروس الكورس مسطّحة */
+export function getCourseLessons(course: CourseDetail): Lesson[] {
+  return course.sections.flatMap((s) => s.lessons)
+}
+
+/** هل الواجب مفتوح؟ — يصبح مفتوحاً عندما تكتمل كل الدروس التي تسبقه */
+export function isAssignmentUnlocked(course: CourseDetail, assignmentId: string): boolean {
+  const items = getCourseItems(course)
+  const index = items.findIndex(
+    (it) => it.kind === 'assignment' && it.assignment.id === assignmentId,
+  )
+  if (index === -1) return true
+  return items.slice(0, index).every((it) => it.kind !== 'lesson' || it.lesson.completed)
+}
+
+// ---------------------------------------------------------------------------
+// Billing
+// ---------------------------------------------------------------------------
+
 export type InvoiceStatus = 'غير مدفوعة' | 'قيد المراجعة' | 'مدفوعة' | 'مرفوضة'
 export type PaymentMethod = 'انستاباي' | 'فودافون كاش'
 

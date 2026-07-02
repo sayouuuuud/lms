@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { VideoPlayer } from '@/components/student/courses/video-player'
 import { markLessonComplete } from '@/app/student/progress/actions'
-import { getCourseItems, type CourseDetail, type Lesson } from '@/lib/student-courses-data'
+import { getCourseItems, type CourseDetail, type Lesson } from '@/lib/student-types'
 
 const lessonIcon = (lesson: Lesson) => {
   if (lesson.completed) return CheckCircle2

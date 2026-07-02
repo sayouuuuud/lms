@@ -26,7 +26,7 @@ import type {
   AssignmentStatus,
   CourseDetail,
   QuizQuestion,
-} from '@/lib/student-courses-data'
+} from '@/lib/student-types'
 
 const statusStyles: Record<AssignmentStatus, string> = {
   'لم يبدأ': 'bg-secondary text-muted-foreground',

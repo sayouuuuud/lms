@@ -3,6 +3,7 @@ import type { ExamStatus, ExamQuestion, Exam } from './student-types'
 // الأنواع مُعرَّفة في lib/student-types.ts — re-export للتوافق مع الاستيرادات الموجودة
 export type { ExamStatus, ExamQuestion, Exam } from './student-types'
 
+/** @deprecated use getStudentExams() server action */
 export const exams: Exam[] = [
   {
     id: 'ex1',
