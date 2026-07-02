@@ -17,10 +17,12 @@ import {
   ArrowLeft,
   Globe,
 } from 'lucide-react'
+import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useLogout } from '@/lib/use-logout'
+import { getAdminProfile } from '@/app/admin/settings/actions'
 
 /* ─── mock data ─── */
 const mockMessages = [
@@ -257,6 +259,11 @@ function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleT
   const logout = useLogout()
   useOutsideClick(ref, () => setOpen(false))
 
+  const { data: admin } = useSWR('admin-profile', () => getAdminProfile())
+  const displayName = admin?.fullName?.trim() || 'مدير المنصة'
+  const roleLabel = admin?.role === 'admin' ? 'مدير المنصة' : admin?.role || 'مدير المنصة'
+  const initials = (displayName || 'أ').trim().slice(0, 2)
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -266,13 +273,14 @@ function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleT
         aria-label="قائمة الحساب"
       >
         <Avatar className="size-10 ring-2 ring-primary/20">
+          {admin?.avatarUrl && <AvatarImage src={admin.avatarUrl} alt={displayName} />}
           <AvatarFallback className="bg-primary/10 font-semibold text-primary">
-            م أ
+            {initials}
           </AvatarFallback>
         </Avatar>
         <div className="hidden leading-tight sm:block">
-          <p className="text-sm font-bold text-foreground">محمد أحمد</p>
-          <p className="text-xs text-muted-foreground">مدير المنصة</p>
+          <p className="text-sm font-bold text-foreground">{displayName}</p>
+          <p className="text-xs text-muted-foreground">{roleLabel}</p>
         </div>
         <ChevronDown
           className={cn(
@@ -286,8 +294,8 @@ function ProfileDropdown({ isDark, onToggleTheme }: { isDark: boolean; onToggleT
         <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
           {/* user info */}
           <div className="border-b border-border px-4 py-3">
-            <p className="text-sm font-bold text-foreground">محمد أحمد</p>
-            <p className="text-xs text-muted-foreground">admin@platform.com</p>
+            <p className="text-sm font-bold text-foreground">{displayName}</p>
+            <p className="text-xs text-muted-foreground">{admin?.email || 'admin@platform.com'}</p>
           </div>
 
           {/* menu items */}

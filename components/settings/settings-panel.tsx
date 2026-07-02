@@ -348,7 +348,8 @@ export function SettingsPanel({
                 <Input
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  readOnly
+                  disabled
                   className="text-right"
                   dir="ltr"
                 />
@@ -375,7 +376,7 @@ export function SettingsPanel({
             </div>
 
             <div className="flex justify-start gap-3">
-              <Button onClick={handleSave} disabled={isPending}>حفظ التغييرات</Button>
+              <Button onClick={handleProfileSave} disabled={isPending || uploadingAvatar}>حفظ التغييرات</Button>
               <Button variant="outline">إلغاء</Button>
             </div>
           </div>
