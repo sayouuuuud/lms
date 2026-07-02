@@ -1,28 +1,7 @@
-export type InvoiceStatus =
-  | 'غير مدفوعة'
-  | 'قيد المراجعة'
-  | 'مدفوعة'
-  | 'مرفوضة'
+import type { InvoiceStatus, PaymentMethod, Invoice } from './student-types'
 
-export type PaymentMethod = 'انستاباي' | 'فودافون كاش'
-
-export type Invoice = {
-  id: string
-  course: string
-  instructor: string
-  amount: number
-  issuedAt: string
-  dueDate: string
-  status: InvoiceStatus
-  // تفاصيل الدفع المرسل (إن وُجد)
-  method?: PaymentMethod
-  reference?: string
-  // رقم الهاتف (فودافون كاش) أو عنوان انستاباي الذي حوّل منه الطالب
-  senderInfo?: string
-  submittedAt?: string
-  // سبب الرفض إن رُفض الطلب
-  rejectionReason?: string
-}
+// الأنواع مُعرَّفة في lib/student-types.ts — re-export للتوافق مع الاستيرادات الموجودة
+export type { InvoiceStatus, PaymentMethod, Invoice } from './student-types'
 
 export const studentInvoices: Invoice[] = [
   {

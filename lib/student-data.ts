@@ -1,47 +1,19 @@
-export type CourseProgress = {
-  id: string
-  title: string
-  instructor: string
-  image: string
-  category: string
-  completedLessons: number
-  totalLessons: number
-  nextLesson: string
-}
+import type {
+  CourseProgress,
+  ScheduleItem,
+  GradeItem,
+  Certificate,
+  Announcement,
+} from './student-types'
 
-export type ScheduleItem = {
-  id: string
-  title: string
-  course: string
-  type: 'محاضرة' | 'اختبار' | 'واجب' | 'مراجعة'
-  day: string
-  date: string
-  time: string
-}
-
-export type GradeItem = {
-  id: string
-  title: string
-  course: string
-  score: number
-  total: number
-  date: string
-}
-
-export type Certificate = {
-  id: string
-  title: string
-  issuer: string
-  date: string
-}
-
-export type Announcement = {
-  id: string
-  title: string
-  text: string
-  time: string
-  course: string
-}
+// الأنواع مُعرَّفة في lib/student-types.ts — re-export للتوافق مع الاستيرادات الموجودة
+export type {
+  CourseProgress,
+  ScheduleItem,
+  GradeItem,
+  Certificate,
+  Announcement,
+} from './student-types'
 
 export const studentProfile = {
   name: 'مريم خالد',

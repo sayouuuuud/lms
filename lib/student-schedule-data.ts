@@ -1,19 +1,7 @@
-export type ScheduleEventType = 'محاضرة' | 'اختبار' | 'واجب' | 'مراجعة' | 'مباشر'
+import type { ScheduleEventType, ScheduleEvent } from './student-types'
 
-export type ScheduleEvent = {
-  id: string
-  title: string
-  /** التاريخ بصيغة yyyy-mm-dd */
-  date: string
-  /** وقت البداية بصيغة HH:mm */
-  time: string
-  type: ScheduleEventType
-  course: string
-  instructor?: string
-  /** مدة الحدث بالدقائق */
-  duration?: number
-  location?: string
-}
+// الأنواع مُعرَّفة في lib/student-types.ts — re-export للتوافق مع الاستيرادات الموجودة
+export type { ScheduleEventType, ScheduleEvent } from './student-types'
 
 export const scheduleEventTypes: ScheduleEventType[] = [
   'محاضرة',

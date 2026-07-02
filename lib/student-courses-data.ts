@@ -1,83 +1,31 @@
-import { enrolledCourses, type CourseProgress } from './student-data'
+import { enrolledCourses } from './student-data'
+import type {
+  CourseProgress,
+  LessonType,
+  Lesson,
+  Section,
+  AssignmentStatus,
+  AssignmentType,
+  QuestionKind,
+  QuizQuestion,
+  Assignment,
+  CourseItem,
+  CourseDetail,
+} from './student-types'
 
-export type LessonType = 'فيديو' | 'مقال' | 'تمرين'
-
-export type Lesson = {
-  id: string
-  /** المعرّف الحقيقي للدرس في قاعدة البيانات (UUID)، يُستخدم لحفظ التقدّم */
-  lessonId?: string
-  title: string
-  type: LessonType
-  duration: string
-  completed: boolean
-  locked: boolean
-  videoUrl?: string
-  description?: string
-}
-
-export type Section = {
-  id: string
-  title: string
-  lessons: Lesson[]
-  /** واجب أو اختبار الوحدة، يظهر بعد دروسها مباشرةً ضمن محتوى الكورس */
-  assignment?: Assignment
-  /**
-   * قائمة المحتوى المرتّبة (دروس وواجبات متداخلة) كما رتّبها الأدمن.
-   * عند وجودها تُستخدم للعرض بدلاً من `lessons` + `assignment`.
-   */
-  items?: CourseItem[]
-}
-
-export type AssignmentStatus = 'لم يبدأ' | 'قيد التنفيذ' | 'تم التسليم' | 'مصحّح'
-
-export type AssignmentType = 'تسليم' | 'اختبار'
-
-/** نوع السؤال: اختيار من متعدد، مقالي، أو رفع ملف */
-export type QuestionKind = 'mcq' | 'essay' | 'file'
-
-export type QuizQuestion = {
-  id: string
-  kind: QuestionKind
-  question: string
-  options: string[]
-  correctIndex: number
-}
-
-export type Assignment = {
-  id: string
-  courseId: string
-  /** الوحدة التي ينتمي إليها الواجب داخل الكورس */
-  sectionId?: string
-  type: AssignmentType
-  title: string
-  description: string
-  instructions: string[]
-  dueDate: string
-  points: number
-  score?: number
-  status: AssignmentStatus
-  attachments: { name: string; size: string }[]
-  /** أسئلة الواجب (اختيار/مقالي/رفع ملف) */
-  questions?: QuizQuestion[]
-  /** مقفول حتى يكمل الطالب كل ما يسبقه في ترتيب المحاضرة */
-  locked?: boolean
-}
-
-/** عنصر موحّد في تدفّق محتوى الكورس: درس أو واجب */
-export type CourseItem =
-  | { kind: 'lesson'; lesson: Lesson; sectionId: string }
-  | { kind: 'assignment'; assignment: Assignment; sectionId: string }
-
-export type CourseDetail = CourseProgress & {
-  description: string
-  rating: number
-  studentsCount: number
-  durationHours: number
-  level: string
-  lastUpdated: string
-  sections: Section[]
-  whatYouLearn: string[]
-}
+// الأنواع مُعرَّفة في lib/student-types.ts — re-export للتوافق مع الاستيرادات الموجودة
+export type {
+  LessonType,
+  Lesson,
+  Section,
+  AssignmentStatus,
+  AssignmentType,
+  QuestionKind,
+  QuizQuestion,
+  Assignment,
+  CourseItem,
+  CourseDetail,
+} from './student-types'
 
 const SAMPLE_VIDEO =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'

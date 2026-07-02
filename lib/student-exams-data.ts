@@ -1,35 +1,7 @@
-export type ExamStatus = 'متاح' | 'قادم' | 'مكتمل'
+import type { ExamStatus, ExamQuestion, Exam } from './student-types'
 
-export type ExamQuestion = {
-  id: string
-  question: string
-  options: string[]
-  correctIndex: number
-}
-
-export type Exam = {
-  id: string
-  title: string
-  course: string
-  courseId: string
-  instructor: string
-  category: string
-  description: string
-  instructions: string[]
-  /** التاريخ الذي يُتاح فيه الاختبار أو موعده المجدول */
-  date: string
-  time: string
-  /** مدة الاختبار بالدقائق */
-  durationMinutes: number
-  totalPoints: number
-  /** النسبة المئوية المطلوبة للنجاح */
-  passingPercent: number
-  status: ExamStatus
-  /** النتيجة المحقّقة (للاختبارات المكتملة فقط) */
-  score?: number
-  topics: string[]
-  questions: ExamQuestion[]
-}
+// الأنواع مُعرَّفة في lib/student-types.ts — re-export للتوافق مع الاستيرادات الموجودة
+export type { ExamStatus, ExamQuestion, Exam } from './student-types'
 
 export const exams: Exam[] = [
   {

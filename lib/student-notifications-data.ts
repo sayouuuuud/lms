@@ -1,20 +1,13 @@
-export type NotificationType =
-  | 'lesson'
-  | 'exam'
-  | 'assignment'
-  | 'grade'
-  | 'message'
-  | 'certificate'
-  | 'system'
+import type {
+  NotificationType,
+  Notification as StudentNotification,
+} from './student-types'
 
-export type Notification = {
-  id: string
-  type: NotificationType
-  title: string
-  text: string
-  time: string
-  read: boolean
-}
+// re-export للتوافق مع الاستيرادات الموجودة
+export type { NotificationType, Notification } from './student-types'
+
+// نوع محلي لتجنّب التعارض مع global Notification
+type Notification = StudentNotification
 
 export const notifications: Notification[] = [
   {

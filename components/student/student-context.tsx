@@ -2,14 +2,24 @@
 
 import { createContext, useContext, ReactNode, useEffect } from 'react'
 import { trackStudentDevice } from '@/app/student/actions'
+import type {
+  StudentProfileInfo,
+  CourseProgress,
+  ScheduleItem,
+  GradeItem,
+  Announcement,
+  ActivityDay,
+  Notification,
+} from '@/lib/student-types'
 
 type StudentData = {
-  profile: any
-  enrolledCourses?: any[]
-  schedule?: any[]
-  grades?: any[]
-  announcements?: any[]
-  activity?: any[]
+  profile: StudentProfileInfo
+  enrolledCourses?: CourseProgress[]
+  schedule?: ScheduleItem[]
+  grades?: GradeItem[]
+  announcements?: Announcement[]
+  activity?: ActivityDay[]
+  notifications?: Notification[]
 }
 
 const StudentContext = createContext<StudentData | null>(null)
