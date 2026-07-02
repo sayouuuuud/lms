@@ -19,7 +19,24 @@ import {
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { exams, type Exam, type ExamStatus } from '@/lib/student-exams-data'
+import type { ExamStatus } from '@/lib/student-exams-data'
+
+// Shape returned by getStudentExams() server action.
+type ExamListItem = {
+  id: string
+  title: string
+  course: string
+  category: string
+  status: ExamStatus
+  pending: boolean
+  questionsCount: number
+  durationMinutes: number
+  totalPoints: number
+  passingPercent: number
+  score: number | null
+  date: string
+  time: string
+}
 
 type Filter = 'all' | ExamStatus
 
@@ -57,7 +74,7 @@ const statusConfig: Record<
   },
 }
 
-function ExamCard({ exam }: { exam: Exam }) {
+function ExamCard({ exam }: { exam: ExamListItem }) {
   const cfg = statusConfig[exam.status] ?? statusConfig['قادم']
   const StatusIcon = cfg.icon
   const percent =
@@ -102,7 +119,7 @@ function ExamCard({ exam }: { exam: Exam }) {
         <div className="mt-4 grid grid-cols-2 gap-y-2.5 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <FileQuestion className="size-3.5" />
-            {exam.questions.length} أسئلة
+            {exam.questionsCount} أسئلة
           </span>
           <span className="flex items-center gap-1.5">
             <Clock className="size-3.5" />
@@ -182,7 +199,7 @@ function ExamCard({ exam }: { exam: Exam }) {
   )
 }
 
-export function StudentExamsPage({ exams = [] }: { exams?: any[] }) {
+export function StudentExamsPage({ exams = [] }: { exams?: ExamListItem[] }) {
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
 
@@ -202,13 +219,17 @@ export function StudentExamsPage({ exams = [] }: { exams?: any[] }) {
   const available = exams.filter((e) => e.status === 'متاح').length
   const upcoming = exams.filter((e) => e.status === 'قادم').length
   const completed = exams.filter((e) => e.status === 'مكتمل')
+  // Only include graded submissions that have a real totalPoints > 0 in the average.
+  const gradedWithPoints = completed.filter(
+    (e) => e.score !== null && e.totalPoints > 0,
+  )
   const avgScore =
-    completed.length > 0
+    gradedWithPoints.length > 0
       ? Math.round(
-          completed.reduce(
+          gradedWithPoints.reduce(
             (a, e) => a + ((e.score ?? 0) / e.totalPoints) * 100,
             0,
-          ) / completed.length,
+          ) / gradedWithPoints.length,
         )
       : 0
 

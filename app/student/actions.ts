@@ -525,17 +525,33 @@ export async function getStudentExams() {
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
-  // Students see every published exam (exams aren't targeted by course).
-  const { data: exams } = await supabase
+  // Step 1: resolve the student's enrolled branch IDs via their stage.
+  // exams.branch_id targets a specific branch; null means broadcast to all.
+  const { stageId, branchIds } = await getStudentTargeting(supabase, student)
+
+  // Step 2: fetch published exams that are either broadcast (branch_id IS NULL)
+  // or specifically aimed at one of the student's enrolled branches.
+  let query = supabase
     .from('exams')
-    .select('id, code, title, course, duration, pass_mark, questions, status, created_at')
+    .select('id, code, title, course, duration, pass_mark, questions, status, created_at, branch_id')
     .eq('status', 'منشور')
     .order('created_at', { ascending: false })
 
+  if (branchIds.length > 0) {
+    // Show exams with no branch (broadcast) OR aimed at one of their branches.
+    query = query.or(
+      `branch_id.is.null,branch_id.in.(${branchIds.join(',')})`,
+    )
+  } else {
+    // Student has no enrolled courses yet — show only broadcast exams.
+    query = query.is('branch_id', null)
+  }
+
+  const { data: exams } = await query
   if (!exams || exams.length === 0) return []
   const examIds = exams.map((e: any) => e.id)
 
-  // The student's own submissions for those exams.
+  // Step 3: fetch this student's own submissions for the visible exams.
   const { data: submissions } = await supabase
     .from('exam_submissions')
     .select('exam_id, score, total, status, grading_status, submitted_at')
@@ -547,8 +563,11 @@ export async function getStudentExams() {
     const pending = sub?.grading_status === 'pending'
     const graded = sub && sub.grading_status === 'graded'
 
-    // status drives the list filters: مكتمل once submitted, متاح otherwise.
-    const status = sub ? 'مكتمل' : 'متاح'
+    // Derive the list-view status: مكتمل once submitted, متاح otherwise.
+    const status: 'متاح' | 'مكتمل' = sub ? 'مكتمل' : 'متاح'
+
+    // totalPoints: use the stored submission total when available, otherwise
+    // fall back to 0 (we can't compute it without fetching all questions here).
     const totalPoints = sub?.total ?? 0
 
     return {
@@ -558,11 +577,12 @@ export async function getStudentExams() {
       category: 'اختبار',
       status,
       pending,
-      questions: Array(e.questions || 0).fill({}),
+      // questionsCount is the integer column — used directly in the card UI.
+      questionsCount: e.questions ?? 0,
       durationMinutes: e.duration || 30,
-      totalPoints: totalPoints || 0,
+      totalPoints,
       passingPercent: e.pass_mark ?? 50,
-      // Only expose a score once grading is fully done.
+      // Only expose a score once auto-grading (or manual grading) is done.
       score: graded ? (sub.score ?? 0) : null,
       date: pending
         ? 'قيد التصحيح'
