@@ -306,30 +306,82 @@ export async function getStudentCertificates() {
   })
 }
 
+// Builds the student's targeting context (stage + enrolled branches + lectures).
+// Shared between getStudentAnnouncements and getStudentNotifications.
+async function getStudentTargeting(supabase: any, student: any) {
+  const stageId: string | null = student.stage_id ?? null
+
+  const { data: enrollments } = await supabase
+    .from('enrollments')
+    .select('course_id')
+    .eq('student_id', student.id)
+  const lectureIds: string[] = (enrollments ?? []).map((e: any) => e.course_id)
+
+  let branchIds: string[] = []
+  if (lectureIds.length > 0) {
+    const { data: lectures } = await supabase
+      .from('lectures')
+      .select('branch_id')
+      .in('id', lectureIds)
+    branchIds = Array.from(
+      new Set((lectures ?? []).map((l: any) => l.branch_id).filter(Boolean)),
+    )
+  }
+
+  return { stageId, lectureIds, branchIds }
+}
+
+// Filters a list of raw notification rows to only those visible to this student
+// based on the quadruple targeting (student / stage / branch / lecture).
+function filterByTargeting(
+  notifs: any[],
+  studentId: string,
+  stageId: string | null,
+  lectureIds: string[],
+  branchIds: string[],
+) {
+  const lectureSet = new Set(lectureIds)
+  const branchSet = new Set(branchIds)
+
+  return notifs.filter((n: any) => {
+    if (n.student_id && n.student_id === studentId) return true
+    if (n.student_id) return false
+
+    const hasTargeting = n.stage_id || n.branch_id || n.lecture_id
+    if (!hasTargeting) return true
+
+    if (n.lecture_id && lectureSet.has(n.lecture_id)) return true
+    if (n.branch_id && branchSet.has(n.branch_id)) return true
+    if (n.stage_id && stageId && n.stage_id === stageId) return true
+    return false
+  })
+}
+
 export async function getStudentAnnouncements() {
   const supabase = await createClient()
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
+  const { stageId, lectureIds, branchIds } = await getStudentTargeting(supabase, student)
+
   const { data: notifs } = await supabase
     .from('notifications')
     .select('*')
     .or(`student_id.eq.${student.id},student_id.is.null`)
-    .eq('type', 'طالب')
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(50)
 
   if (!notifs) return []
 
-  return notifs.map((n: any) => {
-    return {
-      id: n.code,
-      title: n.title,
-      text: n.description,
-      time: formatRelativeArabic(n.created_at),
-      course: 'منصة',
-    }
-  })
+  const visible = filterByTargeting(notifs, student.id, stageId, lectureIds, branchIds)
+
+  return visible.slice(0, 5).map((n: any) => ({
+    id: n.code ?? n.id,
+    title: n.title,
+    text: n.description,
+    time: formatRelativeArabic(n.created_at),
+    course: 'منصة',
+  }))
 }
 
 // Maps an admin-side notification type to the student-facing notification type.
@@ -349,51 +401,15 @@ function mapNotifType(type: string): 'lesson' | 'exam' | 'assignment' | 'grade' 
 }
 
 // Returns the full notification feed for the current student: their own
-// notifications, global broadcasts, and notifications targeted at their grade.
-// Read state comes from notification_reads (graceful if the table is absent).
+// notifications, global broadcasts, and notifications targeted at their
+// stage/branch/lecture. Read state comes from notification_reads.
 export async function getStudentNotifications() {
   const supabase = await createClient()
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
-  // The student's audience: their grade/stage, the branches and lectures they
-  // are enrolled in. Used to decide which targeted notifications they receive.
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('grade')
-    .eq('id', student.user_id)
-    .single()
-  const grade = profile?.grade as string | undefined
+  const { stageId, lectureIds, branchIds } = await getStudentTargeting(supabase, student)
 
-  let stageId: string | null = null
-  if (grade) {
-    const { data: stage } = await supabase
-      .from('stages')
-      .select('id')
-      .eq('slug', grade)
-      .single()
-    stageId = stage?.id ?? null
-  }
-
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('course_id')
-    .eq('student_id', student.id)
-  const lectureIds = (enrollments ?? []).map((e: any) => e.course_id)
-
-  let branchIds: string[] = []
-  if (lectureIds.length > 0) {
-    const { data: lectures } = await supabase
-      .from('lectures')
-      .select('branch_id')
-      .in('id', lectureIds)
-    branchIds = Array.from(
-      new Set((lectures ?? []).map((l: any) => l.branch_id).filter(Boolean)),
-    )
-  }
-
-  // Pull the student's own notifications plus everything not aimed at a single
-  // student (broadcasts + audience-targeted), then filter the audience in JS.
   const { data: notifs } = await supabase
     .from('notifications')
     .select('*')
@@ -401,28 +417,15 @@ export async function getStudentNotifications() {
     .order('created_at', { ascending: false })
     .limit(100)
 
-  const lectureSet = new Set(lectureIds)
-  const branchSet = new Set(branchIds)
+  const rows = filterByTargeting(
+    notifs ?? [],
+    student.id,
+    stageId,
+    lectureIds,
+    branchIds,
+  )
 
-  const rows = (notifs ?? []).filter((n: any) => {
-    // Always show the student's own notifications.
-    if (n.student_id && n.student_id === student.id) return true
-    if (n.student_id) return false
-
-    const hasTargeting =
-      n.stage_id || n.branch_id || n.lecture_id || n.grade
-    // Untargeted = global broadcast → everyone sees it.
-    if (!hasTargeting) return true
-
-    if (n.lecture_id && lectureSet.has(n.lecture_id)) return true
-    if (n.branch_id && branchSet.has(n.branch_id)) return true
-    if (n.stage_id && stageId && n.stage_id === stageId) return true
-    // Backward-compat with the legacy grade-slug column.
-    if (n.grade && grade && n.grade === grade) return true
-    return false
-  })
-
-  // Read state from notification_reads (best-effort).
+  // Read state from notification_reads.
   let readIds = new Set<string>()
   const { data: reads } = await supabase
     .from('notification_reads')
@@ -436,7 +439,7 @@ export async function getStudentNotifications() {
   )
 
   return rows.map((n: any) => ({
-    id: n.code,
+    id: n.code ?? n.id,
     notifId: n.id,
     type: mapNotifType(n.type),
     title: n.title,
