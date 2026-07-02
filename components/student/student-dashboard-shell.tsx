@@ -8,6 +8,7 @@ import { MyCourses } from './my-courses'
 import { UpcomingSchedule } from './upcoming-schedule'
 import { RecentGrades } from './recent-grades'
 import { LearningActivityChart } from './learning-activity-chart'
+import type { ActivityDay } from '@/lib/student-types'
 import { Announcements } from './announcements'
 import { UpcomingExams } from './upcoming-exams'
 import { WeeklyGoals } from './weekly-goals'
@@ -18,13 +19,13 @@ export function StudentDashboardShell({
   schedule,
   grades,
   announcements,
-  activity
+  activity,
 }: {
   enrolledCourses: any[]
   schedule: any[]
   grades: any[]
   announcements: any[]
-  activity: any[]
+  activity: ActivityDay[]
 }) {
   return (
       <div className="flex flex-col gap-4">

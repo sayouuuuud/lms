@@ -482,44 +482,6 @@ export async function markAllStudentNotificationsRead(notifIds: string[]) {
   return { success: true }
 }
 
-export async function getStudentLearningActivity() {
-  // Weekly activity derived from lessons the student completed in the last 7
-  // days (proxy: ~0.5h per completed lesson). Falls back to zeros when there's
-  // no data so the chart still renders.
-  const week = [
-    { key: 6, day: 'السبت', hours: 0 },
-    { key: 0, day: 'الأحد', hours: 0 },
-    { key: 1, day: 'الإثنين', hours: 0 },
-    { key: 2, day: 'الثلاثاء', hours: 0 },
-    { key: 3, day: 'الأربعاء', hours: 0 },
-    { key: 4, day: 'الخميس', hours: 0 },
-    { key: 5, day: 'الجمعة', hours: 0 },
-  ]
-
-  const supabase = await createClient()
-  const student = await getCurrentStudent(supabase)
-  if (!student) return week.map(({ day, hours }) => ({ day, hours }))
-
-  const since = new Date()
-  since.setDate(since.getDate() - 7)
-
-  const { data: progress } = await supabase
-    .from('lesson_progress')
-    .select('completed_at, enrollments!inner(student_id)')
-    .eq('completed', true)
-    .eq('enrollments.student_id', student.id)
-    .gte('completed_at', since.toISOString())
-
-  for (const row of progress ?? []) {
-    if (!row.completed_at) continue
-    const dow = new Date(row.completed_at).getDay() // 0=Sun..6=Sat
-    const bucket = week.find((w) => w.key === dow)
-    if (bucket) bucket.hours += 0.5
-  }
-
-  return week.map(({ day, hours }) => ({ day, hours }))
-}
-
 export async function getStudentExams() {
   const supabase = await createClient()
   const student = await getCurrentStudent(supabase)
@@ -744,6 +706,50 @@ export async function updateStudentPreferences(colorPreset: string, notifPrefs: 
   revalidatePath('/student/settings')
   revalidatePath('/student', 'layout')
   return { success: true }
+}
+
+// Returns the last 7 days of learning activity for the current student.
+// Days with no recorded activity are filled in with 0 hours so the chart
+// always shows a complete 7-day window.
+export async function getStudentLearningActivity() {
+  const supabase = await createClient()
+  const student = await getCurrentStudent(supabase)
+  if (!student) return buildEmptyWeek()
+
+  const { data: rows } = await supabase
+    .from('learning_activity')
+    .select('activity_date, minutes')
+    .eq('student_id', student.id)
+    .gte(
+      'activity_date',
+      new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    )
+    .order('activity_date', { ascending: true })
+
+  // Build a map of date → minutes for fast lookup.
+  const minutesByDate = new Map<string, number>(
+    (rows ?? []).map((r: any) => [r.activity_date as string, r.minutes as number]),
+  )
+
+  return buildEmptyWeek().map((day) => ({
+    ...day,
+    hours: parseFloat(
+      ((minutesByDate.get(day.isoDate) ?? 0) / 60).toFixed(1),
+    ),
+  }))
+}
+
+/** Generates an array of the last 7 days in {day, isoDate, hours} format. */
+function buildEmptyWeek() {
+  const dayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000)
+    return {
+      day: dayNames[d.getDay()],
+      isoDate: d.toISOString().split('T')[0],
+      hours: 0,
+    }
+  })
 }
 
 export async function trackStudentDevice() {
