@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { updateSettings } from '@/app/admin/settings/actions'
+import { updateSettings, updateAdminProfile } from '@/app/admin/settings/actions'
 import { createClient } from '@/lib/supabase/client'
+import { uploadToStorage } from '@/lib/storage-upload'
 import { useTheme } from '@/components/theme-provider'
 import {
   User,
@@ -13,11 +14,12 @@ import {
   SlidersHorizontal,
   Camera,
   Check,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { ToggleSwitch } from '@/components/settings/toggle-switch'
 
@@ -107,7 +109,20 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
+export function SettingsPanel({
+  initialSettings,
+  adminProfile,
+}: {
+  initialSettings?: any
+  adminProfile?: {
+    fullName: string
+    email: string
+    phone: string
+    avatarUrl: string
+    role: string
+    initials: string
+  } | null
+}) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState<TabId>('profile')
@@ -119,11 +134,54 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
     preferences: { darkMode: false, autoPublish: false, activeColor: 'navy' as PresetId }
   }
 
-  const [firstName, setFirstName] = useState(settings.profile.firstName)
-  const [lastName, setLastName] = useState(settings.profile.lastName)
-  const [email, setEmail] = useState(settings.profile.email)
-  const [phone, setPhone] = useState(settings.profile.phone)
+  // Real admin profile is the source of truth for name/email/phone/avatar.
+  const nameParts = (adminProfile?.fullName || '').trim().split(/\s+/).filter(Boolean)
+  const [firstName, setFirstName] = useState(nameParts[0] ?? settings.profile.firstName)
+  const [lastName, setLastName] = useState(
+    nameParts.length > 1 ? nameParts.slice(1).join(' ') : settings.profile.lastName,
+  )
+  const [email] = useState(adminProfile?.email || settings.profile.email)
+  const [phone, setPhone] = useState(adminProfile?.phone || settings.profile.phone)
   const [bio, setBio] = useState(settings.profile.bio)
+
+  // Avatar upload state.
+  const [avatarUrl, setAvatarUrl] = useState(adminProfile?.avatarUrl || '')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const roleLabel = adminProfile?.role === 'admin' ? 'مدير المنصة' : adminProfile?.role || 'مدير المنصة'
+  const displayName = `${firstName} ${lastName}`.trim() || 'مدير المنصة'
+  const initials = (displayName || 'أ').trim().slice(0, 2)
+
+  async function handleAvatarFile(file: File | undefined) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast.error('من فضلك اختر ملف صورة')
+      return
+    }
+    setUploadingAvatar(true)
+    try {
+      const url = await uploadToStorage(file, 'images')
+      setAvatarUrl(url)
+      toast.success('تم رفع الصورة، اضغط حفظ التغييرات لتثبيتها')
+    } catch (e) {
+      toast.error(`فشل رفع الصورة: ${e instanceof Error ? e.message : 'خطأ غير معروف'}`)
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
+  function handleProfileSave() {
+    const fullName = `${firstName} ${lastName}`.trim()
+    startTransition(async () => {
+      const res = await updateAdminProfile({ fullName, phone, avatarUrl })
+      if (res?.error) {
+        toast.error(res.error)
+      } else {
+        toast.success('تم حفظ الملف الشخصي بنجاح')
+        router.refresh()
+      }
+    })
+  }
 
   const [emailNotif, setEmailNotif] = useState(settings.notifications.emailNotif)
   const [pushNotif, setPushNotif] = useState(settings.notifications.pushNotif)
@@ -242,21 +300,35 @@ export function SettingsPanel({ initialSettings }: { initialSettings?: any }) {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="size-20 ring-2 ring-primary/30">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
                   <AvatarFallback className="bg-primary/15 text-xl font-semibold text-primary">
-                    م أ
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleAvatarFile(e.target.files?.[0])}
+                />
                 <button
                   type="button"
-                  className="absolute -bottom-1 -left-1 flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow"
+                  disabled={uploadingAvatar}
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute -bottom-1 -left-1 flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow transition-transform hover:scale-105 disabled:opacity-70"
                   aria-label="تغيير الصورة"
                 >
-                  <Camera className="size-3.5" />
+                  {uploadingAvatar ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="size-3.5" />
+                  )}
                 </button>
               </div>
               <div className="text-right">
-                <p className="text-base font-semibold text-foreground">محمد أحمد</p>
-                <p className="text-sm text-muted-foreground">مدير المنصة</p>
+                <p className="text-base font-semibold text-foreground">{displayName}</p>
+                <p className="text-sm text-muted-foreground">{roleLabel}</p>
               </div>
             </div>
 
