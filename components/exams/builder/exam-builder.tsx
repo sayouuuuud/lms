@@ -59,9 +59,18 @@ export function ExamBuilder() {
       toast.error('أضف سؤالًا واحدًا على الأقل')
       return false
     }
-    const emptyQ = questions.find((q) => !q.text.trim())
-    if (emptyQ) {
+    const emptyTextQ = questions.find(
+      (q) => q.contentMode === 'text' && !q.text.trim(),
+    )
+    if (emptyTextQ) {
       toast.error('هناك سؤال بدون نص')
+      return false
+    }
+    const emptyImageQ = questions.find(
+      (q) => q.contentMode === 'image' && !q.imageUrl.trim(),
+    )
+    if (emptyImageQ) {
+      toast.error('هناك سؤال مصوّر بدون صورة مرفوعة')
       return false
     }
     const badMcq = questions.find(
@@ -194,7 +203,7 @@ export function ExamBuilder() {
                 <ListChecks className="size-6" />
               </span>
               <span className="text-sm font-semibold text-foreground">
-                لم تتم إضافة أي أسئلة بعد
+                لم تتم إ��افة أي أسئلة بعد
               </span>
               <span className="text-xs text-muted-foreground">
                 ابدأ بإضافة سؤال اختيار من متعدد أو مقالي أو إرفاق ملف

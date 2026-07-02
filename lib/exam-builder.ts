@@ -7,10 +7,16 @@ export type McqOption = {
   text: string
 }
 
+export type QuestionContentMode = 'text' | 'image'
+
 export type Question = {
   id: string
   type: QuestionType
+  /** Whether the prompt is written as text or uploaded as an image */
+  contentMode: QuestionContentMode
   text: string
+  /** Public URL of the uploaded question image (used when contentMode === 'image') */
+  imageUrl: string
   points: number
   /** MCQ */
   options: McqOption[]
@@ -76,7 +82,9 @@ export function createQuestion(type: QuestionType): Question {
   const base: Question = {
     id: uid('q'),
     type,
+    contentMode: 'text',
     text: '',
+    imageUrl: '',
     points: 1,
     options: [],
     correctOptionId: null,

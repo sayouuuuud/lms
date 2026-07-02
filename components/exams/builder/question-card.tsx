@@ -1,7 +1,8 @@
 'use client'
 
-import { Check, GripVertical, Plus, Trash2, X } from 'lucide-react'
+import { Check, GripVertical, ImageIcon, Plus, Trash2, Type, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ImageUploadField } from '@/components/ui/image-upload-field'
 import { cn } from '@/lib/utils'
 import {
   createOption,
@@ -53,18 +54,65 @@ export function QuestionCard({ question, index, onChange, onRemove }: QuestionCa
         </Button>
       </div>
 
-      {/* Question text */}
+      {/* Question prompt: text or image */}
       <div className="mt-4 text-right">
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          نص السؤال
-        </label>
-        <textarea
-          value={question.text}
-          onChange={(e) => update({ text: e.target.value })}
-          placeholder="اكتب نص السؤال هنا..."
-          rows={2}
-          className={cn(fieldCls, 'resize-none leading-relaxed')}
-        />
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <label className="text-sm font-medium text-foreground">صيغة السؤال</label>
+          <div className="inline-flex rounded-lg border border-border bg-secondary/50 p-0.5">
+            <button
+              type="button"
+              onClick={() => update({ contentMode: 'text' })}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-colors',
+                question.contentMode === 'text'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Type className="size-3.5" />
+              نص
+            </button>
+            <button
+              type="button"
+              onClick={() => update({ contentMode: 'image' })}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-colors',
+                question.contentMode === 'image'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <ImageIcon className="size-3.5" />
+              صورة
+            </button>
+          </div>
+        </div>
+
+        {question.contentMode === 'text' ? (
+          <textarea
+            value={question.text}
+            onChange={(e) => update({ text: e.target.value })}
+            placeholder="اكتب نص السؤال هنا..."
+            rows={2}
+            className={cn(fieldCls, 'resize-none leading-relaxed')}
+          />
+        ) : (
+          <div className="space-y-3">
+            <ImageUploadField
+              value={question.imageUrl}
+              onChange={(url) => update({ imageUrl: url })}
+              label="صورة السؤال"
+              hint="ارفع صورة تحتوي على نص السؤال (مثال: معادلة أو رسم)"
+            />
+            <textarea
+              value={question.text}
+              onChange={(e) => update({ text: e.target.value })}
+              placeholder="نص توضيحي مختصر للسؤال (اختياري)"
+              rows={2}
+              className={cn(fieldCls, 'resize-none leading-relaxed')}
+            />
+          </div>
+        )}
       </div>
 
       {/* Type specific */}
