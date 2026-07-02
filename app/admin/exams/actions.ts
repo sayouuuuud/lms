@@ -6,6 +6,32 @@ import { revalidatePath } from 'next/cache'
 import type { ExamRecord, ExamStatus } from '@/lib/exams-data'
 
 // Shape sent from the exam builder (client) to be persisted.
+export type StageWithBranches = {
+  id: string
+  title: string
+  branches: { id: string; title: string }[]
+}
+
+// Stages with their branches, used to attribute an exam to a subject branch.
+export async function getStagesWithBranches(): Promise<StageWithBranches[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('stages')
+    .select('id, title, sort_order, branches (id, title, sort_order)')
+    .order('sort_order', { ascending: true })
+  if (error || !data) {
+    console.log('[v0] getStagesWithBranches error:', error?.message)
+    return []
+  }
+  return data.map((s: any) => ({
+    id: s.id,
+    title: s.title,
+    branches: (s.branches || [])
+      .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map((b: any) => ({ id: b.id, title: b.title })),
+  }))
+}
+
 export type SaveExamPayload = {
   meta: {
     title: string
@@ -14,6 +40,7 @@ export type SaveExamPayload = {
     duration: number
     passMark: number
     shuffle: boolean
+    branchId?: string | null
   }
   questions: Array<{
     type: 'mcq' | 'essay' | 'file'
@@ -55,6 +82,7 @@ export async function saveExam(payload: SaveExamPayload) {
       duration: meta.duration,
       pass_mark: meta.passMark,
       shuffle: meta.shuffle,
+      branch_id: meta.branchId || null,
       questions: questions.length,
       participants: 0,
       avg_score: 0,

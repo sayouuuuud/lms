@@ -252,37 +252,91 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
     { month: 'يونيو', amount: spendBase },
   ]
 
-  // 7. Fetch all branches relevant to the student's grade to build dynamic skills
-  let validBranches: string[] = []
-  const { data: stage } = await supabase.from('stages').select('id').eq('title', studentRow.level).single()
-  
-  if (stage) {
-    const { data: branches } = await supabase.from('branches').select('title').eq('stage_id', stage.id)
-    if (branches && branches.length > 0) {
-      validBranches = branches.map((b: any) => b.title)
+  // 7. Skills = comparison across the branches of the student's academic year.
+  // For each branch we combine the student's average exam percentage with the
+  // average progress in that branch's courses.
+  let stageTitle = ''
+  let skills: StudentProfile['skills'] = []
+
+  if (studentRow.stage_id) {
+    const { data: stageRow } = await supabase
+      .from('stages')
+      .select('title')
+      .eq('id', studentRow.stage_id)
+      .single()
+    stageTitle = stageRow?.title || ''
+
+    const { data: branchRows } = await supabase
+      .from('branches')
+      .select('id, title, sort_order')
+      .eq('stage_id', studentRow.stage_id)
+      .order('sort_order', { ascending: true })
+
+    if (branchRows && branchRows.length > 0) {
+      // Exam submissions joined to their exam's branch.
+      const { data: branchExams } = await supabase
+        .from('exam_submissions')
+        .select('score, total, grading_status, exams!inner (branch_id)')
+        .eq('student_id', studentId)
+
+      // Student's enrollments joined to each course's branch.
+      const { data: branchEnrollments } = await supabase
+        .from('enrollments')
+        .select('progress, courses!inner (branch_id)')
+        .eq('student_id', studentId)
+
+      skills = branchRows.map((branch: any) => {
+        // Average exam percentage for this branch (graded submissions only).
+        const branchSubs = (branchExams || []).filter(
+          (s: any) =>
+            s.exams?.branch_id === branch.id &&
+            (s.grading_status ?? 'graded') === 'graded' &&
+            s.total > 0,
+        )
+        const examAvg =
+          branchSubs.length > 0
+            ? Math.round(
+                branchSubs.reduce(
+                  (sum: number, s: any) => sum + (s.score / s.total) * 100,
+                  0,
+                ) / branchSubs.length,
+              )
+            : 0
+
+        // Average course progress for this branch.
+        const branchCourses = (branchEnrollments || []).filter(
+          (e: any) => e.courses?.branch_id === branch.id,
+        )
+        const courseProgress =
+          branchCourses.length > 0
+            ? Math.round(
+                branchCourses.reduce(
+                  (sum: number, e: any) => sum + (e.progress || 0),
+                  0,
+                ) / branchCourses.length,
+              )
+            : 0
+
+        // Combined score: average of both metrics, or whichever exists.
+        const parts: number[] = []
+        if (branchSubs.length > 0) parts.push(examAvg)
+        if (branchCourses.length > 0) parts.push(courseProgress)
+        const score =
+          parts.length > 0
+            ? Math.round(parts.reduce((a, b) => a + b, 0) / parts.length)
+            : 0
+
+        return {
+          subject: branch.title,
+          examAvg,
+          courseProgress,
+          score,
+          examCount: branchSubs.length,
+          courseCount: branchCourses.length,
+        }
+      })
     }
   }
-
-  // Fallback to categories if no branches exist for the stage
-  if (validBranches.length === 0) {
-    const { data: categoriesData } = await supabase.from('categories').select('name')
-    validBranches = categoriesData?.map((c: any) => c.name) || ['الجبر', 'الهندسة الفراغية', 'التفاضل والتكامل', 'الديناميكا', 'الاستاتيكا', 'حساب المثلثات']
-  }
-
-  const skills = validBranches.map((branchName) => {
-    // Find courses student is enrolled in for this branch/category
-    // Courses might store the branch name in 'category' field
-    const enrolledInCat = courses.filter((c) => c.category === branchName)
-    
-    let score = 0
-    if (enrolledInCat.length > 0) {
-      // Calculate average progress as the skill score
-      const totalProgress = enrolledInCat.reduce((sum, c) => sum + c.progress, 0)
-      score = Math.round(totalProgress / enrolledInCat.length)
-    }
-
-    return { subject: branchName, score }
-  })
 
   const submitted = assignments.filter((a) => a.status === 'تم التسليم').length
   const late = assignments.filter((a) => a.status === 'متأخر').length
@@ -305,6 +359,7 @@ export async function getStudentProfileData(code: string): Promise<StudentProfil
     progressTrend,
     monthlySpend,
     skills,
+    stageTitle,
     assignmentBreakdown,
   }
 }

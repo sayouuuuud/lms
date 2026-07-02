@@ -15,14 +15,14 @@ import {
   type Question,
   type QuestionType,
 } from '@/lib/exam-builder'
-import { saveExam } from '@/app/admin/exams/actions'
+import { saveExam, type StageWithBranches } from '@/app/admin/exams/actions'
 import { QuestionCard } from './question-card'
 import { QuestionTypePicker } from './question-type-picker'
 
 const fieldCls =
   'w-full rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card'
 
-export function ExamBuilder() {
+export function ExamBuilder({ stages = [] }: { stages?: StageWithBranches[] }) {
   const [meta, setMeta] = useState<ExamMeta>({
     title: '',
     course: '',
@@ -30,6 +30,7 @@ export function ExamBuilder() {
     duration: 45,
     passMark: 50,
     shuffle: false,
+    branchId: null,
   })
   const [questions, setQuestions] = useState<Question[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -161,6 +162,33 @@ export function ExamBuilder() {
                 />
               </label>
             </div>
+
+            {stages.length > 0 && (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-foreground">
+                  فرع المادة (اختياري)
+                </span>
+                <select
+                  value={meta.branchId ?? ''}
+                  onChange={(e) => updateMeta({ branchId: e.target.value || null })}
+                  className={fieldCls}
+                >
+                  <option value="">بدون فرع محدد</option>
+                  {stages.map((stage) => (
+                    <optgroup key={stage.id} label={stage.title}>
+                      {stage.branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <span className="mt-1.5 block text-xs text-muted-foreground">
+                  يربط درجات الاختبار بفرع المادة في تقارير مستوى الطالب.
+                </span>
+              </label>
+            )}
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-foreground">

@@ -60,7 +60,16 @@ export type StudentProfile = {
   assignments: AssignmentRecord[]
   progressTrend: Array<{ month: string; progress: number }>
   monthlySpend: Array<{ month: string; amount: number }>
-  skills: Array<{ subject: string; score: number }>
+  // Per-branch comparison for the student's academic year.
+  skills: Array<{
+    subject: string
+    examAvg: number
+    courseProgress: number
+    score: number
+    examCount: number
+    courseCount: number
+  }>
+  stageTitle: string
   assignmentBreakdown: Array<{ label: string; value: number }>
 }
 
@@ -203,13 +212,15 @@ function buildProfile(student: StudentRecord): StudentProfile {
   }))
 
   const skills = [
-    { subject: 'البرمجة', score: range(rng, 50, 100) },
-    { subject: 'قواعد البيانات', score: range(rng, 45, 100) },
-    { subject: 'التصميم', score: range(rng, 40, 95) },
-    { subject: 'الخوارزميات', score: range(rng, 40, 95) },
-    { subject: 'الشبكات', score: range(rng, 35, 90) },
-    { subject: 'الأمن', score: range(rng, 40, 90) },
-  ]
+    { subject: 'الجبر والمتطابقات', examAvg: range(rng, 50, 100), courseProgress: range(rng, 40, 100) },
+    { subject: 'التفاضل والتكامل', examAvg: range(rng, 45, 100), courseProgress: range(rng, 35, 95) },
+    { subject: 'الميكانيكا', examAvg: range(rng, 40, 95), courseProgress: range(rng, 40, 95) },
+  ].map((s) => ({
+    ...s,
+    score: Math.round((s.examAvg + s.courseProgress) / 2),
+    examCount: range(rng, 1, 4),
+    courseCount: range(rng, 1, 3),
+  }))
 
   const submitted = assignments.filter((a) => a.status === 'تم التسليم').length
   const late = assignments.filter((a) => a.status === 'متأخر').length
@@ -242,6 +253,7 @@ function buildProfile(student: StudentRecord): StudentProfile {
     progressTrend,
     monthlySpend,
     skills,
+    stageTitle: 'الصف الثاني الثانوي',
     assignmentBreakdown,
   }
 }

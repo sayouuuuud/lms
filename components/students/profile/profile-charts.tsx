@@ -32,7 +32,8 @@ const spendConfig: ChartConfig = {
   amount: { label: 'الإنفاق (ج.م)', color: 'var(--chart-2)' },
 }
 const skillsConfig: ChartConfig = {
-  score: { label: 'الأداء', color: 'var(--chart-1)' },
+  examAvg: { label: 'متوسط الامتحانات', color: 'var(--chart-1)' },
+  courseProgress: { label: 'تقدّم الكورسات', color: 'var(--chart-2)' },
 }
 const breakdownConfig: ChartConfig = {
   value: { label: 'الواجبات' },
@@ -99,21 +100,53 @@ export function ProfileCharts({ profile }: { profile: StudentProfile }) {
         </ChartContainer>
       </ChartCard>
 
-      <ChartCard title="مستوى المهارات" subtitle="تقييم الأداء عبر المجالات المختلفة">
-        <ChartContainer config={skillsConfig} className="mx-auto aspect-square max-h-[260px]">
-          <RadarChart data={profile.skills}>
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <PolarGrid />
-            <PolarAngleAxis dataKey="subject" />
-            <Radar
-              dataKey="score"
-              fill="var(--color-score)"
-              fillOpacity={0.45}
-              stroke="var(--color-score)"
-              strokeWidth={2}
-            />
-          </RadarChart>
-        </ChartContainer>
+      <ChartCard
+        title="المقارنة بين فروع المادة"
+        subtitle={
+          profile.stageTitle
+            ? `أداء الطالب عبر فروع ${profile.stageTitle}`
+            : 'أداء الطالب عبر فروع السنة الدراسية'
+        }
+      >
+        {profile.skills.length > 0 ? (
+          <>
+            <ChartContainer config={skillsConfig} className="mx-auto aspect-square max-h-[260px]">
+              <RadarChart data={profile.skills}>
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <PolarGrid />
+                <PolarAngleAxis dataKey="subject" />
+                <Radar
+                  dataKey="examAvg"
+                  fill="var(--color-examAvg)"
+                  fillOpacity={0.35}
+                  stroke="var(--color-examAvg)"
+                  strokeWidth={2}
+                />
+                <Radar
+                  dataKey="courseProgress"
+                  fill="var(--color-courseProgress)"
+                  fillOpacity={0.2}
+                  stroke="var(--color-courseProgress)"
+                  strokeWidth={2}
+                />
+              </RadarChart>
+            </ChartContainer>
+            <div className="mt-2 flex flex-wrap justify-center gap-4 text-xs">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="size-2.5 rounded-[3px]" style={{ backgroundColor: 'var(--chart-1)' }} />
+                متوسط الامتحانات
+              </span>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="size-2.5 rounded-[3px]" style={{ backgroundColor: 'var(--chart-2)' }} />
+                تقدّم الكورسات
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="flex h-[260px] items-center justify-center text-center text-sm text-muted-foreground">
+            لا توجد فروع مرتبطة بالسنة الدراسية لهذا الطالب بعد.
+          </div>
+        )}
       </ChartCard>
 
       <ChartCard title="حالة الواجبات" subtitle="توزيع الواجبات المسلّمة والمتأخرة">

@@ -20,6 +20,7 @@ export function StudentFormModal() {
     formOpen,
     closeForm,
     submitForm,
+    stages,
     deleting,
     closeDelete,
     confirmDelete,
@@ -34,6 +35,7 @@ export function StudentFormModal() {
   const [phone, setPhone] = useState('')
   const [gender, setGender] = useState<StudentGender>('ذكر')
   const [status, setStatus] = useState<StudentStatus>('نشط')
+  const [stageId, setStageId] = useState<string>('')
 
   // invite field
   const [inviteEmail, setInviteEmail] = useState('')
@@ -47,6 +49,7 @@ export function StudentFormModal() {
       setPhone('')
       setGender('ذكر')
       setStatus('نشط')
+      setStageId('')
       setInviteEmail('')
     }
   }, [formOpen])
@@ -61,6 +64,7 @@ export function StudentFormModal() {
       phone: phone.trim(),
       gender,
       status,
+      stageId: stageId || null,
     })
   }
 
@@ -176,6 +180,30 @@ export function StudentFormModal() {
                 لو الطالب مرفقش صورة، هيتحطله أفاتار تلقائي حسب الجنس.
               </p>
             </Field>
+            {stages.length > 0 && (
+              <Field label="السنة الدراسية">
+                <div className="flex flex-wrap gap-2">
+                  {stages.map((stage) => (
+                    <button
+                      key={stage.id}
+                      type="button"
+                      onClick={() => setStageId((prev) => (prev === stage.id ? '' : stage.id))}
+                      className={cn(
+                        'rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors',
+                        stageId === stage.id
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border bg-secondary/60 text-muted-foreground hover:bg-secondary',
+                      )}
+                    >
+                      {stage.title}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  تُستخدم لمقارنة أداء الطالب عبر فروع المادة في سنته.
+                </p>
+              </Field>
+            )}
             <Field label="الحالة">
               <div className="flex gap-2">
                 {statuses.map((s) => (

@@ -16,6 +16,23 @@ export type StudentInput = {
   phone: string
   gender: StudentGender
   status: StudentStatus
+  stageId?: string | null
+}
+
+export type StageOption = { id: string; title: string }
+
+// Academic years used to assign a student and drive the branch comparison.
+export async function getStages(): Promise<StageOption[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('stages')
+    .select('id, title, sort_order')
+    .order('sort_order', { ascending: true })
+  if (error) {
+    console.log('[v0] getStages error:', error.message)
+    return []
+  }
+  return (data || []).map((s: any) => ({ id: s.id, title: s.title }))
 }
 
 // Ensures the current session belongs to an admin before privileged writes.
@@ -149,6 +166,7 @@ export async function createStudent(input: StudentInput) {
     phone: input.phone || null,
     gender: input.gender,
     status: input.status,
+    stage_id: input.stageId || null,
   })
 
   if (error) {

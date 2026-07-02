@@ -38,6 +38,7 @@ export type ExamMeta = {
   duration: number
   passMark: number
   shuffle: boolean
+  branchId: string | null
 }
 
 export const questionTypeMeta: Record<

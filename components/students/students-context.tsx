@@ -15,7 +15,7 @@ import {
   type StudentRecord,
   type StudentStatus,
 } from '@/lib/students-data'
-import { createStudent, deleteStudent } from '@/app/admin/students/actions'
+import { createStudent, deleteStudent, type StageOption } from '@/app/admin/students/actions'
 
 export type StudentFormValues = {
   name: string
@@ -24,10 +24,12 @@ export type StudentFormValues = {
   phone: string
   gender: StudentGender
   status: StudentStatus
+  stageId?: string | null
 }
 
 type StudentsContextValue = {
   students: StudentRecord[]
+  stages: StageOption[]
   openCreate: () => void
   requestDelete: (student: StudentRecord) => void
   exportData: () => void
@@ -50,9 +52,11 @@ export function useStudents() {
 export function StudentsProvider({
   children,
   initialStudents,
+  stages,
 }: {
   children: ReactNode
   initialStudents: StudentRecord[]
+  stages: StageOption[]
 }) {
   const router = useRouter()
   const [students, setStudents] = useState<StudentRecord[]>(initialStudents)
@@ -62,6 +66,7 @@ export function StudentsProvider({
   const value = useMemo<StudentsContextValue>(
     () => ({
       students,
+      stages,
       openCreate: () => setFormOpen(true),
       requestDelete: (student) => setDeleting(student),
       exportData: () => {
@@ -93,6 +98,7 @@ export function StudentsProvider({
           phone: values.phone,
           gender: values.gender,
           status: values.status,
+          stageId: values.stageId ?? null,
         })
         if (result?.error) {
           toast.error(result.error)
@@ -119,7 +125,7 @@ export function StudentsProvider({
         router.refresh()
       },
     }),
-    [students, formOpen, deleting, router],
+    [students, stages, formOpen, deleting, router],
   )
 
   return (
