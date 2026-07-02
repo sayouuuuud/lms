@@ -1,7 +1,7 @@
-import { Video, ClipboardList, FileText, BookOpenCheck } from 'lucide-react'
+import { Video, ClipboardList, FileText, BookOpenCheck, CalendarDays } from 'lucide-react'
 import { PanelCard } from '@/components/dashboard/panel-card'
 import { cn } from '@/lib/utils'
-import { upcomingSchedule, type ScheduleItem } from '@/lib/student-data'
+import type { ScheduleItem } from '@/lib/student-types'
 
 const typeConfig: Record<
   ScheduleItem['type'],
@@ -13,11 +13,24 @@ const typeConfig: Record<
   مراجعة: { icon: BookOpenCheck, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
 }
 
-export function UpcomingSchedule() {
+export function UpcomingSchedule({ schedule = [] }: { schedule?: ScheduleItem[] }) {
+  if (schedule.length === 0) {
+    return (
+      <PanelCard title="جدولي القادم" action="عرض الكل" actionHref="/student/schedule">
+        <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+            <CalendarDays className="size-6 text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground">لا توجد أحداث قادمة</p>
+        </div>
+      </PanelCard>
+    )
+  }
+
   return (
-    <PanelCard title="جدولي القادم" action="عرض الكل">
+    <PanelCard title="جدولي القادم" action="عرض الكل" actionHref="/student/schedule">
       <ul className="space-y-0.5">
-        {upcomingSchedule.map((item) => {
+        {schedule.map((item) => {
           const config = typeConfig[item.type] ?? typeConfig['محاضرة']
           return (
             <li

@@ -1,10 +1,24 @@
+import Link from 'next/link'
 import { Megaphone } from 'lucide-react'
 import { PanelCard } from '@/components/dashboard/panel-card'
-import { announcements } from '@/lib/student-data'
+import type { Announcement } from '@/lib/student-types'
 
-export function Announcements() {
+export function Announcements({ announcements = [] }: { announcements?: Announcement[] }) {
+  if (announcements.length === 0) {
+    return (
+      <PanelCard title="إعلانات و تنبيهات" action="عرض الكل" actionHref="/student/notifications">
+        <div className="flex min-h-[140px] flex-col items-center justify-center gap-2 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+            <Megaphone className="size-6 text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground">لا توجد إعلانات حديثة</p>
+        </div>
+      </PanelCard>
+    )
+  }
+
   return (
-    <PanelCard title="إعلانات و تنبيهات" action="عرض الكل">
+    <PanelCard title="إعلانات و تنبيهات" action="عرض الكل" actionHref="/student/notifications">
       <ul className="space-y-2">
         {announcements.map((item) => (
           <li key={item.id} className="flex gap-3">
@@ -21,9 +35,11 @@ export function Announcements() {
               <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                 {item.text}
               </p>
-              <span className="mt-1 inline-block text-[11px] font-medium text-primary">
-                {item.course}
-              </span>
+              {item.course && (
+                <span className="mt-1 inline-block text-[11px] font-medium text-primary">
+                  {item.course}
+                </span>
+              )}
             </div>
           </li>
         ))}

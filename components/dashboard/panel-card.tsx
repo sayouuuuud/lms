@@ -1,6 +1,7 @@
 'use client'
 
 import { type ReactNode, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { ChevronDown, Check } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 
@@ -13,6 +14,7 @@ export function PanelCard({
   filterValue,
   onFilterChange,
   action,
+  actionHref,
   children,
 }: {
   title: string
@@ -23,6 +25,8 @@ export function PanelCard({
   filterValue?: string
   onFilterChange?: (value: string) => void
   action?: string
+  /** If provided, the action button becomes a link. */
+  actionHref?: string
   children: ReactNode
 }) {
   return (
@@ -41,12 +45,15 @@ export function PanelCard({
           </span>
         ) : null}
         {action && (
-          <button
-            type="button"
-            className="text-xs font-semibold text-primary hover:underline"
-          >
-            {action}
-          </button>
+          actionHref ? (
+            <Link href={actionHref} className="text-xs font-semibold text-primary hover:underline">
+              {action}
+            </Link>
+          ) : (
+            <button type="button" className="text-xs font-semibold text-primary hover:underline">
+              {action}
+            </button>
+          )
         )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>

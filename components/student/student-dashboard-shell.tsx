@@ -8,7 +8,7 @@ import { MyCourses } from './my-courses'
 import { UpcomingSchedule } from './upcoming-schedule'
 import { RecentGrades } from './recent-grades'
 import { LearningActivityChart } from './learning-activity-chart'
-import type { ActivityDay } from '@/lib/student-types'
+import type { ActivityDay, CourseProgress, ScheduleItem, GradeItem, Announcement } from '@/lib/student-types'
 import { Announcements } from './announcements'
 import { UpcomingExams } from './upcoming-exams'
 import { WeeklyGoals } from './weekly-goals'
@@ -21,55 +21,53 @@ export function StudentDashboardShell({
   announcements,
   activity,
 }: {
-  enrolledCourses: any[]
-  schedule: any[]
-  grades: any[]
-  announcements: any[]
+  enrolledCourses: CourseProgress[]
+  schedule: ScheduleItem[]
+  grades: GradeItem[]
+  announcements: Announcement[]
   activity: ActivityDay[]
 }) {
   return (
-      <div className="flex flex-col gap-4">
-        <StudentWelcome />
-        <StudentStats />
+    <div className="flex flex-col gap-4">
+      <StudentWelcome />
+      <StudentStats courses={enrolledCourses} grades={grades} activity={activity} />
 
-        {/* Row 1: أكمل من حيث توقفت (wide) + الاختبارات القادمة */}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <ContinueLearning courses={enrolledCourses} />
-          </div>
-          <div className="xl:col-span-1">
-            <UpcomingExams schedule={schedule} />
-          </div>
+      {/* Row 1: أكمل من حيث توقفت (wide) + الاختبارات القادمة */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <ContinueLearning courses={enrolledCourses} />
         </div>
-
-        {/* Row 2: الجدول + نشاط التعلم (wide) */}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-1">
-            <UpcomingSchedule schedule={schedule} />
-          </div>
-          <div className="xl:col-span-2">
-            <LearningActivityChart activity={activity} />
-          </div>
+        <div className="xl:col-span-1">
+          <UpcomingExams schedule={schedule} />
         </div>
-
-        {/* Row 3: أحدث الدرجات + الأهداف الأسبوعية + إنجازات الشهر */}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <RecentGrades grades={grades} />
-          <WeeklyGoals />
-          <MonthlyProgress />
-        </div>
-
-        {/* Row 4: إعلانات + كورساتي */}
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <div className="xl:col-span-1">
-            <Announcements announcements={announcements} />
-          </div>
-          <div className="xl:col-span-2">
-            <MyCourses courses={enrolledCourses} />
-          </div>
-        </div>
-
-
       </div>
+
+      {/* Row 2: الجدول + نشاط التعلم (wide) */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="xl:col-span-1">
+          <UpcomingSchedule schedule={schedule} />
+        </div>
+        <div className="xl:col-span-2">
+          <LearningActivityChart activity={activity} />
+        </div>
+      </div>
+
+      {/* Row 3: أحدث الدرجات + الأهداف الأسبوعية + إنجازات الشهر */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <RecentGrades grades={grades} />
+        <WeeklyGoals />
+        <MonthlyProgress />
+      </div>
+
+      {/* Row 4: إعلانات + كورساتي */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="xl:col-span-1">
+          <Announcements announcements={announcements} />
+        </div>
+        <div className="xl:col-span-2">
+          <MyCourses courses={enrolledCourses} />
+        </div>
+      </div>
+    </div>
   )
 }

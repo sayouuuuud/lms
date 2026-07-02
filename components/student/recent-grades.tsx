@@ -1,6 +1,8 @@
+import Link from 'next/link'
 import { PanelCard } from '@/components/dashboard/panel-card'
 import { cn } from '@/lib/utils'
-import { recentGrades } from '@/lib/student-data'
+import { Award } from 'lucide-react'
+import type { GradeItem } from '@/lib/student-types'
 
 function gradeColor(percent: number) {
   if (percent >= 90) return 'text-emerald-600'
@@ -9,12 +11,25 @@ function gradeColor(percent: number) {
   return 'text-rose-600'
 }
 
-export function RecentGrades() {
+export function RecentGrades({ grades = [] }: { grades?: GradeItem[] }) {
+  if (grades.length === 0) {
+    return (
+      <PanelCard title="أحدث الدرجات" action="عرض الكل" actionHref="/student/grades">
+        <div className="flex min-h-[140px] flex-col items-center justify-center gap-2 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+            <Award className="size-6 text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground">لا توجد درجات مصحّحة بعد</p>
+        </div>
+      </PanelCard>
+    )
+  }
+
   return (
-    <PanelCard title="أحدث الدرجات" action="عرض الكل">
+    <PanelCard title="أحدث الدرجات" action="عرض الكل" actionHref="/student/grades">
       <ul className="space-y-0.5">
-        {recentGrades.map((grade) => {
-          const percent = Math.round((grade.score / grade.total) * 100)
+        {grades.map((grade) => {
+          const percent = grade.total > 0 ? Math.round((grade.score / grade.total) * 100) : 0
           return (
             <li
               key={grade.id}

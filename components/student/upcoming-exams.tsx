@@ -1,54 +1,37 @@
 'use client'
 
+import Link from 'next/link'
 import { PanelCard } from '@/components/dashboard/panel-card'
-import { Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Clock, AlertCircle, ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const exams = [
-  {
-    id: 'e1',
-    title: 'اختبار الوحدة الثالثة',
-    course: 'علوم البيانات وPython',
-    date: 'غداً',
-    time: '05:00 م',
-    duration: '60 دقيقة',
-    status: 'قريب',
-    questions: 20,
-  },
-  {
-    id: 'e2',
-    title: 'اختبار منتصف الفصل',
-    course: 'تطوير واجهات React',
-    date: 'الأحد',
-    time: '07:00 م',
-    duration: '90 دقيقة',
-    status: 'قادم',
-    questions: 35,
-  },
-  {
-    id: 'e3',
-    title: 'اختبار نهائي التصميم',
-    course: 'أساسيات UI/UX',
-    date: '5 يوليو',
-    time: '03:00 م',
-    duration: '120 دقيقة',
-    status: 'قادم',
-    questions: 50,
-  },
-]
+import type { ScheduleItem } from '@/lib/student-types'
 
 const statusConfig = {
   قريب: { color: 'text-red-500', bg: 'bg-red-500/10', icon: AlertCircle },
   قادم: { color: 'text-primary', bg: 'bg-primary/10', icon: Clock },
-  مكتمل: { color: 'text-green-500', bg: 'bg-green-500/10', icon: CheckCircle2 },
 }
 
-export function UpcomingExams() {
+export function UpcomingExams({ schedule = [] }: { schedule?: ScheduleItem[] }) {
+  const exams = schedule.filter((item) => item.type === 'اختبار').slice(0, 4)
+
+  if (exams.length === 0) {
+    return (
+      <PanelCard title="الاختبارات القادمة" action="عرض الكل" actionHref="/student/exams">
+        <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+            <ClipboardList className="size-6 text-muted-foreground" />
+          </div>
+          <p className="text-sm text-muted-foreground">لا توجد اختبارات قادمة</p>
+        </div>
+      </PanelCard>
+    )
+  }
+
   return (
-    <PanelCard title="الاختبارات القادمة" action="عرض الكل">
+    <PanelCard title="الاختبارات القادمة" action="عرض الكل" actionHref="/student/exams">
       <ul className="space-y-0.5">
         {exams.map((exam) => {
-          const cfg = statusConfig[exam.status as keyof typeof statusConfig] ?? statusConfig['قادم']
+          const cfg = statusConfig['قادم']
           const Icon = cfg.icon
           return (
             <li
@@ -62,8 +45,9 @@ export function UpcomingExams() {
                 <p className="truncate text-sm font-medium text-foreground">{exam.title}</p>
                 <p className="truncate text-xs text-muted-foreground">{exam.course}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className={cn('text-xs font-semibold', cfg.color)}>{exam.date} · {exam.time}</span>
-                  <span className="text-xs text-muted-foreground">{exam.duration} · {exam.questions} سؤال</span>
+                  <span className={cn('text-xs font-semibold', cfg.color)}>
+                    {exam.day} · {exam.time}
+                  </span>
                 </div>
               </div>
             </li>

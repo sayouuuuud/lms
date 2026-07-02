@@ -233,35 +233,58 @@ export async function getStudentRecentGrades() {
   const student = await getCurrentStudent(supabase)
   if (!student) return []
 
-  const { data: subs } = await supabase
+  // Fetch graded assignment submissions first.
+  const { data: asgSubs } = await supabase
     .from('assignment_submissions')
-    .select(`
-      id,
-      score,
-      submitted_at,
-      assignments (
-        title,
-        points,
-        courses (title)
-      )
-    `)
+    .select('id, score, submitted_at, assignments(title, points, lecture_id, lectures:lecture_id(title))')
     .eq('student_id', student.id)
     .eq('status', 'مصحّح')
     .order('submitted_at', { ascending: false })
     .limit(5)
 
-  if (!subs) return []
+  // Fetch graded exam submissions too.
+  const { data: examSubs } = await supabase
+    .from('exam_submissions')
+    .select('id, score, total, submitted_at, grading_status, exams(title, course)')
+    .eq('student_id', student.id)
+    .eq('grading_status', 'graded')
+    .order('submitted_at', { ascending: false })
+    .limit(5)
 
-  return subs.map((s: any) => {
-    return {
+  const grades: import('@/lib/student-types').GradeItem[] = []
+
+  for (const s of asgSubs ?? []) {
+    const asg = s.assignments as any
+    grades.push({
       id: s.id,
-      title: s.assignments?.title,
-      course: s.assignments?.courses?.title || 'عام',
-      score: s.score || 0,
-      total: s.assignments?.points || 0,
-      date: s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('ar-EG') : '',
-    }
-  })
+      title: asg?.title ?? '—',
+      course: (asg?.lectures as any)?.title ?? 'عام',
+      score: s.score ?? 0,
+      total: asg?.points ?? 0,
+      date: s.submitted_at
+        ? new Date(s.submitted_at).toLocaleDateString('ar-EG')
+        : '',
+    })
+  }
+
+  for (const s of examSubs ?? []) {
+    const ex = s.exams as any
+    grades.push({
+      id: s.id,
+      title: ex?.title ?? '—',
+      course: ex?.course ?? 'عام',
+      score: s.score ?? 0,
+      total: (s as any).total ?? 0,
+      date: s.submitted_at
+        ? new Date(s.submitted_at).toLocaleDateString('ar-EG')
+        : '',
+    })
+  }
+
+  // Sort merged list by recency, keep top 5.
+  return grades
+    .sort((a, b) => (a.date > b.date ? -1 : 1))
+    .slice(0, 5)
 }
 
 export async function getStudentCertificates() {
