@@ -182,7 +182,7 @@ export async function getStudentExam(code: string): Promise<StudentExam | null> 
     let keyMap = new Map<string, { correct: string | null; model: string | null }>()
 
     if (submission.questions_snapshot && Array.isArray(submission.questions_snapshot)) {
-      const snap = submission.questions_snapshot as QuestionsSnapshot
+      const snap = submission.questions_snapshot as unknown as QuestionsSnapshot
       qList = sanitizeQuestions(snap).map((q) => ({
         id: q.id,
         type: q.questionType,
