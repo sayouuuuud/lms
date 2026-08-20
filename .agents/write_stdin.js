@@ -1,0 +1,1 @@
+const fs = require("fs"); fs.writeFileSync(process.argv[2], fs.readFileSync(0));

@@ -273,10 +273,10 @@ export async function updateAdminEmail(input: { newEmail: string; currentPasswor
       return { error: 'البريد الإلكتروني مستخدم من حساب آخر.' }
     }
 
-    await prisma.$transaction([
-      prisma.user.update({ where: { id: dbUser.id }, data: { email: newEmail } }),
-      prisma.profiles.update({ where: { id: dbUser.id }, data: { email: newEmail } }),
-    ])
+    await prisma.$transaction(async (tx: any) => {
+      await tx.user.update({ where: { id: dbUser.id }, data: { email: newEmail } })
+      await tx.profiles.update({ where: { id: dbUser.id }, data: { email: newEmail } })
+    })
 
     logActivity({ action: 'update', resource: 'settings', targetLabel: 'تغيير البريد الإلكتروني للأدمن' }).catch(() => {})
     revalidatePath('/admin', 'layout')

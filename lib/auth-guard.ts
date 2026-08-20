@@ -1,6 +1,6 @@
 import 'server-only'
 import { auth } from '@/auth'
-import { prisma } from '@/lib/prisma'
+import { prisma, runWithUserContext, userContextStorage, type UserContext } from '@/lib/prisma'
 import {
   type AccessLevel,
   type PermissionMap,
@@ -64,9 +64,20 @@ export async function hasResourceAccess(
   resource: ResourceKey,
   level: AccessLevel = 'view',
 ): Promise<boolean> {
-  const role = await getCurrentRole()
+  const session = await auth()
+  const user = session?.user as any
+  const role = user?.role
   if (role === 'admin') return true
   if (role !== 'assistant') return false
+
+  if (user?.id) {
+    userContextStorage.enterWith({
+      id: user.id,
+      role: 'assistant',
+      email: user.email,
+    })
+  }
+
   const map = await getPermissionMap()
   return satisfies(map[resource], level)
 }
@@ -76,8 +87,55 @@ export async function getCurrentStudent() {
   const session = await auth()
   const user = session?.user
   if (!user) return null
-  const data = await prisma.students.findFirst({
+  const context: UserContext = {
+    id: user.id,
+    role: (user as any).role || 'student',
+    email: user.email,
+  }
+  userContextStorage.enterWith(context)
+  return await prisma.students.findFirst({
     where: { user_id: user.id }
   })
-  return data
+}
+
+/**
+ * Executes a callback with the authenticated user context bound to Prisma queries.
+ */
+export async function withAuthContext<T>(
+  fn: (user: any) => Promise<T>
+): Promise<T> {
+  const session = await auth()
+  const user = session?.user
+  const context: UserContext = user
+    ? { id: user.id, role: (user as any).role || 'student', email: user.email }
+    : { role: 'anon' }
+
+  userContextStorage.enterWith(context)
+  return runWithUserContext(context, async () => {
+    return await fn(user)
+  })
+}
+
+/**
+ * Executes a callback with the authenticated student context and student record bound to Prisma queries.
+ */
+export async function withStudentAuth<T>(
+  fn: (student: any, user: any) => Promise<T>
+): Promise<T | null> {
+  const session = await auth()
+  const user = session?.user
+  if (!user) return null
+  const context: UserContext = {
+    id: user.id,
+    role: (user as any).role || 'student',
+    email: user.email,
+  }
+  userContextStorage.enterWith(context)
+  return runWithUserContext(context, async () => {
+    const student = await prisma.students.findFirst({
+      where: { user_id: user.id }
+    })
+    if (!student) return null
+    return await fn(student, user)
+  })
 }

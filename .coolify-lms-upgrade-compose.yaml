@@ -1,0 +1,50 @@
+services:
+    dprbtcyerdqrgim5cdvgruco-131052782266:
+        image: 'dprbtcyerdqrgim5cdvgruco:7da5b94fdc219156ec284ca787f4ab8d07105fd3'
+        container_name: dprbtcyerdqrgim5cdvgruco-131052782266
+        restart: unless-stopped
+        expose:
+            - '3000'
+        networks:
+            coolify:
+                aliases:
+                    - dprbtcyerdqrgim5cdvgruco-131052782266
+        mem_limit: '0'
+        memswap_limit: '0'
+        mem_swappiness: 60
+        mem_reservation: '0'
+        cpus: 0.0
+        cpu_shares: 1024
+        env_file:
+            - .env
+        labels:
+            - traefik.enable=true
+            - traefik.http.middlewares.gzip.compress=true
+            - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+            - traefik.http.routers.http-0-dprbtcyerdqrgim5cdvgruco.entryPoints=http
+            - traefik.http.routers.http-0-dprbtcyerdqrgim5cdvgruco.middlewares=gzip
+            - 'traefik.http.routers.http-0-dprbtcyerdqrgim5cdvgruco.rule=Host(`dprbtcyerdqrgim5cdvgruco.169.58.172.222.sslip.io`) && PathPrefix(`/`)'
+            - traefik.http.routers.http-0-dprbtcyerdqrgim5cdvgruco.service=http-0-dprbtcyerdqrgim5cdvgruco
+            - traefik.http.services.http-0-dprbtcyerdqrgim5cdvgruco.loadbalancer.server.port=3000
+            - 'caddy_0.encode=zstd gzip'
+            - 'caddy_0.handle_path.0_reverse_proxy={{upstreams 3000}}'
+            - 'caddy_0.handle_path=/*'
+            - caddy_0.header=-Server
+            - 'caddy_0.try_files={path} /index.html /index.php'
+            - 'caddy_0=http://dprbtcyerdqrgim5cdvgruco.169.58.172.222.sslip.io'
+            - caddy_ingress_network=coolify
+            - coolify.managed=true
+            - coolify.version=4.3.1
+            - coolify.applicationId=6
+            - coolify.type=application
+            - coolify.name=dprbtcyerdqrgim5cdvgruco
+            - coolify.resourceName=lms-upgrade
+            - coolify.projectName=lms
+            - coolify.serviceName=lms-upgrade
+            - coolify.environmentName=production
+            - coolify.pullRequestId=0
+networks:
+    coolify:
+        external: true
+        name: coolify
+        attachable: true

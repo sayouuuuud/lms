@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   AlarmClock,
+  AlertCircle,
   ArrowRight,
   Award,
   CheckCircle2,
@@ -16,6 +17,7 @@ import {
   Loader2,
   Paperclip,
   Send,
+  WifiOff,
   XCircle,
 } from 'lucide-react'
 import Image from 'next/image'
@@ -24,11 +26,17 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ImageUploadField } from '@/components/ui/image-upload-field'
 import { cn } from '@/lib/utils'
-import { submitExam, type StudentExam } from '@/app/student/exams/actions'
+import {
+  startOrResumeExamAttemptAction,
+  saveDraftAnswersAction,
+  submitExamAttemptAction,
+  type StudentExam,
+} from '@/app/student/exams/actions'
 
 const OPTION_LABELS = ['أ', 'ب', 'ج', 'د', 'هـ', 'و']
 
 type Phase = 'intro' | 'taking' | 'result'
+type SyncStatus = 'saved' | 'saving' | 'offline' | 'error'
 
 type LocalAnswer = {
   selectedOption?: string | null
@@ -37,32 +45,213 @@ type LocalAnswer = {
 }
 
 function formatTime(total: number) {
-  const m = Math.floor(total / 60)
-  const s = total % 60
+  const t = Math.max(0, total)
+  const m = Math.floor(t / 60)
+  const s = t % 60
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 export function ExamDetail({ exam }: { exam: StudentExam }) {
   const router = useRouter()
   const alreadySubmitted = exam.submission != null
-  const [phase, setPhase] = useState<Phase>(alreadySubmitted ? 'result' : 'intro')
-  const [answers, setAnswers] = useState<Record<string, LocalAnswer>>({})
-  const [secondsLeft, setSecondsLeft] = useState(exam.durationMinutes * 60)
+  const hasActiveAttempt =
+    !alreadySubmitted &&
+    exam.activeAttempt != null &&
+    exam.activeAttempt.status === 'in_progress' &&
+    exam.activeAttempt.remainingSeconds > 0
+
+  const [phase, setPhase] = useState<Phase>(
+    alreadySubmitted ? 'result' : hasActiveAttempt ? 'taking' : 'intro'
+  )
+  const [attemptId, setAttemptId] = useState<string | null>(
+    exam.activeAttempt?.id || null
+  )
+  const [answers, setAnswers] = useState<Record<string, LocalAnswer>>(() => {
+    return (exam.activeAttempt?.draftAnswers as Record<string, LocalAnswer>) || {}
+  })
+  const [secondsLeft, setSecondsLeft] = useState<number>(() => {
+    if (hasActiveAttempt && exam.activeAttempt) {
+      return exam.activeAttempt.remainingSeconds
+    }
+    return exam.durationMinutes * 60
+  })
+
+  const [questions, setQuestions] = useState(exam.questions || [])
   const [submitting, setSubmitting] = useState(false)
+  const [starting, setStarting] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('saved')
+  const [isOnline, setIsOnline] = useState(true)
 
-  const questions = exam.questions
+  const answersRef = useRef(answers)
+  answersRef.current = answers
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const attemptIdRef = useRef(attemptId)
+  attemptIdRef.current = attemptId
 
-  // Countdown while taking; auto-submit on timeout.
+  // Online / Offline Detection
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsOnline(navigator.onLine)
+
+    const handleOnline = () => {
+      setIsOnline(true)
+      setSyncStatus('saving')
+      toast.success('تمت استعادة الاتصال بالإنترنت')
+      // Flush draft on reconnect
+      if (attemptIdRef.current) {
+        saveDraftAnswersAction(attemptIdRef.current, answersRef.current)
+          .then((res) => {
+            if (res.success) {
+              setSyncStatus('saved')
+              if (res.remainingSeconds > 0) {
+                setSecondsLeft(res.remainingSeconds)
+              }
+            } else {
+              setSyncStatus('error')
+            }
+          })
+          .catch(() => setSyncStatus('error'))
+      }
+    }
+
+    const handleOffline = () => {
+      setIsOnline(false)
+      setSyncStatus('offline')
+      toast.warning('انقطع الاتصال بالإنترنت - إجاباتك محفوظة محلياً')
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Local storage restoration on mount if active attempt exists
+  useEffect(() => {
+    if (typeof window === 'undefined' || !attemptId) return
+    const localKey = `exam_draft_${attemptId}`
+    try {
+      const stored = localStorage.getItem(localKey)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setAnswers((prev) => ({ ...prev, ...parsed }))
+      }
+    } catch (e) {
+      // LocalStorage access error ignored
+    }
+  }, [attemptId])
+
+  // Countdown timer while taking
   useEffect(() => {
     if (phase !== 'taking') return
     if (secondsLeft <= 0) {
-      void handleSubmit()
+      void handleSubmit(true)
       return
     }
-    const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000)
-    return () => clearTimeout(t)
+
+    const timer = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          clearInterval(timer)
+          void handleSubmit(true)
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, secondsLeft])
+
+  // Periodic heartbeat sync every 15s while taking
+  useEffect(() => {
+    if (phase !== 'taking' || !attemptId) return
+
+    heartbeatIntervalRef.current = setInterval(async () => {
+      if (!navigator.onLine) return
+      try {
+        const res = await saveDraftAnswersAction(attemptId, answersRef.current)
+        if (res.success) {
+          setSyncStatus('saved')
+          if (res.remainingSeconds > 0) {
+            // Drift correction: sync timer with server if drift > 3s
+            setSecondsLeft((prev) => {
+              const diff = Math.abs(prev - res.remainingSeconds)
+              return diff > 3 ? res.remainingSeconds : prev
+            })
+          }
+        } else if (res.expired) {
+          toast.error('انتهى الوقت المحدد للاختبار')
+          void handleSubmit(true)
+        }
+      } catch (e) {
+        // Network sync error, will retry on next interval
+      }
+    }, 15000)
+
+    return () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, attemptId])
+
+  // Debounced auto-save triggers when answers change
+  const triggerDebouncedSave = useCallback((newAnswers: Record<string, LocalAnswer>) => {
+    if (typeof window !== 'undefined' && attemptIdRef.current) {
+      try {
+        localStorage.setItem(`exam_draft_${attemptIdRef.current}`, JSON.stringify(newAnswers))
+      } catch (e) {}
+    }
+
+    if (!navigator.onLine) {
+      setSyncStatus('offline')
+      return
+    }
+
+    setSyncStatus('saving')
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      if (!attemptIdRef.current) return
+      try {
+        const res = await saveDraftAnswersAction(attemptIdRef.current, newAnswers)
+        if (res.success) {
+          setSyncStatus('saved')
+          if (res.remainingSeconds > 0) {
+            setSecondsLeft((prev) => {
+              const diff = Math.abs(prev - res.remainingSeconds)
+              return diff > 5 ? res.remainingSeconds : prev
+            })
+          }
+        } else if (res.expired) {
+          toast.error('انتهت مدة الاختبار')
+          setSyncStatus('error')
+          void handleSubmit(true)
+        } else {
+          setSyncStatus('error')
+        }
+      } catch (e) {
+        setSyncStatus('error')
+      }
+    }, 800)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const setAnswer = (qId: string, patch: LocalAnswer) => {
+    setAnswers((prev) => {
+      const updated = { ...prev, [qId]: { ...prev[qId], ...patch } }
+      triggerDebouncedSave(updated)
+      return updated
+    })
+  }
 
   const isAnswered = (qId: string) => {
     const a = answers[qId]
@@ -80,31 +269,84 @@ export function ExamDetail({ exam }: { exam: StudentExam }) {
     ? Math.round((answeredCount / questions.length) * 100)
     : 0
 
-  const setAnswer = (qId: string, patch: LocalAnswer) =>
-    setAnswers((prev) => ({ ...prev, [qId]: { ...prev[qId], ...patch } }))
+  async function handleStart() {
+    if (starting) return
+    setStarting(true)
+    try {
+      const res = await startOrResumeExamAttemptAction(exam.code)
+      if (!res.success || !res.attempt) {
+        toast.error(res.error || 'تعذر بدء الاختبار')
+        return
+      }
 
-  async function handleSubmit() {
+      setAttemptId(res.attempt.id)
+      attemptIdRef.current = res.attempt.id
+      setSecondsLeft(res.attempt.remainingSeconds)
+      if (res.attempt.questions && res.attempt.questions.length > 0) {
+        setQuestions(res.attempt.questions)
+      }
+      if (res.attempt.draftAnswers) {
+        setAnswers((prev) => ({ ...prev, ...res.attempt!.draftAnswers }))
+      }
+      setPhase('taking')
+      toast.success('تم بدء الاختبار بنجاح')
+    } catch (e: any) {
+      toast.error(e?.message || 'حدث خطأ أثناء بدء الاختبار')
+    } finally {
+      setStarting(false)
+    }
+  }
+
+  async function handleSubmit(auto: boolean = false) {
     if (submitting) return
+    if (!navigator.onLine && !auto) {
+      toast.error('أنت غير متصل بالإنترنت. يرجى الانتظار حتى عودة الاتصال لتسليم الاختبار بأمان.')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const payload = questions.map((q) => ({
+      const currentId = attemptIdRef.current || attemptId
+      if (!currentId) {
+        toast.error('لا توجد محاولة نشطة للتسليم')
+        return
+      }
+
+      const payloadAnswers = questions.map((q) => ({
         questionId: q.id,
-        selectedOption: answers[q.id]?.selectedOption ?? null,
-        answerText: answers[q.id]?.answerText ?? null,
-        fileUrl: answers[q.id]?.fileUrl ?? null,
+        selectedOption: answersRef.current[q.id]?.selectedOption ?? null,
+        answerText: answersRef.current[q.id]?.answerText ?? null,
+        fileUrl: answersRef.current[q.id]?.fileUrl ?? null,
       }))
-      const result = await submitExam(exam.code, payload)
+
+      const idempotencyKey = `sub_${currentId}_${exam.code}`
+      const result = await submitExamAttemptAction({
+        attemptId: currentId,
+        idempotencyKey,
+        answers: payloadAnswers,
+      })
+
       if (!result.success) {
         toast.error(result.error || 'تعذر تسليم الاختبار')
         return
       }
+
+      // Cleanup local draft
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(`exam_draft_${currentId}`)
+        } catch (e) {}
+      }
+
       toast.success(
         result.gradingStatus === 'pending'
           ? 'تم تسليم اختبارك، النتيجة قيد التصحيح'
-          : 'تم تسليم اختبارك بنجاح',
+          : 'تم تسليم اختبارك بنجاح'
       )
       setPhase('result')
       router.refresh()
+    } catch (e: any) {
+      toast.error(e?.message || 'تعذر تسليم الاختبار')
     } finally {
       setSubmitting(false)
     }
@@ -127,6 +369,16 @@ export function ExamDetail({ exam }: { exam: StudentExam }) {
         كل الاختبارات
       </Link>
 
+      {/* Offline Alert Banner */}
+      {!isOnline && phase === 'taking' && (
+        <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-700 dark:text-amber-300">
+          <WifiOff className="size-5 shrink-0" />
+          <p className="text-sm font-medium">
+            ⚠️ انقطع الاتصال بالإنترنت. إجاباتك محفوظة بأمان على جهازك، وسنقوم بمزامنتها تلقائياً مع الخادم فور عودة الاتصال.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <Card className="p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -144,10 +396,43 @@ export function ExamDetail({ exam }: { exam: StudentExam }) {
             </div>
           </div>
           {phase === 'taking' && (
-            <span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-sm font-bold text-primary tabular-nums">
-              <AlarmClock className="size-4" />
-              {formatTime(secondsLeft)}
-            </span>
+            <div className="flex items-center gap-3">
+              {/* Sync Status Badge */}
+              <div className="flex items-center gap-1.5 text-xs">
+                {syncStatus === 'saving' && (
+                  <span className="flex items-center gap-1 text-primary">
+                    <Loader2 className="size-3.5 animate-spin" />
+                    جاري الحفظ...
+                  </span>
+                )}
+                {syncStatus === 'saved' && (
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <CheckCircle2 className="size-3.5" />
+                    تم الحفظ
+                  </span>
+                )}
+                {syncStatus === 'offline' && (
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                    <WifiOff className="size-3.5" />
+                    محلياً
+                  </span>
+                )}
+                {syncStatus === 'error' && (
+                  <span className="flex items-center gap-1 text-destructive font-medium">
+                    <AlertCircle className="size-3.5" />
+                    تعذر المزامنة
+                  </span>
+                )}
+              </div>
+
+              <span className={cn(
+                "inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold tabular-nums transition-colors",
+                secondsLeft < 180 ? "bg-destructive/10 text-destructive animate-pulse" : "bg-primary/10 text-primary"
+              )}>
+                <AlarmClock className="size-4" />
+                {formatTime(secondsLeft)}
+              </span>
+            </div>
           )}
         </div>
 
@@ -178,18 +463,22 @@ export function ExamDetail({ exam }: { exam: StudentExam }) {
           <div className="mt-6 flex items-center gap-3 rounded-xl bg-amber-500/10 p-4 text-amber-600 dark:text-amber-400">
             <AlarmClock className="size-5 shrink-0" />
             <p className="text-sm">
-              بمجرد بدء الاختبار سيبدأ العدّاد ({exam.durationMinutes} دقيقة). لا يمكنك
-              التسليم أكثر من مرة.
+              بمجرد بدء الاختبار سيبدأ العدّاد الموجه من الخادم ({exam.durationMinutes} دقيقة).
+              يتم حفظ إجاباتك تلقائياً باستمرار.
             </p>
           </div>
 
           <Button
             className="mt-6 w-fit"
-            onClick={() => setPhase('taking')}
-            disabled={questions.length === 0}
+            onClick={handleStart}
+            disabled={questions.length === 0 || starting}
           >
-            <ClipboardList className="size-4" />
-            بدء الاختبار الآن
+            {starting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <ClipboardList className="size-4" />
+            )}
+            {starting ? 'جاري بدء الاختبار...' : 'بدء الاختبار الآن'}
           </Button>
           {questions.length === 0 && (
             <p className="mt-2 text-xs text-muted-foreground">
@@ -249,19 +538,23 @@ export function ExamDetail({ exam }: { exam: StudentExam }) {
                     : undefined
                 }
                 pending={exam.submission?.gradingStatus === 'pending'}
+                disabled={secondsLeft <= 0 && phase === 'taking'}
               />
             ))}
           </ol>
 
           {phase === 'taking' && (
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Button onClick={handleSubmit} disabled={!allAnswered || submitting}>
+              <Button
+                onClick={() => handleSubmit(false)}
+                disabled={!allAnswered || submitting || (secondsLeft <= 0)}
+              >
                 {submitting ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <Send className="size-4" />
                 )}
-                تسليم الاختبار
+                {submitting ? 'جاري التسليم...' : 'تسليم الاختبار'}
               </Button>
               {!allAnswered && (
                 <p className="text-xs text-muted-foreground">
@@ -360,6 +653,7 @@ function QuestionBlock({
   onChange,
   review,
   pending,
+  disabled,
 }: {
   index: number
   question: StudentExam['questions'][number]
@@ -370,6 +664,7 @@ function QuestionBlock({
     ? never
     : NonNullable<StudentExam['submission']>['answers'][number]
   pending?: boolean
+  disabled?: boolean
 }) {
   const reviewing = phase === 'result'
 
@@ -411,7 +706,7 @@ function QuestionBlock({
               <button
                 key={oi}
                 type="button"
-                disabled={reviewing}
+                disabled={reviewing || disabled}
                 onClick={() => onChange({ selectedOption: opt })}
                 className={cn(
                   'flex items-center gap-3 rounded-xl border p-3 text-right text-sm transition-colors',
@@ -427,6 +722,7 @@ function QuestionBlock({
                     !isCorrect &&
                     !selected &&
                     'border-border text-muted-foreground',
+                  disabled && 'opacity-60 cursor-not-allowed'
                 )}
               >
                 <span
@@ -456,11 +752,12 @@ function QuestionBlock({
           </div>
         ) : (
           <textarea
+            disabled={disabled}
             value={localAnswer?.answerText ?? ''}
             onChange={(e) => onChange({ answerText: e.target.value })}
             placeholder="اكتب إجابتك هنا..."
             rows={4}
-            className="w-full resize-none rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card"
+            className="w-full resize-none rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:bg-card disabled:opacity-60 disabled:cursor-not-allowed"
           />
         ))}
 

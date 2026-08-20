@@ -636,6 +636,7 @@ model branches {
   lectures        lectures[]
   monthly_courses monthly_courses[]
   notifications   notifications[]
+  taxonomy_domains taxonomy_domains[]
 
   @@unique([stage_id, slug])
   @@index([stage_id], map: "idx_branches_stage")
@@ -859,6 +860,7 @@ model exam_questions {
   exam_answers          exam_answers[]
   exams                 exams                         @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   question_bank_questions question_bank_questions?    @relation(fields: [bank_question_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "exam_questions_bank_question_fk")
+  exam_question_skills  exam_question_skills[]
 
   @@index([bank_question_id], map: "idx_exam_questions_bank")
   @@schema("public")
@@ -866,22 +868,56 @@ model exam_questions {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model exam_attempts {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  exam_id            String             @db.Uuid
+  student_id         String             @db.Uuid
+  status             String             @default("in_progress")
+  started_at         DateTime           @default(now()) @db.Timestamptz(6)
+  expires_at         DateTime           @db.Timestamptz(6)
+  submitted_at       DateTime?          @db.Timestamptz(6)
+  last_heartbeat_at  DateTime           @default(now()) @db.Timestamptz(6)
+  idempotency_key    String?            @unique
+  questions_snapshot Json               @db.JsonB
+  answers            Json               @default("{}") @db.JsonB
+  score              Int?               @default(0)
+  total_points       Int                @default(0)
+  is_locked          Boolean            @default(false)
+  lock_timestamp     DateTime?          @db.Timestamptz(6)
+  created_at         DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime           @default(now()) @db.Timestamptz(6)
+  exams              exams              @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students           students           @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_submissions   exam_submissions[]
+
+  @@index([student_id, exam_id, status], map: "idx_exam_attempts_student_exam")
+  @@index([expires_at], map: "idx_exam_attempts_expires")
+  @@index([exam_id, status], map: "idx_exam_attempts_exam_status")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model exam_submissions {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  exam_id        String         @db.Uuid
-  student_id     String         @db.Uuid
-  score          Int
-  total          Int
-  status         String
-  submitted_at   DateTime       @default(now()) @db.Timestamptz(6)
-  grading_status String         @default("graded")
-  auto_score     Int            @default(0)
-  manual_score   Int            @default(0)
-  exam_answers   exam_answers[]
-  exams          exams          @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  students       students       @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  exam_id            String         @db.Uuid
+  student_id         String         @db.Uuid
+  attempt_id         String?        @db.Uuid
+  score              Int
+  total              Int
+  status             String
+  submitted_at       DateTime       @default(now()) @db.Timestamptz(6)
+  grading_status     String         @default("graded")
+  auto_score         Int            @default(0)
+  manual_score       Int            @default(0)
+  questions_snapshot Json?          @db.JsonB
+  exam_answers       exam_answers[]
+  exams              exams          @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students           students       @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_attempts      exam_attempts? @relation(fields: [attempt_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@unique([exam_id, student_id])
+  @@index([attempt_id], map: "idx_exam_submissions_attempt")
   @@schema("public")
 }
 
@@ -905,6 +941,7 @@ model exams {
   stage_id         String?            @db.Uuid
   exam_questions   exam_questions[]
   exam_submissions exam_submissions[]
+  exam_attempts    exam_attempts[]
   branches         branches?          @relation(fields: [branch_id], references: [id], onUpdate: NoAction)
   stages           stages?            @relation(fields: [stage_id], references: [id], onUpdate: NoAction)
 
@@ -1008,6 +1045,7 @@ model lessons {
   lectures                         lectures @relation(fields: [lecture_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   videos_lessons_video_idTovideos  videos?  @relation("lessons_video_idTovideos", fields: [video_id], references: [id], onUpdate: NoAction)
   videos_videos_lesson_idTolessons videos[] @relation("videos_lesson_idTolessons")
+  lesson_skills                    lesson_skills[]
 
   @@index([lecture_id], map: "idx_lessons_lecture")
   @@index([lecture_id], map: "idx_lessons_lecture_id")
@@ -1283,6 +1321,9 @@ model platform_settings {
   worker_concurrency          Int?      @default(1)
   segment_duration_sec        Int?      @default(4)
   renditions                  Json?     @default("[{\"name\": \"360p\", \"width\": 640, \"height\": 360, \"abitrate\": \"64k\", \"vbitrate\": \"600k\"}, {\"name\": \"480p\", \"width\": 854, \"height\": 480, \"abitrate\": \"96k\", \"vbitrate\": \"1200k\"}, {\"name\": \"720p\", \"width\": 1280, \"height\": 720, \"abitrate\": \"128k\", \"vbitrate\": \"2500k\"}, {\"name\": \"1080p\", \"width\": 1920, \"height\": 1080, \"abitrate\": \"192k\", \"vbitrate\": \"5000k\"}]")
+  rescue_whatsapp_cooldown_hours Int    @default(72)
+  rescue_auto_notify             Boolean @default(false)
+  rescue_hourly_limit            Int     @default(50)
 
   @@schema("public")
 }
@@ -1460,6 +1501,7 @@ model students {
   certificates           certificates[]
   enrollments            enrollments[]
   exam_submissions       exam_submissions[]
+  exam_attempts          exam_attempts[]
   learning_activity      learning_activity[]
   notification_reads     notification_reads[]
   notifications          notifications[]
@@ -1471,6 +1513,9 @@ model students {
   student_security_state   student_security_state?
   student_security_events  student_security_events[]
   device_removal_requests  device_removal_requests[]
+  rescue_cases             rescue_cases[]
+  student_skill_mastery    student_skill_mastery[]
+  student_skill_history    student_skill_history[]
   stages                   stages?                  @relation(fields: [stage_id], references: [id], onUpdate: NoAction)
   users                    User?                    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
 
@@ -1695,6 +1740,7 @@ model question_bank_questions {
   scopes           question_bank_scopes[]
   topics           question_bank_question_topics[]
   exam_questions   exam_questions[]
+  question_skills  question_bank_question_skills[]
 
   @@index([archived_at, created_at(sort: Desc)], map: "idx_qbq_active")
   @@index([difficulty], map: "idx_qbq_difficulty")
@@ -1885,3 +1931,185 @@ model device_removal_requests {
   @@index([student_id], map: "idx_removal_requests_student")
   @@schema("public")
 }
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model rescue_cases {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String    @db.Uuid
+  trigger_type      String
+  priority          String    @default("medium")
+  status            String    @default("open")
+  risk_score        Int       @default(50)
+  details           Json      @default("{}")
+  suggested_action  String    @default("")
+  assigned_to       String?   @db.Uuid
+  last_contacted_at DateTime? @db.Timestamptz(6)
+  resolved_at       DateTime? @db.Timestamptz(6)
+  resolution_notes  String?
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime  @default(now()) @db.Timestamptz(6)
+
+  students          students  @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([student_id], map: "idx_rescue_cases_student")
+  @@index([status], map: "idx_rescue_cases_status")
+  @@index([trigger_type], map: "idx_rescue_cases_trigger")
+  @@index([priority, risk_score(sort: Desc)], map: "idx_rescue_cases_priority")
+  @@index([created_at(sort: Desc)], map: "idx_rescue_cases_created")
+  @@schema("public")
+}
+
+// ─── Taxonomy & Mastery Models ──────────────────────────────────────────────
+
+model taxonomy_domains {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id   String            @db.Uuid
+  code        String            @unique
+  title       String
+  description String            @default("")
+  sort_order  Int               @default(0)
+  icon        String?
+  created_at  DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime          @default(now()) @db.Timestamptz(6)
+
+  branches    branches          @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  topics      taxonomy_topics[]
+
+  @@index([branch_id], map: "idx_tax_domain_branch")
+  @@schema("public")
+}
+
+model taxonomy_topics {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  domain_id   String            @db.Uuid
+  code        String            @unique
+  title       String
+  description String            @default("")
+  sort_order  Int               @default(0)
+  created_at  DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime          @default(now()) @db.Timestamptz(6)
+
+  domains     taxonomy_domains  @relation(fields: [domain_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills      taxonomy_skills[]
+
+  @@index([domain_id], map: "idx_tax_topic_domain")
+  @@schema("public")
+}
+
+model taxonomy_skills {
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topic_id           String                     @db.Uuid
+  parent_skill_id    String?                    @db.Uuid
+  code               String                     @unique
+  title              String
+  description        String                     @default("")
+  importance_weight  Float                      @default(1.0)
+  difficulty_level   String                     @default("medium")
+  sort_order         Int                        @default(0)
+  created_at         DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime                   @default(now()) @db.Timestamptz(6)
+
+  topic              taxonomy_topics            @relation(fields: [topic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  parent_skill       taxonomy_skills?           @relation("SkillSubSkills", fields: [parent_skill_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  sub_skills         taxonomy_skills[]          @relation("SkillSubSkills")
+  
+  lesson_skills      lesson_skills[]
+  qb_question_skills question_bank_question_skills[]
+  exam_question_skills exam_question_skills[]
+  student_mastery    student_skill_mastery[]
+  student_history    student_skill_history[]
+
+  @@index([topic_id], map: "idx_tax_skill_topic")
+  @@index([parent_skill_id], map: "idx_tax_skill_parent")
+  @@schema("public")
+}
+
+model lesson_skills {
+  lesson_id   String          @db.Uuid
+  skill_id    String          @db.Uuid
+  is_primary  Boolean         @default(true)
+  created_at  DateTime        @default(now()) @db.Timestamptz(6)
+
+  lessons     lessons         @relation(fields: [lesson_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills      taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([lesson_id, skill_id])
+  @@index([skill_id], map: "idx_lesson_skills_skill")
+  @@schema("public")
+}
+
+model question_bank_question_skills {
+  question_id String                  @db.Uuid
+  skill_id    String                  @db.Uuid
+  weight      Float                   @default(1.0)
+  created_at  DateTime                @default(now()) @db.Timestamptz(6)
+
+  question    question_bank_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skill       taxonomy_skills         @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([question_id, skill_id])
+  @@index([skill_id], map: "idx_qbq_skills_skill")
+  @@schema("public")
+}
+
+model exam_question_skills {
+  question_id String          @db.Uuid
+  skill_id    String          @db.Uuid
+  weight      Float           @default(1.0)
+  created_at  DateTime        @default(now()) @db.Timestamptz(6)
+
+  exam_question exam_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skill       taxonomy_skills  @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([question_id, skill_id])
+  @@index([skill_id], map: "idx_eq_skills_skill")
+  @@schema("public")
+}
+
+model student_skill_mastery {
+  id                         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id                 String          @db.Uuid
+  skill_id                   String          @db.Uuid
+  mastery_score              Float           @default(0.0)
+  status                     String          @default("not_started")
+  confidence_score           Float           @default(0.0)
+  total_questions_attempted  Int             @default(0)
+  correct_answers_count      Int             @default(0)
+  consecutive_errors         Int             @default(0)
+  total_error_repetition     Int             @default(0)
+  content_completion_rate    Float           @default(0.0)
+  last_attempt_at            DateTime?       @db.Timestamptz(6)
+  last_correct_at            DateTime?       @db.Timestamptz(6)
+  history_log                Json            @default("[]")
+  created_at                 DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime        @default(now()) @db.Timestamptz(6)
+
+  students                   students        @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills                     taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([student_id, skill_id], map: "uq_student_skill_mastery")
+  @@index([student_id, status], map: "idx_ssm_student_status")
+  @@index([skill_id], map: "idx_ssm_skill")
+  @@schema("public")
+}
+
+model student_skill_history {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id     String          @db.Uuid
+  skill_id       String          @db.Uuid
+  previous_score Float           @default(0.0)
+  new_score      Float           @default(0.0)
+  trigger_type   String
+  trigger_id     String?
+  metadata       Json            @default("{}")
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+
+  students       students        @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills         taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([student_id, skill_id], map: "idx_ssh_student_skill")
+  @@index([created_at(sort: Desc)], map: "idx_ssh_created_at")
+  @@schema("public")
+}
+

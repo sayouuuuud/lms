@@ -1,0 +1,1 @@
+const fs = require("fs"); const p = process.argv[2]; const hex = process.argv[3]; fs.writeFileSync(p, Buffer.from(hex, "hex"));

@@ -85,9 +85,13 @@ export async function getContentTree(): Promise<TreeStage[]> {
 type ScopeInput = { scopeType: ScopeType; scopeId: string }
 
 /** أي client — الـ prisma العام أو الـ tx جوه transaction */
-type DbClient = Pick<typeof prisma, 'lectures' | 'monthly_courses' | 'branches'>
+type DbClient = {
+  lectures: { findUnique: (args: any) => Promise<any> }
+  monthly_courses: { findUnique: (args: any) => Promise<any> }
+  branches: { findUnique: (args: any) => Promise<any> }
+}
 
-async function autoExpandScopes(inputs: ScopeInput[], db: DbClient = prisma): Promise<ScopeInput[]> {
+async function autoExpandScopes(inputs: ScopeInput[], db: DbClient = prisma as any): Promise<ScopeInput[]> {
   const seen = new Set<string>()
   const result: ScopeInput[] = []
 
