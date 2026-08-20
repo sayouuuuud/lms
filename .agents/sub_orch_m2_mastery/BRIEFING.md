@@ -1,4 +1,4 @@
-# BRIEFING — 2026-08-20T19:16:40Z
+# BRIEFING — 2026-08-20T19:50:20Z
 
 ## Mission
 Orchestrate the complete implementation and verification of Milestone 2 (M2: Mastery & Taxonomy) for LMS upgrade.
@@ -31,7 +31,7 @@ Orchestrate the complete implementation and verification of Milestone 2 (M2: Mas
   4. Forensic integrity audit [pending]
   5. Gate verification & Handoff [pending]
 - **Current phase**: 2 (Dispatch & Execute)
-- **Current focus**: Worker `22fa21bb-71b9-4f1b-b7b8-d30651333cd3` executing implementation
+- **Current focus**: Replacement worker `690e5f43-1cf1-4ab9-8a2b-c6085f1237a8` executing implementation
 
 ## 🔒 Key Constraints
 - NEVER write source code directly. All implementation done via subagents.
@@ -46,16 +46,18 @@ Orchestrate the complete implementation and verification of Milestone 2 (M2: Mas
 
 ## Key Decisions Made
 - Architecture follows `report.md` from survey explorer: 3-tier hierarchy (`domains` -> `topics` -> `skills`), multi-entity linking (`lesson_skills`, `question_bank_question_skills`, `exam_question_skills`), `student_skill_mastery`, mathematical mastery engine with decay, error penalty, confidence calibration $\kappa_s$, and exam submission hook.
+- First worker hit 429 quota on pro model; replaced with flash worker `worker_m2_mastery_2`.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
-| worker_m2_mastery_1 | teamwork_preview_worker | M2 Taxonomy & Mastery implementation | in-progress | 22fa21bb-71b9-4f1b-b7b8-d30651333cd3 |
+| worker_m2_mastery_1 | teamwork_preview_worker | M2 Implementation | failed (429) | 22fa21bb-71b9-4f1b-b7b8-d30651333cd3 |
+| worker_m2_mastery_2 | teamwork_preview_worker | M2 Implementation | in-progress | 690e5f43-1cf1-4ab9-8a2b-c6085f1237a8 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 1 / 16
-- Pending subagents: 22fa21bb-71b9-4f1b-b7b8-d30651333cd3
+- Spawn count: 2 / 16
+- Pending subagents: 690e5f43-1cf1-4ab9-8a2b-c6085f1237a8
 - Predecessor: none
 - Successor: not yet spawned
 

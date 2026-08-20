@@ -1,4 +1,4 @@
-# BRIEFING — 2026-08-20T19:16:30Z
+# BRIEFING — 2026-08-20T19:52:00Z
 
 ## Mission
 Orchestrate and execute the complete implementation and verification of Milestone 3 (M3: Rescue System & WhatsApp).
@@ -20,12 +20,12 @@ Orchestrate and execute the complete implementation and verification of Mileston
 4. **Succession**: Spawn successor at 16 spawns if necessary.
 - **Work items**:
   1. Initialize scope, briefing, progress [done]
-  2. Dispatch Worker for implementation [in-progress]
-  3. Dispatch Reviewers, Challengers, Auditor [pending]
+  2. Dispatch Worker for implementation [done]
+  3. Dispatch Reviewers, Challengers, Auditor [in-progress]
   4. Evaluate Gate Status [pending]
   5. Deliver handoff to parent [pending]
-- **Current phase**: Phase 1 (Worker Execution)
-- **Current focus**: Waiting for worker_m3_rescue_1 completion
+- **Current phase**: Phase 2 (Verification Gate)
+- **Current focus**: Awaiting results from Reviewers, Challengers, and Forensic Auditor
 
 ## 🔒 Key Constraints
 - Strictly DISPATCH-ONLY. Never write/edit source code or run build/test commands directly.
@@ -38,18 +38,23 @@ Orchestrate and execute the complete implementation and verification of Mileston
 - Updated: 2026-08-20T19:16:00Z
 
 ## Key Decisions Made
-- Executing M3 directly via single iteration loop with Worker, 2 Reviewers, 2 Challengers, and 1 Auditor.
-- Dispatched worker_m3_rescue_1 (conv ID: 075e8e12-e760-4274-a30f-7a380b9dabcf).
+- Executed implementation via Worker.
+- Re-spawned Challenger 1 after transient 502 error.
+- Active verification panel: 2 Reviewers, 2 Challengers, and 1 Forensic Auditor.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
-| worker_m3_rescue_1 | teamwork_preview_worker | Implement M3 Rescue & WhatsApp | in-progress | 075e8e12-e760-4274-a30f-7a380b9dabcf |
+| reviewer_m3_1 | teamwork_preview_reviewer | Code correctness & tests | in-progress | eb558bd8-feb7-43cc-8eaa-663074f272bd |
+| reviewer_m3_2 | teamwork_preview_reviewer | WhatsApp anti-spam & security | in-progress | 16409ac0-66db-4a48-8dee-9a5295543bd9 |
+| challenger_m3_1 | teamwork_preview_challenger | Stress-test detection rules | in-progress | 0a79a8f1-eacb-43fd-8c59-129fa48e86b3 |
+| challenger_m3_2 | teamwork_preview_challenger | Stress-test WhatsApp cooldown | in-progress | c5bdfacf-f3d2-4d8b-826c-6834e3f56b91 |
+| auditor_m3_1 | teamwork_preview_auditor | Forensic integrity verification | in-progress | 3567c777-8859-41ed-9edf-1850545ecb80 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 1 / 16
-- Pending subagents: 075e8e12-e760-4274-a30f-7a380b9dabcf
+- Spawn count: 7 / 16
+- Pending subagents: eb558bd8-feb7-43cc-8eaa-663074f272bd, 16409ac0-66db-4a48-8dee-9a5295543bd9, 0a79a8f1-eacb-43fd-8c59-129fa48e86b3, c5bdfacf-f3d2-4d8b-826c-6834e3f56b91, 3567c777-8859-41ed-9edf-1850545ecb80
 - Predecessor: none
 - Successor: not yet spawned
 

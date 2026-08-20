@@ -1,5 +1,6 @@
 import 'server-only'
 import { prisma } from '@/lib/prisma'
+import { hasActiveSubscription, isReleasedFilter } from '@/lib/subscriptions'
 import { createPlaybackToken } from '@/lib/video-token'
 import { auth } from '@/auth'
 import { assertDeviceAllowed } from '@/lib/device-guard'
@@ -217,6 +218,15 @@ async function getProgress(userId: string): Promise<Progress> {
 }
 
 export async function getPurchasedLectureIds(userId: string): Promise<string[]> {
+  const isSubscribed = await hasActiveSubscription(userId)
+  if (isSubscribed) {
+    const allLectures = await prisma.lectures.findMany({
+      where: isReleasedFilter,
+      select: { id: true }
+    })
+    return allLectures.map((l: any) => l.id)
+  }
+
   const data = await prisma.orders.findMany({
     where: { student_id: userId, status: 'approved' },
     select: { order_items: { select: { lecture_id: true, monthly_course_id: true, term_id: true, item_type: true } } }
@@ -264,6 +274,15 @@ export async function getPurchasedLectureIds(userId: string): Promise<string[]> 
 }
 
 export async function getPurchasedCourseIds(userId: string): Promise<string[]> {
+  const isSubscribed = await hasActiveSubscription(userId)
+  if (isSubscribed) {
+    const allCourses = await prisma.monthly_courses.findMany({
+      where: isReleasedFilter,
+      select: { id: true }
+    })
+    return allCourses.map((c: any) => c.id)
+  }
+
   const data = await prisma.orders.findMany({
     where: { student_id: userId, status: 'approved' },
     select: { order_items: { select: { monthly_course_id: true, term_id: true, item_type: true } } }
@@ -351,21 +370,33 @@ export async function getEnrolledMonthlyCourses(): Promise<EnrolledMonthlyCourse
   const user = session?.user
   if (!user || !user.id) return []
 
-  const orderRows = await prisma.orders.findMany({
-    where: { student_id: user.id, status: 'approved' },
-    select: { created_at: true, order_items: { select: { monthly_course_id: true, item_type: true } } }
-  })
-
-  if (!orderRows) return []
-
+  const isSubscribed = await hasActiveSubscription(user.id)
   const enrolledAtByCourse = new Map<string, string>()
-  for (const order of orderRows) {
-    for (const item of order.order_items) {
-      if (item.item_type === 'course_bundle' && item.monthly_course_id) {
-        const existing = enrolledAtByCourse.get(item.monthly_course_id)
-        const created = order.created_at.toISOString()
-        if (!existing || new Date(created) < new Date(existing)) {
-          enrolledAtByCourse.set(item.monthly_course_id, created)
+
+  if (isSubscribed) {
+    const allCourses = await prisma.monthly_courses.findMany({
+      where: isReleasedFilter,
+      select: { id: true, created_at: true }
+    })
+    for (const c of allCourses) {
+      enrolledAtByCourse.set(c.id, (c.created_at || new Date()).toISOString())
+    }
+  } else {
+    const orderRows = await prisma.orders.findMany({
+      where: { student_id: user.id, status: 'approved' },
+      select: { created_at: true, order_items: { select: { monthly_course_id: true, item_type: true } } }
+    })
+    
+    if (orderRows) {
+      for (const order of orderRows) {
+        for (const item of order.order_items) {
+          if (item.item_type === 'course_bundle' && item.monthly_course_id) {
+            const existing = enrolledAtByCourse.get(item.monthly_course_id)
+            const created = order.created_at.toISOString()
+            if (!existing || new Date(created) < new Date(existing)) {
+              enrolledAtByCourse.set(item.monthly_course_id, created)
+            }
+          }
         }
       }
     }
@@ -380,7 +411,7 @@ export async function getEnrolledMonthlyCourses(): Promise<EnrolledMonthlyCourse
   })
 
   const lectureRows = await prisma.lectures.findMany({
-    where: { monthly_course_id: { in: courseIds } },
+    where: { monthly_course_id: { in: courseIds }, AND: [isReleasedFilter] },
     select: {
       id: true,
       slug: true,
@@ -392,6 +423,7 @@ export async function getEnrolledMonthlyCourses(): Promise<EnrolledMonthlyCourse
       sort_order: true,
       created_at: true,
       lessons: {
+        where: isReleasedFilter,
         select: { id: true, slug: true, sort_order: true },
         orderBy: { sort_order: 'asc' },
       },

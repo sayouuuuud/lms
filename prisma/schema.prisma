@@ -620,22 +620,22 @@ model auth_logs {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model branches {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  stage_id        String            @db.Uuid
-  slug            String
-  title           String
-  description     String            @default("")
-  image           String            @default("")
-  topics          String[]          @default([])
-  sort_order      Int               @default(0)
-  created_at      DateTime          @default(now()) @db.Timestamptz(6)
-  stages          stages            @relation(fields: [stage_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  calendar_events calendar_events[]
-  courses         courses[]
-  exams           exams[]
-  lectures        lectures[]
-  monthly_courses monthly_courses[]
-  notifications   notifications[]
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stage_id         String             @db.Uuid
+  slug             String
+  title            String
+  description      String             @default("")
+  image            String             @default("")
+  topics           String[]           @default([])
+  sort_order       Int                @default(0)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  stages           stages             @relation(fields: [stage_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  calendar_events  calendar_events[]
+  courses          courses[]
+  exams            exams[]
+  lectures         lectures[]
+  monthly_courses  monthly_courses[]
+  notifications    notifications[]
   taxonomy_domains taxonomy_domains[]
 
   @@unique([stage_id, slug])
@@ -844,23 +844,23 @@ model exam_answers {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model exam_questions {
-  id                    String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  exam_id               String                        @db.Uuid
-  question_text         String
-  options               Json?
-  correct_answer        String?
-  points                Int                           @default(1)
-  created_at            DateTime                      @default(now()) @db.Timestamptz(6)
-  question_type         String                        @default("mcq")
-  content_mode          String                        @default("text")
-  image_url             String?
-  model_answer          String?
-  order_index           Int                           @default(0)
-  bank_question_id      String?                       @db.Uuid
-  exam_answers          exam_answers[]
-  exams                 exams                         @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  question_bank_questions question_bank_questions?    @relation(fields: [bank_question_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "exam_questions_bank_question_fk")
-  exam_question_skills  exam_question_skills[]
+  id                      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  exam_id                 String                   @db.Uuid
+  question_text           String
+  options                 Json?
+  correct_answer          String?
+  points                  Int                      @default(1)
+  created_at              DateTime                 @default(now()) @db.Timestamptz(6)
+  question_type           String                   @default("mcq")
+  content_mode            String                   @default("text")
+  image_url               String?
+  model_answer            String?
+  order_index             Int                      @default(0)
+  bank_question_id        String?                  @db.Uuid
+  exam_answers            exam_answers[]
+  exams                   exams                    @relation(fields: [exam_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  question_bank_questions question_bank_questions? @relation(fields: [bank_question_id], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "exam_questions_bank_question_fk")
+  exam_question_skills    exam_question_skills[]
 
   @@index([bank_question_id], map: "idx_exam_questions_bank")
   @@schema("public")
@@ -937,6 +937,8 @@ model exams {
   pass_mark        Int                @default(50)
   description      String?
   shuffle          Boolean            @default(false)
+  release_date     DateTime?          @db.Timestamptz(6)
+  is_published     Boolean            @default(true)
   branch_id        String?            @db.Uuid
   stage_id         String?            @db.Uuid
   exam_questions   exam_questions[]
@@ -988,6 +990,7 @@ model lectures {
   created_at                DateTime                 @default(now()) @db.Timestamptz(6)
   image                     String?
   release_date              DateTime?                @db.Timestamptz(6)
+  is_published              Boolean                  @default(true)
   instructor                String?
   what_you_learn            String[]                 @default([])
   monthly_course_id         String?                  @db.Uuid
@@ -1029,22 +1032,24 @@ model lesson_progress {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model lessons {
-  id                               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  lecture_id                       String   @db.Uuid
+  id                               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lecture_id                       String          @db.Uuid
   slug                             String
   title                            String
-  duration                         String   @default("")
-  is_free                          Boolean  @default(false)
-  sort_order                       Int      @default(0)
-  created_at                       DateTime @default(now()) @db.Timestamptz(6)
+  duration                         String          @default("")
+  is_free                          Boolean         @default(false)
+  sort_order                       Int             @default(0)
+  created_at                       DateTime        @default(now()) @db.Timestamptz(6)
   video_url                        String?
+  is_published                     Boolean         @default(true)
+  release_date                     DateTime?       @db.Timestamptz(6)
   description                      String?
-  content_type                     String   @default("فيديو")
-  attachments                      Json     @default("[]")
-  video_id                         String?  @db.Uuid
-  lectures                         lectures @relation(fields: [lecture_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  videos_lessons_video_idTovideos  videos?  @relation("lessons_video_idTovideos", fields: [video_id], references: [id], onUpdate: NoAction)
-  videos_videos_lesson_idTolessons videos[] @relation("videos_lesson_idTolessons")
+  content_type                     String          @default("فيديو")
+  attachments                      Json            @default("[]")
+  video_id                         String?         @db.Uuid
+  lectures                         lectures        @relation(fields: [lecture_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  videos_lessons_video_idTovideos  videos?         @relation("lessons_video_idTovideos", fields: [video_id], references: [id], onUpdate: NoAction)
+  videos_videos_lesson_idTolessons videos[]        @relation("videos_lesson_idTolessons")
   lesson_skills                    lesson_skills[]
 
   @@index([lecture_id], map: "idx_lessons_lecture")
@@ -1108,6 +1113,7 @@ model monthly_courses {
   old_price               Decimal?                  @db.Decimal
   badge                   String?
   is_published            Boolean                   @default(true)
+  release_date            DateTime?                 @db.Timestamptz(6)
   sort_order              Int                       @default(0)
   created_at              DateTime                  @default(now()) @db.Timestamptz(6)
   updated_at              DateTime                  @default(now()) @db.Timestamptz(6)
@@ -1312,18 +1318,20 @@ model payments {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model platform_settings {
-  id                          Int       @id @default(1)
-  is_streaming_enabled        Boolean   @default(false)
-  whatsapp_payment_notify     Boolean   @default(true)
-  updated_at                  DateTime? @default(now()) @db.Timestamptz(6)
-  worker_cpu_threads          Int?      @default(2)
-  worker_ram_mb               Int?      @default(2048)
-  worker_concurrency          Int?      @default(1)
-  segment_duration_sec        Int?      @default(4)
-  renditions                  Json?     @default("[{\"name\": \"360p\", \"width\": 640, \"height\": 360, \"abitrate\": \"64k\", \"vbitrate\": \"600k\"}, {\"name\": \"480p\", \"width\": 854, \"height\": 480, \"abitrate\": \"96k\", \"vbitrate\": \"1200k\"}, {\"name\": \"720p\", \"width\": 1280, \"height\": 720, \"abitrate\": \"128k\", \"vbitrate\": \"2500k\"}, {\"name\": \"1080p\", \"width\": 1920, \"height\": 1080, \"abitrate\": \"192k\", \"vbitrate\": \"5000k\"}]")
-  rescue_whatsapp_cooldown_hours Int    @default(72)
-  rescue_auto_notify             Boolean @default(false)
-  rescue_hourly_limit            Int     @default(50)
+  id                             Int       @id @default(1)
+  is_streaming_enabled           Boolean   @default(false)
+  whatsapp_payment_notify        Boolean   @default(true)
+  updated_at                     DateTime? @default(now()) @db.Timestamptz(6)
+  worker_cpu_threads             Int?      @default(2)
+  worker_ram_mb                  Int?      @default(2048)
+  worker_concurrency             Int?      @default(1)
+  segment_duration_sec           Int?      @default(4)
+  renditions                     Json?     @default("[{\"name\": \"360p\", \"width\": 640, \"height\": 360, \"abitrate\": \"64k\", \"vbitrate\": \"600k\"}, {\"name\": \"480p\", \"width\": 854, \"height\": 480, \"abitrate\": \"96k\", \"vbitrate\": \"1200k\"}, {\"name\": \"720p\", \"width\": 1280, \"height\": 720, \"abitrate\": \"128k\", \"vbitrate\": \"2500k\"}, {\"name\": \"1080p\", \"width\": 1920, \"height\": 1080, \"abitrate\": \"192k\", \"vbitrate\": \"5000k\"}]")
+  rescue_whatsapp_cooldown_hours Int       @default(72)
+  rescue_auto_notify             Boolean   @default(false)
+  rescue_hourly_limit            Int       @default(50)
+  subscription_mode              String    @default("purchases_only")
+  grace_period_days              Int       @default(3)
 
   @@schema("public")
 }
@@ -1423,8 +1431,6 @@ model stages {
   @@schema("public")
 }
 
-
-
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model student_content_progress {
@@ -1478,46 +1484,47 @@ model student_weekly_goals {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model students {
-  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code                   String                   @unique
-  user_id                String?                  @db.Uuid
-  name                   String
-  email                  String?
-  phone                  String?
-  parent_phone           String?
-  address                String?
-  school_name            String?
-  gender                 String                   @default("ذكر")
-  avatar                 String?
-  courses                Int                      @default(0)
-  progress               Int                      @default(0)
-  spent                  String                   @default("0 ج.م")
-  status                 String                   @default("نشط")
-  joined_at              DateTime                 @default(dbgenerated("CURRENT_DATE")) @db.Date
-  created_at             DateTime                 @default(now()) @db.Timestamptz(6)
-  stage_id               String?                  @db.Uuid
-  last_seen_at           DateTime?                @db.Timestamptz(6)
-  assignment_submissions assignment_submissions[]
-  certificates           certificates[]
-  enrollments            enrollments[]
-  exam_submissions       exam_submissions[]
-  exam_attempts          exam_attempts[]
-  learning_activity      learning_activity[]
-  notification_reads     notification_reads[]
-  notifications          notifications[]
-  payments               payments[]
-  student_devices          student_devices?
-  student_weekly_goals     student_weekly_goals?
-  student_trusted_devices  student_trusted_devices[]
-  student_device_sessions  student_device_sessions[]
-  student_security_state   student_security_state?
-  student_security_events  student_security_events[]
-  device_removal_requests  device_removal_requests[]
-  rescue_cases             rescue_cases[]
-  student_skill_mastery    student_skill_mastery[]
-  student_skill_history    student_skill_history[]
-  stages                   stages?                  @relation(fields: [stage_id], references: [id], onUpdate: NoAction)
-  users                    User?                    @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                    String                    @unique
+  user_id                 String?                   @db.Uuid
+  name                    String
+  email                   String?
+  phone                   String?
+  parent_phone            String?
+  address                 String?
+  school_name             String?
+  gender                  String                    @default("ذكر")
+  avatar                  String?
+  courses                 Int                       @default(0)
+  progress                Int                       @default(0)
+  spent                   String                    @default("0 ج.م")
+  status                  String                    @default("نشط")
+  joined_at               DateTime                  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  stage_id                String?                   @db.Uuid
+  last_seen_at            DateTime?                 @db.Timestamptz(6)
+  assignment_submissions  assignment_submissions[]
+  certificates            certificates[]
+  enrollments             enrollments[]
+  exam_submissions        exam_submissions[]
+  exam_attempts           exam_attempts[]
+  learning_activity       learning_activity[]
+  notification_reads      notification_reads[]
+  notifications           notifications[]
+  payments                payments[]
+  student_devices         student_devices?
+  student_weekly_goals    student_weekly_goals?
+  student_trusted_devices student_trusted_devices[]
+  student_device_sessions student_device_sessions[]
+  student_security_state  student_security_state?
+  student_security_events student_security_events[]
+  device_removal_requests device_removal_requests[]
+  rescue_cases            rescue_cases[]
+  student_skill_mastery   student_skill_mastery[]
+  student_skill_history   student_skill_history[]
+  stages                  stages?                   @relation(fields: [stage_id], references: [id], onUpdate: NoAction)
+  users                   User?                     @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  studentSubscriptions    student_subscriptions[]
 
   @@index([last_seen_at(sort: Desc)], map: "idx_students_last_seen_at")
   @@index([stage_id], map: "students_stage_idx")
@@ -1716,31 +1723,31 @@ enum one_time_token_type {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model question_bank_questions {
-  id               String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question_text    String                         @default("")
-  question_type    String                         @default("mcq")
-  content_mode     String                         @default("text")
-  image_url        String?
-  options          Json                           @default("[]")
-  correct_answer   String?
-  model_answer     String?
-  points           Int                            @default(1)
-  difficulty       String                         @default("medium")
-  auto_difficulty  String?
-  usage_count      Int                            @default(0)
-  last_used_at     DateTime?                      @db.Timestamptz(6)
-  answers_count    Int                            @default(0)
-  correct_count    Int                            @default(0)
-  notes            String?
-  created_by       String?                        @db.Uuid
-  archived_at      DateTime?                      @db.Timestamptz(6)
-  created_at       DateTime                       @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime                       @default(now()) @db.Timestamptz(6)
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_text   String    @default("")
+  question_type   String    @default("mcq")
+  content_mode    String    @default("text")
+  image_url       String?
+  options         Json      @default("[]")
+  correct_answer  String?
+  model_answer    String?
+  points          Int       @default(1)
+  difficulty      String    @default("medium")
+  auto_difficulty String?
+  usage_count     Int       @default(0)
+  last_used_at    DateTime? @db.Timestamptz(6)
+  answers_count   Int       @default(0)
+  correct_count   Int       @default(0)
+  notes           String?
+  created_by      String?   @db.Uuid
+  archived_at     DateTime? @db.Timestamptz(6)
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
 
-  scopes           question_bank_scopes[]
-  topics           question_bank_question_topics[]
-  exam_questions   exam_questions[]
-  question_skills  question_bank_question_skills[]
+  scopes          question_bank_scopes[]
+  topics          question_bank_question_topics[]
+  exam_questions  exam_questions[]
+  question_skills question_bank_question_skills[]
 
   @@index([archived_at, created_at(sort: Desc)], map: "idx_qbq_active")
   @@index([difficulty], map: "idx_qbq_difficulty")
@@ -1750,13 +1757,13 @@ model question_bank_questions {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model question_bank_scopes {
-  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question_id String                  @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_id String   @db.Uuid
   scope_type  String
-  scope_id    String                  @db.Uuid
-  created_at  DateTime                @default(now()) @db.Timestamptz(6)
+  scope_id    String   @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  question    question_bank_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  question question_bank_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([question_id, scope_type, scope_id], map: "uq_qbs_unique")
   @@index([scope_type, scope_id], map: "idx_qbs_lookup")
@@ -1765,21 +1772,21 @@ model question_bank_scopes {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model question_bank_topics {
-  id         String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title      String                         @unique(map: "uq_qbt_title")
-  created_at DateTime                       @default(now()) @db.Timestamptz(6)
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title      String   @unique(map: "uq_qbt_title")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
 
-  questions  question_bank_question_topics[]
+  questions question_bank_question_topics[]
 
   @@schema("public")
 }
 
 model question_bank_question_topics {
-  question_id String                  @db.Uuid
-  topic_id    String                  @db.Uuid
+  question_id String @db.Uuid
+  topic_id    String @db.Uuid
 
-  question    question_bank_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  topic       question_bank_topics    @relation(fields: [topic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  question question_bank_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  topic    question_bank_topics    @relation(fields: [topic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([question_id, topic_id])
   @@index([topic_id], map: "idx_qbqt_topic")
@@ -1839,8 +1846,8 @@ model student_device_sessions {
   revoked_at     DateTime? @db.Timestamptz(6)
   revoked_reason String    @default("")
 
-  students students                  @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  device   student_trusted_devices?  @relation(fields: [device_id], references: [id], onUpdate: NoAction)
+  students students                 @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  device   student_trusted_devices? @relation(fields: [device_id], references: [id], onUpdate: NoAction)
 
   @@index([student_id, last_seen_at(sort: Desc)], map: "idx_device_sessions_student_seen")
   @@index([device_id], map: "idx_device_sessions_device")
@@ -1886,8 +1893,8 @@ model student_security_events {
   actor_id    String?  @db.Uuid
   created_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  students students                  @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  device   student_trusted_devices?  @relation(fields: [device_id], references: [id], onUpdate: NoAction)
+  students students                 @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  device   student_trusted_devices? @relation(fields: [device_id], references: [id], onUpdate: NoAction)
 
   @@index([student_id, created_at(sort: Desc)], map: "idx_security_events_student")
   @@index([event_type], map: "idx_security_events_type")
@@ -1924,7 +1931,7 @@ model device_removal_requests {
   handled_at DateTime? @db.Timestamptz(6)
   created_at DateTime  @default(now()) @db.Timestamptz(6)
 
-  students students               @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students students                @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   device   student_trusted_devices @relation(fields: [device_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([status, created_at(sort: Desc)], map: "idx_removal_requests_status")
@@ -1950,7 +1957,7 @@ model rescue_cases {
   created_at        DateTime  @default(now()) @db.Timestamptz(6)
   updated_at        DateTime  @default(now()) @db.Timestamptz(6)
 
-  students          students  @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students students @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([student_id], map: "idx_rescue_cases_student")
   @@index([status], map: "idx_rescue_cases_status")
@@ -1963,62 +1970,62 @@ model rescue_cases {
 // ─── Taxonomy & Mastery Models ──────────────────────────────────────────────
 
 model taxonomy_domains {
-  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  branch_id   String            @db.Uuid
-  code        String            @unique
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id   String   @db.Uuid
+  code        String   @unique
   title       String
-  description String            @default("")
-  sort_order  Int               @default(0)
+  description String   @default("")
+  sort_order  Int      @default(0)
   icon        String?
-  created_at  DateTime          @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime          @default(now()) @db.Timestamptz(6)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  branches    branches          @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  topics      taxonomy_topics[]
+  branches branches          @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  topics   taxonomy_topics[]
 
   @@index([branch_id], map: "idx_tax_domain_branch")
   @@schema("public")
 }
 
 model taxonomy_topics {
-  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  domain_id   String            @db.Uuid
-  code        String            @unique
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  domain_id   String   @db.Uuid
+  code        String   @unique
   title       String
-  description String            @default("")
-  sort_order  Int               @default(0)
-  created_at  DateTime          @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime          @default(now()) @db.Timestamptz(6)
+  description String   @default("")
+  sort_order  Int      @default(0)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  domains     taxonomy_domains  @relation(fields: [domain_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skills      taxonomy_skills[]
+  domains taxonomy_domains  @relation(fields: [domain_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills  taxonomy_skills[]
 
   @@index([domain_id], map: "idx_tax_topic_domain")
   @@schema("public")
 }
 
 model taxonomy_skills {
-  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  topic_id           String                     @db.Uuid
-  parent_skill_id    String?                    @db.Uuid
-  code               String                     @unique
-  title              String
-  description        String                     @default("")
-  importance_weight  Float                      @default(1.0)
-  difficulty_level   String                     @default("medium")
-  sort_order         Int                        @default(0)
-  created_at         DateTime                   @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime                   @default(now()) @db.Timestamptz(6)
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topic_id          String   @db.Uuid
+  parent_skill_id   String?  @db.Uuid
+  code              String   @unique
+  title             String
+  description       String   @default("")
+  importance_weight Float    @default(1.0)
+  difficulty_level  String   @default("medium")
+  sort_order        Int      @default(0)
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @default(now()) @db.Timestamptz(6)
 
-  topic              taxonomy_topics            @relation(fields: [topic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  parent_skill       taxonomy_skills?           @relation("SkillSubSkills", fields: [parent_skill_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  sub_skills         taxonomy_skills[]          @relation("SkillSubSkills")
-  
-  lesson_skills      lesson_skills[]
-  qb_question_skills question_bank_question_skills[]
+  topic        taxonomy_topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  parent_skill taxonomy_skills?  @relation("SkillSubSkills", fields: [parent_skill_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  sub_skills   taxonomy_skills[] @relation("SkillSubSkills")
+
+  lesson_skills        lesson_skills[]
+  qb_question_skills   question_bank_question_skills[]
   exam_question_skills exam_question_skills[]
-  student_mastery    student_skill_mastery[]
-  student_history    student_skill_history[]
+  student_mastery      student_skill_mastery[]
+  student_history      student_skill_history[]
 
   @@index([topic_id], map: "idx_tax_skill_topic")
   @@index([parent_skill_id], map: "idx_tax_skill_parent")
@@ -2026,13 +2033,13 @@ model taxonomy_skills {
 }
 
 model lesson_skills {
-  lesson_id   String          @db.Uuid
-  skill_id    String          @db.Uuid
-  is_primary  Boolean         @default(true)
-  created_at  DateTime        @default(now()) @db.Timestamptz(6)
+  lesson_id  String   @db.Uuid
+  skill_id   String   @db.Uuid
+  is_primary Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
 
-  lessons     lessons         @relation(fields: [lesson_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skills      taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  lessons lessons         @relation(fields: [lesson_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills  taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([lesson_id, skill_id])
   @@index([skill_id], map: "idx_lesson_skills_skill")
@@ -2040,13 +2047,13 @@ model lesson_skills {
 }
 
 model question_bank_question_skills {
-  question_id String                  @db.Uuid
-  skill_id    String                  @db.Uuid
-  weight      Float                   @default(1.0)
-  created_at  DateTime                @default(now()) @db.Timestamptz(6)
+  question_id String   @db.Uuid
+  skill_id    String   @db.Uuid
+  weight      Float    @default(1.0)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  question    question_bank_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skill       taxonomy_skills         @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  question question_bank_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skill    taxonomy_skills         @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([question_id, skill_id])
   @@index([skill_id], map: "idx_qbq_skills_skill")
@@ -2054,13 +2061,13 @@ model question_bank_question_skills {
 }
 
 model exam_question_skills {
-  question_id String          @db.Uuid
-  skill_id    String          @db.Uuid
-  weight      Float           @default(1.0)
-  created_at  DateTime        @default(now()) @db.Timestamptz(6)
+  question_id String   @db.Uuid
+  skill_id    String   @db.Uuid
+  weight      Float    @default(1.0)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  exam_question exam_questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skill       taxonomy_skills  @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  exam_question exam_questions  @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skill         taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([question_id, skill_id])
   @@index([skill_id], map: "idx_eq_skills_skill")
@@ -2068,25 +2075,25 @@ model exam_question_skills {
 }
 
 model student_skill_mastery {
-  id                         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id                 String          @db.Uuid
-  skill_id                   String          @db.Uuid
-  mastery_score              Float           @default(0.0)
-  status                     String          @default("not_started")
-  confidence_score           Float           @default(0.0)
-  total_questions_attempted  Int             @default(0)
-  correct_answers_count      Int             @default(0)
-  consecutive_errors         Int             @default(0)
-  total_error_repetition     Int             @default(0)
-  content_completion_rate    Float           @default(0.0)
-  last_attempt_at            DateTime?       @db.Timestamptz(6)
-  last_correct_at            DateTime?       @db.Timestamptz(6)
-  history_log                Json            @default("[]")
-  created_at                 DateTime        @default(now()) @db.Timestamptz(6)
-  updated_at                 DateTime        @default(now()) @db.Timestamptz(6)
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id                String    @db.Uuid
+  skill_id                  String    @db.Uuid
+  mastery_score             Float     @default(0.0)
+  status                    String    @default("not_started")
+  confidence_score          Float     @default(0.0)
+  total_questions_attempted Int       @default(0)
+  correct_answers_count     Int       @default(0)
+  consecutive_errors        Int       @default(0)
+  total_error_repetition    Int       @default(0)
+  content_completion_rate   Float     @default(0.0)
+  last_attempt_at           DateTime? @db.Timestamptz(6)
+  last_correct_at           DateTime? @db.Timestamptz(6)
+  history_log               Json      @default("[]")
+  created_at                DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime  @default(now()) @db.Timestamptz(6)
 
-  students                   students        @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skills                     taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students students        @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills   taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([student_id, skill_id], map: "uq_student_skill_mastery")
   @@index([student_id, status], map: "idx_ssm_student_status")
@@ -2095,21 +2102,56 @@ model student_skill_mastery {
 }
 
 model student_skill_history {
-  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id     String          @db.Uuid
-  skill_id       String          @db.Uuid
-  previous_score Float           @default(0.0)
-  new_score      Float           @default(0.0)
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id     String   @db.Uuid
+  skill_id       String   @db.Uuid
+  previous_score Float    @default(0.0)
+  new_score      Float    @default(0.0)
   trigger_type   String
   trigger_id     String?
-  metadata       Json            @default("{}")
-  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  metadata       Json     @default("{}")
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
 
-  students       students        @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  skills         taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  students students        @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  skills   taxonomy_skills @relation(fields: [skill_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([student_id, skill_id], map: "idx_ssh_student_skill")
   @@index([created_at(sort: Desc)], map: "idx_ssh_created_at")
   @@schema("public")
 }
 
+model subscription_plans {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  description   String   @default("")
+  price         Decimal  @db.Decimal
+  duration_days Int      @default(30)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+  stage_id      String?  @db.Uuid
+  branch_id     String?  @db.Uuid
+
+  student_subscriptions student_subscriptions[]
+
+  @@index([is_active])
+  @@schema("public")
+}
+
+model student_subscriptions {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id String   @db.Uuid
+  plan_id    String   @db.Uuid
+  start_date DateTime @default(now()) @db.Timestamptz(6)
+  end_date   DateTime @db.Timestamptz(6)
+  status     String   @default("active")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+
+  students students           @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  plans    subscription_plans @relation(fields: [plan_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([student_id, status])
+  @@index([end_date])
+  @@schema("public")
+}

@@ -72,6 +72,10 @@ export async function studentCanAccessExam(
   student: any,
   exam: { stage_id?: string | null; branch_id?: string | null },
 ): Promise<boolean> {
+  const { hasActiveSubscription } = await import('@/lib/subscriptions')
+  const isSub = await hasActiveSubscription(student.user_id)
+  if (isSub) return true
+
   const hasStage = !exam.stage_id
   const hasBranch = !exam.branch_id
 
@@ -127,6 +131,8 @@ export async function getStudentExam(code: string): Promise<StudentExam | null> 
         status: true,
         stage_id: true,
         branch_id: true,
+        is_published: true,
+        release_date: true,
       }
     })
   } else {
@@ -143,11 +149,15 @@ export async function getStudentExam(code: string): Promise<StudentExam | null> 
         status: true,
         stage_id: true,
         branch_id: true,
+        is_published: true,
+        release_date: true,
       }
     })
   }
 
   if (!exam || exam.status !== 'منشور') return null
+  if (exam.is_published === false) return null
+  if (exam.release_date && new Date(exam.release_date) > new Date()) return null
   if (!(await studentCanAccessExam(student, exam))) return null
 
   // 1. Check existing submission

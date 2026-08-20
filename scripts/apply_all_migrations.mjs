@@ -31,6 +31,7 @@ async function runMigrations() {
     path.join('scripts', '001_exam_attempts.sql'),
     path.join('scripts', '002_taxonomy_mastery.sql'),
     path.join('scripts', '003_rescue_system.sql'),
+    path.join('scripts', '004_release_and_subscriptions.sql'),
     path.join('scripts', 'R01_rls_and_security_setup.sql'),
   ]
 

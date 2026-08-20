@@ -1,4 +1,4 @@
-# BRIEFING — 2026-08-20T19:19:50Z
+# BRIEFING — 2026-08-20T19:50:30Z
 
 ## Mission
 Orchestrate and execute Milestone 1: Exams Edge Cases (network drops, timer spoofing, double submission, question snapshotting).
@@ -27,7 +27,7 @@ Orchestrate and execute Milestone 1: Exams Edge Cases (network drops, timer spoo
   5. Standalone verification scripts [in-progress]
   6. Gate & verification [pending]
 - **Current phase**: 2
-- **Current focus**: Worker 1 implementation across Schema, lib/exams.ts, UI, and Test scripts
+- **Current focus**: Worker 2 implementation across Schema, lib/exams.ts, UI, and Test scripts
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files directly.
@@ -45,7 +45,7 @@ Orchestrate and execute Milestone 1: Exams Edge Cases (network drops, timer spoo
 ## Key Decisions Made
 - Milestone 1 encompasses all 4 exam edge cases defined in ORIGINAL_REQUEST.md.
 - Synthesized explorer findings into unified architecture and schema.
-- Worker 1 dispatched to execute full implementation and run verification suite.
+- Worker 1 hit quota 429; replaced with Worker 2 (flash model) to continue execution cleanly.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
@@ -53,12 +53,13 @@ Orchestrate and execute Milestone 1: Exams Edge Cases (network drops, timer spoo
 | explorer_1 | teamwork_preview_explorer | DB Schema & Migration Plan | completed | 736a4978-8378-4881-be25-5426c6db2699 |
 | explorer_2 | teamwork_preview_explorer | Core Service & Edge Cases | completed | 6e36f8aa-2b52-453b-882e-ffa8fd2a4be8 |
 | explorer_3 | teamwork_preview_explorer | UI/Actions & Verification Scripts | completed | 315cce9e-e27c-4c50-a377-6c83f7f22268 |
-| worker_1 | teamwork_preview_worker | Full Implementation & Script Verification | in-progress | 2f251287-8c58-4350-ab73-edf162c01dd2 |
+| worker_1 | teamwork_preview_worker | Implementation & Scripts | failed (429 quota) | 2f251287-8c58-4350-ab73-edf162c01dd2 |
+| worker_2 | teamwork_preview_worker | Implementation & Scripts (Replacement) | in-progress | 513ec21c-0b99-4f3f-9893-75601ec737bb |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 4 / 16
-- Pending subagents: 2f251287-8c58-4350-ab73-edf162c01dd2
+- Spawn count: 5 / 16
+- Pending subagents: 513ec21c-0b99-4f3f-9893-75601ec737bb
 - Predecessor: none
 - Successor: not yet spawned
 
