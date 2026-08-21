@@ -2125,6 +2125,12 @@ model subscription_plans {
   code                  String?                   @db.VarChar(80)
   title                 String
   description           String                    @default("")
+  marketing_label       String?                   @db.VarChar(120)
+  short_description     String                    @default("")
+  image_url             String?
+  public_visible        Boolean                   @default(true)
+  featured              Boolean                   @default(false)
+  sort_order            Int                       @default(0)
   price                 Decimal                   @db.Decimal
   duration_days         Int                       @default(30)
   billing_period        String                    @default("custom")

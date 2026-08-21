@@ -9,11 +9,15 @@ import {
   Sparkles,
 } from 'lucide-react'
 import type { Stage } from '@/lib/landing-data'
+import type { PublicSubscriptionPlan } from '@/lib/subscription-public'
+import { PublicSubscriptionStrip } from '@/components/subscriptions/public-subscription-strip'
 
 export function StageDetail({
   stage,
+  subscriptionPlans = [],
 }: {
   stage: Stage
+  subscriptionPlans?: PublicSubscriptionPlan[]
 }) {
   // Total courses = sum of monthly courses across all branches
   const totalCourses = stage.branches.reduce(
@@ -102,6 +106,8 @@ export function StageDetail({
           <div className="absolute inset-x-0 bottom-0 h-12 rounded-t-[2.5rem] bg-[#eee6d5] md:h-16 md:rounded-t-[3.5rem] dark:bg-[#120e0a]" />
         </div>
       </section>
+
+      <PublicSubscriptionStrip plans={subscriptionPlans} title={`اشتراك المرحلة — ${stage.title}`} subtitle="اختر خطة تفتح لك محتوى المرحلة أو الفروع التي تحتاجها طوال مدة الاشتراك." />
 
       {/* ── Branches ──────────────────────────────────────────────────── */}
       <section className="relative mx-auto max-w-7xl px-4 py-10 sm:px-5 sm:py-12 md:px-8 md:py-16">

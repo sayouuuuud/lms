@@ -17,6 +17,8 @@ import {
 import type { Stage, Branch, Lecture, MonthlyCourse } from '@/lib/landing-data'
 import { Check } from 'lucide-react'
 import { useCart } from '@/components/cart/cart-provider'
+import type { PublicSubscriptionPlan } from '@/lib/subscription-public'
+import { PublicSubscriptionStrip } from '@/components/subscriptions/public-subscription-strip'
 
 function formatEGP(value: number) {
   return new Intl.NumberFormat('ar-EG').format(value)
@@ -248,7 +250,7 @@ function MonthlyCourseCard({ course, index, href }: { course: MonthlyCourse; ind
   )
 }
 
-export function BranchDetail({ stage, branch }: { stage: Stage; branch: Branch }) {
+export function BranchDetail({ stage, branch, subscriptionPlans = [] }: { stage: Stage; branch: Branch; subscriptionPlans?: PublicSubscriptionPlan[] }) {
   const courses = branch.monthlyCourses ?? []
   const totalLessons = courses.reduce((sum, course) => sum + course.lectures.reduce((lectureSum, lecture) => lectureSum + lecture.lessons.length, 0), 0)
 
@@ -322,6 +324,8 @@ export function BranchDetail({ stage, branch }: { stage: Stage; branch: Branch }
           <div className="absolute inset-x-0 bottom-0 h-12 rounded-t-[2.5rem] bg-[#eee6d5] md:h-16 md:rounded-t-[3.5rem] dark:bg-[#120e0a]" />
         </div>
       </section>
+
+      <PublicSubscriptionStrip plans={subscriptionPlans} title={`اشتراك ${branch.title}`} subtitle="هذه الخطط مخصصة لمحتوى الفرع الحالي، وتوضح لك نطاق الوصول ومدة الاشتراك قبل البدء." />
 
       {/* ── Monthly courses ─────────────────────────────────────────── */}
       <section className="relative mx-auto max-w-6xl px-4 py-10 sm:px-5 sm:py-12 md:px-8 md:py-16">

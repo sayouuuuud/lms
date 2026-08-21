@@ -7,6 +7,7 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { SiteFooter } from '@/components/landing/site-footer'
 import { BranchDetail } from '@/components/stages/branch-detail'
+import { getPublicSubscriptionPlans } from '@/lib/subscription-public'
 
 export async function generateMetadata({
   params,
@@ -50,6 +51,7 @@ export default async function BranchPage({
   const result = await getBranchBySlug(id, branchId)
   if (!result) notFound()
 
+  const subscriptionPlans = await getPublicSubscriptionPlans({ stageId: result.stage.id, branchId: result.branch.id, context: 'branch' })
   const siteUrl = getSiteUrl()
   const breadcrumb = {
     '@context': 'https://schema.org',
@@ -65,7 +67,7 @@ export default async function BranchPage({
     <>
       <JsonLd data={breadcrumb} />
       <LandingNavbar />
-      <BranchDetail stage={result.stage} branch={result.branch} />
+      <BranchDetail stage={result.stage} branch={result.branch} subscriptionPlans={subscriptionPlans} />
       <SiteFooter />
     </>
   )

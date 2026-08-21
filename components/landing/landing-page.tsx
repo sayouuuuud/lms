@@ -11,6 +11,8 @@ import { TestimonialsSection } from './testimonials-section'
 import { SiteFooter } from './site-footer'
 import { ScrollRefresh } from './scroll-refresh'
 import type { Stage } from '@/lib/landing-data'
+import type { PublicSubscriptionPlan } from '@/lib/subscription-public'
+import { PublicSubscriptionStrip } from '@/components/subscriptions/public-subscription-strip'
 import type { SiteContent } from '@/lib/site-content-defaults'
 import { DEFAULT_SITE_CONTENT } from '@/lib/site-content-defaults'
 
@@ -18,10 +20,12 @@ export function LandingPage({
   stages = [],
   isLoggedIn = false,
   siteContent = DEFAULT_SITE_CONTENT,
+  subscriptionPlans = [],
 }: {
   stages?: Stage[]
   isLoggedIn?: boolean
   siteContent?: SiteContent
+  subscriptionPlans?: PublicSubscriptionPlan[]
 }) {
   return (
     <div className="relative min-h-screen bg-background text-foreground">
@@ -31,6 +35,7 @@ export function LandingPage({
         <main>
           <HeroSection content={siteContent.hero} />
           <WaveDivider />
+          <PublicSubscriptionStrip plans={subscriptionPlans} title="اشتراك واحد لمحتوى أكثر" subtitle="اختَر السنة والفرع والخطة المناسبة من صفحة الاشتراكات، واعرف بالضبط ما الذي تفتحه الخطة وكم تستمر." />
           <FeaturesSection content={siteContent.features} />
           <StagesSection stages={stages} />
           <StatsSection content={siteContent.stats} />

@@ -4,10 +4,11 @@ import { getSiteContent } from '@/lib/site-content'
 import { getSiteUrl } from '@/lib/seo'
 import { JsonLd } from '@/components/seo/json-ld'
 import { auth } from '@/auth'
+import { getPublicSubscriptionPlans } from '@/lib/subscription-public'
 export default async function Page() {
   const session = await auth()
   const user = session?.user
-  const [stages, siteContent] = await Promise.all([getCurriculum(), getSiteContent()])
+  const [stages, siteContent, subscriptionPlans] = await Promise.all([getCurriculum(), getSiteContent(), getPublicSubscriptionPlans({ featuredOnly: true, context: 'home' })])
   const siteUrl = getSiteUrl()
 
   const organizationSchema = {
@@ -39,7 +40,7 @@ export default async function Page() {
     <>
       <JsonLd data={organizationSchema} />
       <JsonLd data={websiteSchema} />
-      <LandingPage stages={stages} isLoggedIn={!!user} siteContent={siteContent} />
+      <LandingPage stages={stages} isLoggedIn={!!user} siteContent={siteContent} subscriptionPlans={subscriptionPlans} />
     </>
   )
 }

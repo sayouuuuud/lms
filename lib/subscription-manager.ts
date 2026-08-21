@@ -30,6 +30,12 @@ export type SubscriptionManagerFilters = {
 export type PlanInput = {
   title: string
   description?: string
+  marketingLabel?: string | null
+  shortDescription?: string | null
+  imageUrl?: string | null
+  publicVisible?: boolean
+  featured?: boolean
+  sortOrder?: number
   price: number
   durationDays: number
   billingPeriod: string
@@ -88,6 +94,12 @@ function serializePlan(plan: any) {
     code: plan.code,
     title: plan.title,
     description: plan.description,
+    marketingLabel: plan.marketing_label,
+    shortDescription: plan.short_description,
+    imageUrl: plan.image_url,
+    publicVisible: plan.public_visible,
+    featured: plan.featured,
+    sortOrder: plan.sort_order,
     price: Number(plan.price),
     durationDays: plan.duration_days,
     billingPeriod: plan.billing_period,
@@ -147,6 +159,12 @@ const planSelect = {
   code: true,
   title: true,
   description: true,
+  marketing_label: true,
+  short_description: true,
+  image_url: true,
+  public_visible: true,
+  featured: true,
+  sort_order: true,
   price: true,
   duration_days: true,
   billing_period: true,
@@ -257,6 +275,12 @@ export async function createSubscriptionPlan(input: PlanInput, actorId: string) 
         code,
         title,
         description: cleanText(input.description),
+        marketing_label: cleanText(input.marketingLabel) || null,
+        short_description: cleanText(input.shortDescription),
+        image_url: cleanText(input.imageUrl) || null,
+        public_visible: input.publicVisible !== false,
+        featured: Boolean(input.featured),
+        sort_order: Math.max(0, Math.floor(finiteNumber(input.sortOrder))),
         price: new Prisma.Decimal(finiteNumber(input.price)),
         duration_days: Math.floor(finiteNumber(input.durationDays)),
         billing_period: cleanText(input.billingPeriod, 'custom'),
@@ -297,6 +321,12 @@ export async function updateSubscriptionPlan(planId: string, input: PlanInput, a
         code: cleanText(input.code) || null,
         title: cleanText(input.title),
         description: cleanText(input.description),
+        marketing_label: cleanText(input.marketingLabel) || null,
+        short_description: cleanText(input.shortDescription),
+        image_url: cleanText(input.imageUrl) || null,
+        public_visible: input.publicVisible !== false,
+        featured: Boolean(input.featured),
+        sort_order: Math.max(0, Math.floor(finiteNumber(input.sortOrder))),
         price: new Prisma.Decimal(finiteNumber(input.price)),
         duration_days: Math.floor(finiteNumber(input.durationDays)),
         billing_period: cleanText(input.billingPeriod, 'custom'),
@@ -515,4 +545,38 @@ export async function renewSubscription(input: {
     })
     return { id: current.id, planTitle: current.plans.title, endDate: endDate.toISOString() }
   })
+}
+
+
+export async function getSubscriptionPlanDetail(planId: string) {
+  const plan = await prisma.subscription_plans.findUnique({
+    where: { id: planId },
+    include: {
+      scopes: { orderBy: [{ scope_type: 'asc' }, { created_at: 'asc' }] },
+      _count: { select: { student_subscriptions: true } },
+    },
+  })
+  if (!plan) return null
+  return serializePlan({ ...plan, subscriberCount: plan._count.student_subscriptions })
+}
+
+export async function getSubscriptionScopeOptions() {
+  const [stages, branches, terms, monthlyCourses, courses, lectures] = await Promise.all([
+    prisma.stages.findMany({ select: { id: true, title: true }, orderBy: { sort_order: 'asc' } }),
+    prisma.branches.findMany({ select: { id: true, title: true, stages: { select: { title: true } } }, orderBy: [{ stage_id: 'asc' }, { sort_order: 'asc' }] }),
+    prisma.terms.findMany({ select: { id: true, title: true, stages: { select: { title: true } } }, orderBy: [{ stage_id: 'asc' }, { sort_order: 'asc' }] }),
+    prisma.monthly_courses.findMany({ select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } }, is_published: true }, orderBy: { created_at: 'desc' }, take: 500 }),
+    prisma.courses.findMany({ select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } }, status: true }, orderBy: { created_at: 'desc' }, take: 500 }),
+    prisma.lectures.findMany({ select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } }, is_published: true }, orderBy: { created_at: 'desc' }, take: 1000 }),
+  ])
+  return {
+    stages: stages.map((item) => ({ id: item.id, label: item.title })),
+    branches: branches.map((item) => ({ id: item.id, label: `${item.stages.title} — ${item.title}` })),
+    terms: terms.map((item) => ({ id: item.id, label: `${item.stages.title} — ${item.title}` })),
+    courses: [
+      ...monthlyCourses.map((item) => ({ id: item.id, kind: 'course' as const, label: `كورس شهري — ${item.branches.stages.title} — ${item.branches.title} — ${item.title}` })),
+      ...courses.map((item) => ({ id: item.id, kind: 'course' as const, label: `كورس — ${item.branches?.stages?.title ?? ''} — ${item.branches?.title ?? ''} — ${item.title}` })),
+    ],
+    lectures: lectures.map((item) => ({ id: item.id, kind: 'lecture' as const, label: `${item.branches.stages.title} — ${item.branches.title} — ${item.title}` })),
+  }
 }

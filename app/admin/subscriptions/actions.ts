@@ -8,6 +8,8 @@ import {
   createSubscriptionPlan,
   getSubscriptionEvents,
   getSubscriptionManagerData,
+  getSubscriptionPlanDetail,
+  getSubscriptionScopeOptions,
   setPlanActive,
   setSubscriptionMode,
   renewSubscription,
@@ -18,6 +20,7 @@ import {
   type SubscriptionStatus,
 } from '@/lib/subscription-manager'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 async function requireSubscriptionManager() {
   const allowed = await hasResourceAccess('subscriptions', 'manage')
@@ -59,6 +62,7 @@ export async function updateSubscriptionPlanAction(planId: string, input: PlanIn
     await updateSubscriptionPlan(planId, input, actorId)
     await logActivity({ action: 'update', resource: 'subscriptions', targetId: planId, targetLabel: input.title, details: 'تعديل خطة اشتراك ونطاقاتها' })
     revalidatePath('/admin/subscriptions')
+    revalidatePath(`/admin/subscriptions/${planId}`)
     return { ok: true as const }
   } catch (error) {
     return { ok: false as const, error: failMessage(error) }
@@ -153,6 +157,26 @@ export async function transitionSubscriptionAction(input: {
     await logActivity({ action: 'update', resource: 'subscriptions', targetId: input.subscriptionId, details: `انتقال حالة الاشتراك إلى ${input.toStatus}` })
     revalidatePath('/admin/subscriptions')
     return { ok: true as const }
+  } catch (error) {
+    return { ok: false as const, error: failMessage(error) }
+  }
+}
+
+export async function getSubscriptionPlanDetailAction(planId: string) {
+  try {
+    await requireSubscriptionManager()
+    const plan = await getSubscriptionPlanDetail(planId)
+    if (!plan) return { ok: false as const, error: 'الخطة غير موجودة' }
+    return { ok: true as const, plan }
+  } catch (error) {
+    return { ok: false as const, error: failMessage(error) }
+  }
+}
+
+export async function getSubscriptionScopeOptionsAction() {
+  try {
+    await requireSubscriptionManager()
+    return { ok: true as const, options: await getSubscriptionScopeOptions() }
   } catch (error) {
     return { ok: false as const, error: failMessage(error) }
   }
