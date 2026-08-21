@@ -99,3 +99,30 @@
 `9498ea5 feat: add subscription plan presentation and public catalog`
 
 تم رفعه بنجاح إلى `origin/main`، وتطابق `HEAD` مع `origin/main` بعد `git fetch`. لم تبق تغييرات غير مرفوعة في الشجرة.
+
+
+## تقرير الاختبار الشامل — 21 أغسطس 2026
+
+تم تشغيل الاختبارات الشاملة على مشروع Lms Upgrade فقط.
+
+| الفئة | النتيجة |
+|---|---|
+| اختبار حوكمة الاشتراكات | ناجح: دورة الحياة، الدفع، grace، النطاقات، الأوضاع، وعقود التدقيق |
+| الاختبار الشامل | ناجح: 14 حالة دورة حياة، 16 حالة نطاق، 12 حالة وضع/مصدر، وعقود schema/actions/UI |
+| TypeScript | ناجح عبر `tsc --noEmit` |
+| transaction على staging | ناجح: إنشاء خطة ونطاق واشتراك وحدث ثم rollback كامل |
+| الاختبارات السلبية على staging | ناجحة: رفض billing period غير صالح، scope غير صالح، التكرار، status غير صالح، وpayment status غير صالح |
+| بيانات اختبار بعد rollback | صفر خطط اختبار متبقية |
+| فحص staging البنيوي | ناجح: الجداول والحقول والقيود والفهارس موجودة |
+| فحص قاعدة `upgrade` قراءةً فقط | ناجح: الجداول والقيود والفهارس موجودة ولا توجد بيانات اختبار مؤقتة |
+| Next.js production build | اكتمل وتولدت مسارات الاشتراكات الجديدة؛ ظهرت رسائل تحذير اتصال لأن sandbox لا يملك `DATABASE_URL` المحلي |
+| ESLint | لم يبدأ لأن حزمة `eslint` غير موجودة في `node_modules`؛ لا توجد نتيجة lint سلبية من الكود نفسه |
+
+تم تثبيت أوامر الاختبار في `package.json`:
+
+```bash
+npm run test:subscription-governance
+npm run test:subscription-comprehensive
+```
+
+ملف الاختبار الجديد هو `scripts/test-subscription-comprehensive.mjs`، وملف اختبار قيود staging محفوظ في `analysis/subscription-staging-negative-tests.sql`. لم يتم تغيير قاعدة `upgrade` أثناء الاختبارات الأخيرة؛ فحوص الإنتاج الأخيرة كانت قراءةً فقط.

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:subscription-governance": "node scripts/test-subscription-governance.mjs",
+    "test:subscription-comprehensive": "node scripts/test-subscription-comprehensive.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {
