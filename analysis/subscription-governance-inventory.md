@@ -25,7 +25,8 @@
 | الاختبار | النتيجة |
 |---|---:|
 | `npm run test:subscription-governance` | ناجح: lifecycle، payment، grace، scopes، modes، audit contracts |
-| `./node_modules/.bin/tsc --noEmit --pretty false` | ناجح |
+| `./node_modules/.bin/tsc --noEmit --pretty false` | ناجح بعد إصلاح sanity_test المدموج من main |
+| sanity_test المدموج من main | تم إصلاحه ليستخدم branch_id فعليًا ويضمن التنظيف عند الفشل |
 | اختبار transaction على staging | ناجح؛ أُنشئت خطة ونطاق واشتراك وحدث ثم تم rollback، ولم تبق بيانات اختبار |
 | إعادة تشغيل migration على staging | ناجحة؛ تثبت idempotency |
 | `git diff --check` | ناجح |
