@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  CreditCard,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -47,6 +48,7 @@ const navItems: {
   { label: 'الرسائل', icon: MessageSquare, href: '/student/messages', badge: 'messages' },
   { label: 'الإشعارات', icon: Bell, href: '/student/notifications', badge: 'notifications' },
   { label: 'الفواتير', icon: Receipt, href: '/student/billing', badge: 'billing' },
+  { label: 'الاشتراكات', icon: CreditCard, href: '/student/subscriptions' },
   { label: 'أجهزتي', icon: ShieldCheck, href: '/student/devices' },
   { label: 'الإعدادات', icon: Settings, href: '/student/settings' },
 ]
