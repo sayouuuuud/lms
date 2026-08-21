@@ -91,3 +91,11 @@
 `/data/backups/lms-upgrade/staging-before-subscription-plan-presentation-20260821T181754Z.dump`
 
 `/data/backups/lms-upgrade/upgrade-before-subscription-plan-presentation-20260821T181942Z.dump`
+
+## حالة Git النهائية
+
+تم إنشاء commit التوسعة:
+
+`9498ea5 feat: add subscription plan presentation and public catalog`
+
+تم رفعه بنجاح إلى `origin/main`، وتطابق `HEAD` مع `origin/main` بعد `git fetch`. لم تبق تغييرات غير مرفوعة في الشجرة.
