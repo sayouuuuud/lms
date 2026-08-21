@@ -44,6 +44,8 @@ export type ExamMeta = {
   shuffle: boolean
   stageId: string | null
   branchId: string | null
+  isPublished?: boolean
+  releaseDate?: string | null
 }
 
 export const questionTypeMeta: Record<
