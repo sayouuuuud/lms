@@ -13,6 +13,7 @@ export type ResourceKey =
   | 'assignments'
   | 'calendar'
   | 'payments'
+  | 'subscriptions'
   | 'messages'
   | 'notifications'
   | 'coupons'
@@ -33,6 +34,7 @@ export const RESOURCES: { key: ResourceKey; label: string; href: string }[] = [
   { key: 'assignments', label: 'الواجبات', href: '/admin/assignments' },
   { key: 'calendar', label: 'التقويم', href: '/admin/calendar' },
   { key: 'payments', label: 'الطلبات', href: '/admin/payments' },
+  { key: 'subscriptions', label: 'إدارة الاشتراكات', href: '/admin/subscriptions' },
   { key: 'messages', label: 'الرسائل', href: '/admin/messages' },
   { key: 'notifications', label: 'الإشعارات', href: '/admin/notifications' },
   { key: 'coupons', label: 'خصومات و الكوبونات', href: '/admin/coupons' },

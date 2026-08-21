@@ -1,6 +1,7 @@
 import 'server-only'
 import { prisma } from '@/lib/prisma'
-import { hasActiveSubscription, isReleasedFilter } from '@/lib/subscriptions'
+import { isReleasedFilter } from '@/lib/subscriptions'
+import { getSubscriptionAccessibleContent, getSubscriptionMode } from '@/lib/subscription-access'
 import { createPlaybackToken } from '@/lib/video-token'
 import { auth } from '@/auth'
 import { assertDeviceAllowed } from '@/lib/device-guard'
@@ -218,21 +219,13 @@ async function getProgress(userId: string): Promise<Progress> {
 }
 
 export async function getPurchasedLectureIds(userId: string): Promise<string[]> {
-  const isSubscribed = await hasActiveSubscription(userId)
-  if (isSubscribed) {
-    const allLectures = await prisma.lectures.findMany({
-      where: isReleasedFilter,
-      select: { id: true }
-    })
-    return allLectures.map((l: any) => l.id)
-  }
-
-  const data = await prisma.orders.findMany({
+  const mode = await getSubscriptionMode()
+  const data = mode === 'subscriptions_only'
+    ? []
+    : await prisma.orders.findMany({
     where: { student_id: userId, status: 'approved' },
     select: { order_items: { select: { lecture_id: true, monthly_course_id: true, term_id: true, item_type: true } } }
   })
-
-  if (!data) return []
 
   const ids = new Set<string>()
   const courseIds = new Set<string>()
@@ -240,13 +233,9 @@ export async function getPurchasedLectureIds(userId: string): Promise<string[]> 
 
   for (const order of data) {
     for (const item of order.order_items) {
-      if (item.item_type === 'term_bundle' && item.term_id) {
-        termIds.add(item.term_id)
-      } else if (item.item_type === 'course_bundle' && item.monthly_course_id) {
-        courseIds.add(item.monthly_course_id)
-      } else if (item.lecture_id) {
-        ids.add(item.lecture_id)
-      }
+      if (item.item_type === 'term_bundle' && item.term_id) termIds.add(item.term_id)
+      else if (item.item_type === 'course_bundle' && item.monthly_course_id) courseIds.add(item.monthly_course_id)
+      else if (item.lecture_id) ids.add(item.lecture_id)
     }
   }
 
@@ -255,9 +244,7 @@ export async function getPurchasedLectureIds(userId: string): Promise<string[]> 
       where: { term_id: { in: [...termIds] } },
       select: { id: true }
     })
-    for (const row of termCourses) {
-      if (row.id) courseIds.add(row.id)
-    }
+    for (const row of termCourses) courseIds.add(row.id)
   }
 
   if (courseIds.size > 0) {
@@ -265,41 +252,31 @@ export async function getPurchasedLectureIds(userId: string): Promise<string[]> 
       where: { monthly_course_id: { in: [...courseIds] } },
       select: { id: true }
     })
-    for (const row of courseLectures) {
-      if (row.id) ids.add(row.id)
-    }
+    for (const row of courseLectures) ids.add(row.id)
   }
 
+  if (mode !== 'purchases_only') {
+    const subscriptionContent = await getSubscriptionAccessibleContent(userId)
+    for (const id of subscriptionContent.lectureIds) ids.add(id)
+  }
   return [...ids]
 }
 
 export async function getPurchasedCourseIds(userId: string): Promise<string[]> {
-  const isSubscribed = await hasActiveSubscription(userId)
-  if (isSubscribed) {
-    const allCourses = await prisma.monthly_courses.findMany({
-      where: isReleasedFilter,
-      select: { id: true }
-    })
-    return allCourses.map((c: any) => c.id)
-  }
-
-  const data = await prisma.orders.findMany({
+  const mode = await getSubscriptionMode()
+  const data = mode === 'subscriptions_only'
+    ? []
+    : await prisma.orders.findMany({
     where: { student_id: userId, status: 'approved' },
     select: { order_items: { select: { monthly_course_id: true, term_id: true, item_type: true } } }
   })
 
-  if (!data) return []
-
   const courseIds = new Set<string>()
   const termIds = new Set<string>()
-
   for (const order of data) {
     for (const item of order.order_items) {
-      if (item.item_type === 'term_bundle' && item.term_id) {
-        termIds.add(item.term_id)
-      } else if (item.item_type === 'course_bundle' && item.monthly_course_id) {
-        courseIds.add(item.monthly_course_id)
-      }
+      if (item.item_type === 'term_bundle' && item.term_id) termIds.add(item.term_id)
+      else if (item.item_type === 'course_bundle' && item.monthly_course_id) courseIds.add(item.monthly_course_id)
     }
   }
 
@@ -308,11 +285,13 @@ export async function getPurchasedCourseIds(userId: string): Promise<string[]> {
       where: { term_id: { in: [...termIds] } },
       select: { id: true }
     })
-    for (const row of termCourses) {
-      if (row.id) courseIds.add(row.id)
-    }
+    for (const row of termCourses) courseIds.add(row.id)
   }
 
+  if (mode !== 'purchases_only') {
+    const subscriptionContent = await getSubscriptionAccessibleContent(userId)
+    for (const id of subscriptionContent.courseIds) courseIds.add(id)
+  }
   return [...courseIds]
 }
 
@@ -370,35 +349,47 @@ export async function getEnrolledMonthlyCourses(): Promise<EnrolledMonthlyCourse
   const user = session?.user
   if (!user || !user.id) return []
 
-  const isSubscribed = await hasActiveSubscription(user.id)
+  const mode = await getSubscriptionMode()
   const enrolledAtByCourse = new Map<string, string>()
+  const orderRows = mode === 'subscriptions_only'
+    ? []
+    : await prisma.orders.findMany({
+    where: { student_id: user.id, status: 'approved' },
+    select: {
+      created_at: true,
+      order_items: { select: { monthly_course_id: true, term_id: true, item_type: true } },
+    },
+  })
 
-  if (isSubscribed) {
-    const allCourses = await prisma.monthly_courses.findMany({
-      where: isReleasedFilter,
-      select: { id: true, created_at: true }
-    })
-    for (const c of allCourses) {
-      enrolledAtByCourse.set(c.id, (c.created_at || new Date()).toISOString())
-    }
-  } else {
-    const orderRows = await prisma.orders.findMany({
-      where: { student_id: user.id, status: 'approved' },
-      select: { created_at: true, order_items: { select: { monthly_course_id: true, item_type: true } } }
-    })
-    
-    if (orderRows) {
-      for (const order of orderRows) {
-        for (const item of order.order_items) {
-          if (item.item_type === 'course_bundle' && item.monthly_course_id) {
-            const existing = enrolledAtByCourse.get(item.monthly_course_id)
-            const created = order.created_at.toISOString()
-            if (!existing || new Date(created) < new Date(existing)) {
-              enrolledAtByCourse.set(item.monthly_course_id, created)
-            }
-          }
-        }
+  const termIds = new Set<string>()
+  for (const order of orderRows) {
+    for (const item of order.order_items) {
+      if (item.item_type === 'term_bundle' && item.term_id) termIds.add(item.term_id)
+      if (item.item_type === 'course_bundle' && item.monthly_course_id) {
+        const created = order.created_at.toISOString()
+        const existing = enrolledAtByCourse.get(item.monthly_course_id)
+        if (!existing || new Date(created) < new Date(existing)) enrolledAtByCourse.set(item.monthly_course_id, created)
       }
+    }
+  }
+
+  if (termIds.size > 0) {
+    const termCourses = await prisma.monthly_courses.findMany({
+      where: { term_id: { in: [...termIds] } },
+      select: { id: true },
+    })
+    const enrolledAt = orderRows[0]?.created_at?.toISOString() ?? new Date().toISOString()
+    for (const row of termCourses) {
+      if (!enrolledAtByCourse.has(row.id)) enrolledAtByCourse.set(row.id, enrolledAt)
+    }
+  }
+
+  if (mode !== 'purchases_only') {
+    const subscriptionContent = await getSubscriptionAccessibleContent(user.id)
+    const subscriptionEnrolledAt = new Date().toISOString()
+    for (const courseId of subscriptionContent.courseIds) {
+      const existing = enrolledAtByCourse.get(courseId)
+      if (!existing) enrolledAtByCourse.set(courseId, subscriptionEnrolledAt)
     }
   }
 

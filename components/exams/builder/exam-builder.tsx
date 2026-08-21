@@ -45,6 +45,8 @@ export function ExamBuilder({
     shuffle: false,
     stageId: null,
     branchId: null,
+    releaseDate: null,
+    isPublished: true,
   })
   const [questions, setQuestions] = useState<Question[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)

@@ -1,67 +1,62 @@
-import 'server-only'
-
 import { prisma } from '@/lib/prisma'
+import { getSubscriptionAccessState, getSubscriptionMode } from '@/lib/subscription-access'
 
 /**
- * Returns true if the auth user (userId) has an approved
- * purchase that covers the given lectureId via any of three paths:
- *   1. Direct lecture purchase  (item_type = 'lecture',       lecture_id = lectureId)
- *   2. Course bundle            (item_type = 'course_bundle', monthly_course_id = lecture.monthly_course_id)
- *   3. Term bundle              (item_type = 'term_bundle',   term_id = monthly_course.term_id)
+ * الوصول للمحاضرة مشتق من مصدرين مستقلين:
+ * 1) طلب approved يملك المحاضرة أو الكورس أو الترم.
+ * 2) اشتراك صالح يطابق نطاق المحاضرة.
+ * انتهاء الاشتراك لا يحذف ولا يلغي المشتريات السابقة.
  */
 export async function userCanAccessLecture(
   userId: string,
   lectureId: string,
 ): Promise<boolean> {
+  const mode = await getSubscriptionMode()
   const lecture = await prisma.lectures.findUnique({
     where: { id: lectureId },
-    select: { id: true, monthly_course_id: true }
+    select: {
+      id: true,
+      branch_id: true,
+      monthly_course_id: true,
+      monthly_courses: { select: { term_id: true } },
+    },
   })
 
   if (!lecture) return false
-  const courseId: string | null = lecture.monthly_course_id ?? null
 
-  let termId: string | null = null
-  if (courseId) {
-    const course = await prisma.monthly_courses.findUnique({
-      where: { id: courseId },
-      select: { term_id: true }
-    })
-    termId = course?.term_id ?? null
-  }
-
-  const orders = await prisma.orders.findMany({
+  const orders = mode === 'subscriptions_only'
+    ? []
+    : await prisma.orders.findMany({
     where: { student_id: userId, status: 'approved' },
     select: {
       order_items: {
-        select: { lecture_id: true, monthly_course_id: true, term_id: true, item_type: true }
-      }
-    }
+        select: {
+          lecture_id: true,
+          monthly_course_id: true,
+          term_id: true,
+          item_type: true,
+        },
+      },
+    },
   })
-
-  if (!orders) return false
 
   for (const order of orders) {
     for (const item of order.order_items) {
       if (item.lecture_id === lectureId) return true
-
       if (
-        courseId &&
+        lecture.monthly_course_id &&
         item.item_type === 'course_bundle' &&
-        item.monthly_course_id === courseId
-      ) {
-        return true
-      }
-
+        item.monthly_course_id === lecture.monthly_course_id
+      ) return true
       if (
-        termId &&
+        lecture.monthly_courses?.term_id &&
         item.item_type === 'term_bundle' &&
-        item.term_id === termId
-      ) {
-        return true
-      }
+        item.term_id === lecture.monthly_courses.term_id
+      ) return true
     }
   }
 
-  return false
+  if (mode === 'purchases_only') return false
+  const subscription = await getSubscriptionAccessState(userId, lectureId)
+  return subscription.allowed
 }
