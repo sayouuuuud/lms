@@ -27,6 +27,10 @@ export type SubscriptionManagerFilters = {
   pageSize?: number
 }
 
+const SUBSCRIPTION_SCOPE_TYPES = ['all_released', 'branch', 'stage', 'term', 'course', 'lecture'] as const
+
+type SubscriptionScopeType = (typeof SUBSCRIPTION_SCOPE_TYPES)[number]
+
 export type PlanInput = {
   title: string
   description?: string
@@ -45,7 +49,7 @@ export type PlanInput = {
   code?: string
   stageId?: string | null
   branchId?: string | null
-  scopes?: Array<{ scopeType: string; scopeId?: string | null }>
+  scopes?: Array<{ scopeType: SubscriptionScopeType | string; scopeId?: string | null }>
 }
 
 export type SubscriptionTransitionInput = {
@@ -76,11 +80,53 @@ function assertPlanInput(input: PlanInput) {
   if (durationDays < 1 || durationDays > 3650) throw new Error('مدة الخطة يجب أن تكون بين يوم و3650 يومًا')
   const scopeMode = cleanText(input.scopeMode, 'all_released')
   if (!['all_released', 'selected'].includes(scopeMode)) throw new Error('نطاق الخطة غير صالح')
-  if ((input.scopes ?? []).some((scope) => !cleanText(scope.scopeType) || (scope.scopeType !== 'all_released' && !scope.scopeId))) {
-    throw new Error('يوجد نطاق اشتراك غير مكتمل')
+  if ((input.scopes ?? []).some((scope) => !SUBSCRIPTION_SCOPE_TYPES.includes(cleanText(scope.scopeType) as SubscriptionScopeType) || (scope.scopeType !== 'all_released' && !scope.scopeId))) {
+    throw new Error('يوجد نطاق اشتراك غير مكتمل أو غير مدعوم')
   }
   if (scopeMode === 'selected' && (input.scopes ?? []).length === 0 && !input.stageId && !input.branchId) {
     throw new Error('الخطة المحددة يجب أن تحتوي على نطاق واحد على الأقل')
+  }
+}
+
+function normalizeScopes(scopes: PlanInput['scopes'] = []) {
+  const seen = new Set<string>()
+  return scopes.map((scope) => ({
+    scopeType: cleanText(scope.scopeType) as SubscriptionScopeType,
+    scopeId: scope.scopeId || null,
+  })).filter((scope) => {
+    const key = `${scope.scopeType}:${scope.scopeId ?? ''}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+async function validateScopeReferences(scopes: ReturnType<typeof normalizeScopes>) {
+  const idsByType = new Map<SubscriptionScopeType, string[]>()
+  for (const scope of scopes) {
+    if (!scope.scopeId || scope.scopeType === 'all_released') continue
+    idsByType.set(scope.scopeType, [...(idsByType.get(scope.scopeType) ?? []), scope.scopeId])
+  }
+
+  const stageIds = idsByType.get('stage') ?? []
+  const branchIds = idsByType.get('branch') ?? []
+  const termIds = idsByType.get('term') ?? []
+  const courseIds = idsByType.get('course') ?? []
+  const lectureIds = idsByType.get('lecture') ?? []
+  const [stages, branches, terms, monthlyCourses, courses, lectures] = await Promise.all([
+    prisma.stages.findMany({ where: { id: { in: stageIds } }, select: { id: true } }),
+    prisma.branches.findMany({ where: { id: { in: branchIds } }, select: { id: true } }),
+    prisma.terms.findMany({ where: { id: { in: termIds } }, select: { id: true } }),
+    prisma.monthly_courses.findMany({ where: { id: { in: courseIds } }, select: { id: true } }),
+    prisma.courses.findMany({ where: { id: { in: courseIds } }, select: { id: true } }),
+    prisma.lectures.findMany({ where: { id: { in: lectureIds } }, select: { id: true } }),
+  ])
+  if (stages.length !== stageIds.length || branches.length !== branchIds.length || terms.length !== termIds.length || lectures.length !== lectureIds.length) {
+    throw new Error('يوجد عنصر محدد في الخطة غير موجود في قاعدة البيانات')
+  }
+  const existingCourseIds = new Set([...monthlyCourses, ...courses].map((course) => course.id))
+  if (existingCourseIds.size !== new Set(courseIds).size) {
+    throw new Error('يوجد كورس محدد غير موجود في قاعدة البيانات')
   }
 }
 
@@ -267,7 +313,8 @@ export async function createSubscriptionPlan(input: PlanInput, actorId: string) 
   assertPlanInput(input)
   const title = cleanText(input.title)
   const code = cleanText(input.code) || null
-  const scopes = input.scopes ?? []
+  const scopes = normalizeScopes(input.scopes)
+  await validateScopeReferences(scopes)
 
   const plan = await prisma.$transaction(async (tx) => {
     const created = await tx.subscription_plans.create({
@@ -312,7 +359,8 @@ export async function createSubscriptionPlan(input: PlanInput, actorId: string) 
 export async function updateSubscriptionPlan(planId: string, input: PlanInput, actorId: string) {
   if (!planId) throw new Error('معرّف الخطة مطلوب')
   assertPlanInput(input)
-  const scopes = input.scopes ?? []
+  const scopes = normalizeScopes(input.scopes)
+  await validateScopeReferences(scopes)
 
   await prisma.$transaction(async (tx) => {
     await tx.subscription_plans.update({
@@ -565,18 +613,56 @@ export async function getSubscriptionScopeOptions() {
     prisma.stages.findMany({ select: { id: true, title: true }, orderBy: { sort_order: 'asc' } }),
     prisma.branches.findMany({ select: { id: true, title: true, stages: { select: { title: true } } }, orderBy: [{ stage_id: 'asc' }, { sort_order: 'asc' }] }),
     prisma.terms.findMany({ select: { id: true, title: true, stages: { select: { title: true } } }, orderBy: [{ stage_id: 'asc' }, { sort_order: 'asc' }] }),
-    prisma.monthly_courses.findMany({ select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } }, is_published: true }, orderBy: { created_at: 'desc' }, take: 500 }),
-    prisma.courses.findMany({ select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } }, status: true }, orderBy: { created_at: 'desc' }, take: 500 }),
-    prisma.lectures.findMany({ select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } }, is_published: true }, orderBy: { created_at: 'desc' }, take: 1000 }),
+    prisma.monthly_courses.findMany({
+      where: { is_published: true },
+      select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } } },
+      orderBy: [{ branch_id: 'asc' }, { sort_order: 'asc' }],
+      take: 500,
+    }),
+    prisma.courses.findMany({
+      where: { status: { not: 'محذوف' } },
+      select: { id: true, title: true, branches: { select: { title: true, stages: { select: { title: true } } } } },
+      orderBy: [{ branch_id: 'asc' }, { created_at: 'desc' }],
+      take: 500,
+    }),
+    prisma.lectures.findMany({
+      where: { is_published: true },
+      select: { id: true, title: true, monthly_course_id: true, branches: { select: { title: true, stages: { select: { title: true } } } } },
+      orderBy: [{ monthly_course_id: 'asc' }, { course_sort_order: 'asc' }, { sort_order: 'asc' }],
+      take: 2000,
+    }),
   ])
+
+  const lecturesByCourse = new Map<string, Array<{ id: string; title: string }>>()
+  for (const lecture of lectures) {
+    if (!lecture.monthly_course_id) continue
+    const courseLectures = lecturesByCourse.get(lecture.monthly_course_id) ?? []
+    courseLectures.push({ id: lecture.id, title: lecture.title })
+    lecturesByCourse.set(lecture.monthly_course_id, courseLectures)
+  }
+
   return {
     stages: stages.map((item) => ({ id: item.id, label: item.title })),
     branches: branches.map((item) => ({ id: item.id, label: `${item.stages.title} — ${item.title}` })),
     terms: terms.map((item) => ({ id: item.id, label: `${item.stages.title} — ${item.title}` })),
-    courses: [
-      ...monthlyCourses.map((item) => ({ id: item.id, kind: 'course' as const, label: `كورس شهري — ${item.branches.stages.title} — ${item.branches.title} — ${item.title}` })),
-      ...courses.map((item) => ({ id: item.id, kind: 'course' as const, label: `كورس — ${item.branches?.stages?.title ?? ''} — ${item.branches?.title ?? ''} — ${item.title}` })),
+    coursesWithLectures: [
+      ...monthlyCourses.map((item) => ({
+        id: item.id,
+        kind: 'monthly_course' as const,
+        title: item.title,
+        branchLabel: `${item.branches.stages.title} — ${item.branches.title}`,
+        lectures: lecturesByCourse.get(item.id) ?? [],
+      })),
+      ...courses.map((item) => ({
+        id: item.id,
+        kind: 'course' as const,
+        title: item.title,
+        branchLabel: item.branches ? `${item.branches.stages?.title ?? ''} — ${item.branches.title}` : 'بدون فرع محدد',
+        lectures: [],
+      })),
     ],
-    lectures: lectures.map((item) => ({ id: item.id, kind: 'lecture' as const, label: `${item.branches.stages.title} — ${item.branches.title} — ${item.title}` })),
+    looseLectures: lectures
+      .filter((item) => !item.monthly_course_id)
+      .map((item) => ({ id: item.id, label: `${item.branches.stages.title} — ${item.branches.title} — ${item.title}` })),
   }
 }
