@@ -54,6 +54,7 @@ export function LectureFormModals() {
   const [image, setImage] = useState('')
   const [releaseDate, setReleaseDate] = useState('')
   const [isFree, setIsFree] = useState(false)
+  const [isPublished, setIsPublished] = useState(true)
 
   // Inline "create a new course" state (keyed per branch so newly-created
   // courses show up immediately without waiting for a full data refresh).
@@ -181,6 +182,7 @@ export function LectureFormModals() {
       releaseDate: releaseDate || null,
       whatYouLearn: whatYouLearn.split('\n').map(s => s.trim()).filter(Boolean),
       isFree,
+      isPublished,
     })
   }
 
@@ -190,6 +192,8 @@ export function LectureFormModals() {
   const [lDuration, setLDuration] = useState('')
   const [lIsFree, setLIsFree] = useState(false)
   const [lAttachments, setLAttachments] = useState<LessonAttachment[]>([])
+  const [lIsPublished, setLIsPublished] = useState(true)
+  const [lReleaseDate, setLReleaseDate] = useState('')
 
   useEffect(() => {
     if (lessonFormOpen) {
@@ -197,6 +201,8 @@ export function LectureFormModals() {
       setLDuration(editingLesson?.duration ?? '')
       setLIsFree(editingLesson?.isFree ?? false)
       setLAttachments(editingLesson?.attachments ?? [])
+      setLIsPublished(true) // assume always true initially
+      setLReleaseDate('')
     }
   }, [lessonFormOpen, editingLesson])
 
@@ -210,6 +216,8 @@ export function LectureFormModals() {
       // نوع محتوى الدرس مثبّت على "فيديو"
       contentType: 'فيديو',
       attachments: lAttachments,
+      isPublished: lIsPublished,
+      releaseDate: lReleaseDate || null,
     })
   }
 
@@ -431,6 +439,21 @@ export function LectureFormModals() {
             />
           </Field>
 
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-secondary/40 px-4 py-3 transition-colors hover:bg-secondary/60">
+            <input
+              type="checkbox"
+              checked={isPublished}
+              onChange={(e) => setIsPublished(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+            />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">نشر المحاضرة</span>
+              <span className="text-xs text-muted-foreground">
+                المحاضرة هتكون ظاهرة للطلاب (أو حسب موعد النزول).
+              </span>
+            </span>
+          </label>
+
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit" disabled={!branchId}>
               {editingLecture ? 'حفظ التغييرات' : 'إضافة المحاضرة'}
@@ -480,6 +503,27 @@ export function LectureFormModals() {
             onChange={setLAttachments}
             hint="ملفات إضافية (PDF، Word، صور...) يقدر الطالب يحمّلها مع الدرس."
           />
+
+          <Field label="موعد تفعيل الدرس (اختياري)">
+            <input
+              type="datetime-local"
+              value={lReleaseDate}
+              onChange={(e) => setLReleaseDate(e.target.value)}
+              className={cn(selectClass, 'w-full')}
+              dir="ltr"
+            />
+          </Field>
+
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <input
+              type="checkbox"
+              checked={lIsPublished}
+              onChange={(e) => setLIsPublished(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-primary"
+            />
+            <span className="text-sm text-foreground">نشر الدرس</span>
+          </label>
+
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit">
               {editingLesson ? 'حفظ التغييرات' : 'إضافة الدرس'}

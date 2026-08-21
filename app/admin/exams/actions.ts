@@ -35,6 +35,8 @@ export type SaveExamPayload = {
     shuffle: boolean
     stageId?: string | null
     branchId?: string | null
+    isPublished?: boolean
+    releaseDate?: Date | string | null
   }
   questions: Array<{
     type: 'mcq' | 'essay' | 'file'
@@ -47,7 +49,7 @@ export type SaveExamPayload = {
     modelAnswer: string
     bankQuestionId?: string | null
   }>
-  publish: boolean
+  publish?: boolean
 }
 
 function makeExamCode() {
@@ -62,6 +64,10 @@ export async function saveExam(payload: SaveExamPayload) {
   const { meta, questions, publish } = payload
   const code = makeExamCode()
 
+  // Use meta.isPublished if provided, fallback to publish, default true
+  const isPub = meta.isPublished !== undefined ? meta.isPublished : (publish ?? true)
+  const relDate = meta.releaseDate ? new Date(meta.releaseDate) : null
+
   try {
     const exam = await prisma.exams.create({
       data: {
@@ -75,7 +81,8 @@ export async function saveExam(payload: SaveExamPayload) {
         stage_id: meta.stageId || null,
         branch_id: meta.branchId || null,
         questions: questions.length,
-        status: publish ? 'منشور' : 'مسودة',
+        status: isPub ? 'منشور' : 'مسودة',
+        release_date: relDate,
       },
       select: { id: true, code: true }
     })

@@ -81,6 +81,7 @@ export type LectureInput = {
   releaseDate?: string | null
   whatYouLearn?: string[] | null
   isFree?: boolean
+  isPublished?: boolean
 }
 
 export type LessonInput = {
@@ -91,6 +92,8 @@ export type LessonInput = {
   videoUrl?: string | null
   description?: string | null
   attachments?: LessonAttachment[]
+  isPublished?: boolean
+  releaseDate?: Date | string | null
 }
 
 function slugify(input: string) {
@@ -231,6 +234,8 @@ export async function getBranchOptions(): Promise<BranchOption[]> {
 export async function createMonthlyCourseQuick(input: {
   branchId: string
   title: string
+  isPublished?: boolean
+  releaseDate?: Date | string | null
 }): Promise<{ id: string; title: string } | { error: string }> {
   if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
@@ -245,7 +250,8 @@ export async function createMonthlyCourseQuick(input: {
         branch_id: input.branchId,
         slug: slugify(title),
         title,
-        is_published: true,
+        is_published: input.isPublished ?? true,
+        release_date: input.releaseDate ? new Date(input.releaseDate) : null,
         sort_order: count + 1,
       },
       select: { id: true, title: true }
@@ -285,6 +291,7 @@ export async function createLecture(input: LectureInput) {
         what_you_learn: input.whatYouLearn || [],
         is_free: input.isFree ?? false,
         image: input.image || null,
+        is_published: input.isPublished ?? true,
       },
       select: { id: true, slug: true }
     })
@@ -370,6 +377,7 @@ export async function updateLecture(id: string, input: LectureInput) {
         what_you_learn: input.whatYouLearn || [],
         is_free: input.isFree ?? false,
         image: input.image !== undefined ? input.image : undefined,
+        is_published: input.isPublished ?? true,
       }
     })
 
@@ -479,6 +487,8 @@ export async function createLesson(lectureId: string, input: LessonInput) {
         video_url: isStreamingVideo ? null : (input.videoUrl ?? null),
         description: input.description ?? null,
         attachments: input.attachments ?? [],
+        is_published: input.isPublished ?? true,
+        release_date: input.releaseDate ? new Date(input.releaseDate) : null,
       },
       select: { id: true },
     })
@@ -530,6 +540,8 @@ export async function updateLesson(id: string, input: LessonInput) {
         ),
         description: input.description !== undefined ? input.description : undefined,
         attachments: input.attachments !== undefined ? input.attachments : undefined,
+        is_published: input.isPublished ?? true,
+        release_date: input.releaseDate ? new Date(input.releaseDate) : null,
       }
     })
 

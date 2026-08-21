@@ -69,7 +69,6 @@ const navItems: NavItemOrGroup[] = [
       { label: 'التصنيفات', icon: Layers, href: '/admin/categories', resource: 'categories' },
       { label: 'الكورسات والمسارات', icon: BookOpen, href: '/admin/courses', resource: 'courses' },
       { label: 'الامتحانات', icon: ClipboardList, href: '/admin/exams', resource: 'exams' },
-      { label: 'إدارة النشر', icon: CalendarDays, href: '/admin/release-manager', resource: 'courses' },
       { label: 'الاشتراكات', icon: CreditCard, href: '/admin/subscriptions', resource: 'payments' },
       { label: 'بنك الأسئلة', icon: Library, href: '/admin/question-bank', resource: 'question-bank' },
       { label: 'الواجبات', icon: FileText, href: '/admin/assignments', resource: 'assignments' },

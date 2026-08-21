@@ -114,6 +114,8 @@ export function AdminLectureDetail({
   const [lVideoType, setLVideoType] = useState<'upload' | 'youtube'>('upload')
   const [lDesc, setLDesc] = useState('')
   const [lAttachments, setLAttachments] = useState<LessonAttachment[]>([])
+  const [lIsPublished, setLIsPublished] = useState(true)
+  const [lReleaseDate, setLReleaseDate] = useState('')
 
   const openCreateLesson = () => {
     setEditingLesson(null)
@@ -124,6 +126,8 @@ export function AdminLectureDetail({
     setLVideoType('upload')
     setLDesc('')
     setLAttachments([])
+    setLIsPublished(true)
+    setLReleaseDate('')
     setLessonOpen(true)
   }
 
@@ -140,6 +144,8 @@ export function AdminLectureDetail({
     )
     setLDesc(lesson.description ?? '')
     setLAttachments(lesson.attachments ?? [])
+    setLIsPublished(true) // assume always true for now if missing
+    setLReleaseDate('')
     setLessonOpen(true)
   }
 
@@ -155,6 +161,8 @@ export function AdminLectureDetail({
       videoUrl: lVideo || null,
       description: lDesc.trim() || null,
       attachments: lAttachments,
+      isPublished: lIsPublished,
+      releaseDate: lReleaseDate || null,
     }
     const res = editingLesson
       ? await updateLesson(editingLesson.id, input)
@@ -484,6 +492,27 @@ export function AdminLectureDetail({
               hint="ملفات إضافية (PDF، Word، صور...) يقدر الطالب يحمّلها مع الدرس. الحد الأقصى 100 MB لكل ملف."
             />
           </div>
+
+          <Field label="موعد تفعيل الدرس (اختياري)">
+            <input
+              type="datetime-local"
+              value={lReleaseDate}
+              onChange={(e) => setLReleaseDate(e.target.value)}
+              className={cn('w-full rounded-xl border border-border bg-secondary/60 px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:bg-card')}
+              dir="ltr"
+            />
+          </Field>
+
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <input
+              type="checkbox"
+              checked={lIsPublished}
+              onChange={(e) => setLIsPublished(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-primary"
+            />
+            <span className="text-sm text-foreground">نشر الدرس</span>
+          </label>
+
           <div className="flex justify-start gap-2 pt-2">
             <Button type="submit">
               {editingLesson ? 'حفظ التغييرات' : 'إضافة الدرس'}

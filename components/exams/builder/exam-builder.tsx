@@ -401,21 +401,43 @@ export function ExamBuilder({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Button type="button" onClick={() => handleSave(true)} disabled={saving}>
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-            نشر الاختبار
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleSave(false)}
-            disabled={saving}
-          >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            حفظ كمسودة
-          </Button>
-          <Link
+          <div className="flex flex-col gap-2">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-foreground">
+                تاريخ النشر (اختياري)
+              </span>
+              <input
+                type="datetime-local"
+                value={meta.releaseDate ? String(meta.releaseDate) : ''}
+                onChange={(e) => updateMeta({ releaseDate: e.target.value || null })}
+                className={fieldCls}
+                dir="ltr"
+              />
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 pb-2">
+              <input
+                type="checkbox"
+                checked={meta.isPublished ?? true}
+                onChange={(e) => updateMeta({ isPublished: e.target.checked })}
+                className="size-4 accent-primary"
+              />
+              <span className="text-sm font-medium text-foreground">نشر الاختبار مباشرة؟</span>
+            </label>
+
+            <Button type="button" onClick={() => handleSave(true)} disabled={saving}>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              حفظ الاختبار
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleSave(false)}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              حفظ كمسودة
+            </Button>
+            <Link
             href="/admin/exams"
             className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
