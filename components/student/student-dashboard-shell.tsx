@@ -1,6 +1,7 @@
 'use client'
 
 import { StudentLayout } from './student-layout'
+import { useStudent } from './student-context'
 import { StudentWelcome } from './student-welcome'
 import { StudentStats } from './student-stats'
 import { ContinueLearning } from './continue-learning'
@@ -14,19 +15,8 @@ import { UpcomingExams } from './upcoming-exams'
 import { PendingAssignments } from './pending-assignments'
 import { MonthlyProgress } from './monthly-progress'
 
-export function StudentDashboardShell({
-  enrolledCourses,
-  schedule,
-  grades,
-  announcements,
-  activity,
-}: {
-  enrolledCourses: CourseProgress[]
-  schedule: ScheduleItem[]
-  grades: GradeItem[]
-  announcements: Announcement[]
-  activity: ActivityDay[]
-}) {
+export function StudentDashboardShell() {
+  const { enrolledCourses = [], schedule = [], grades = [], announcements = [], activity = [] } = useStudent()
   // ── Real values for the welcome banner (computed from live data) ──
   const totalCompleted = enrolledCourses.reduce((s, c) => s + c.completedLessons, 0)
   const totalLessons = enrolledCourses.reduce((s, c) => s + c.totalLessons, 0)

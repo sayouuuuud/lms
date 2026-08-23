@@ -70,16 +70,16 @@ export async function hasResourceAccess(
   if (role === 'admin') return true
   if (role !== 'assistant') return false
 
-  if (user?.id) {
-    userContextStorage.enterWith({
-      id: user.id,
-      role: 'assistant',
-      email: user.email,
-    })
+  const context: UserContext = {
+    id: user.id,
+    role: 'assistant',
+    email: user.email,
   }
 
-  const map = await getPermissionMap()
-  return satisfies(map[resource], level)
+  return runWithUserContext(context, async () => {
+    const map = await getPermissionMap()
+    return satisfies(map[resource], level)
+  })
 }
 
 /** يرجّع صف students المرتبط بالمستخدم الحالي (للبوابة الطلابية). */
@@ -92,9 +92,10 @@ export async function getCurrentStudent() {
     role: (user as any).role || 'student',
     email: user.email,
   }
-  userContextStorage.enterWith(context)
-  return await prisma.students.findFirst({
-    where: { user_id: user.id }
+  return runWithUserContext(context, async () => {
+    return await prisma.students.findFirst({
+      where: { user_id: user.id }
+    })
   })
 }
 
@@ -110,7 +111,6 @@ export async function withAuthContext<T>(
     ? { id: user.id, role: (user as any).role || 'student', email: user.email }
     : { role: 'anon' }
 
-  userContextStorage.enterWith(context)
   return runWithUserContext(context, async () => {
     return await fn(user)
   })
@@ -130,7 +130,6 @@ export async function withStudentAuth<T>(
     role: (user as any).role || 'student',
     email: user.email,
   }
-  userContextStorage.enterWith(context)
   return runWithUserContext(context, async () => {
     const student = await prisma.students.findFirst({
       where: { user_id: user.id }
