@@ -68,3 +68,25 @@ export function formatRelativeArabic(iso: string | null | undefined): string {
     year: 'numeric',
   })
 }
+
+/**
+ * نافذة تحذير انتهاء الاشتراك — نقية وقابلة للاختبار بمعزل.
+ * تُستخدم في منظف الاشتراكات لبناء إشعارات مفتاحية غير قابلة للتكرار:
+ * المفتاح = SUBEXP-<subscriptionId>-<window>.
+ * تُرجع null عندما لا يستحق الإشعار (أكثر من 7 أيام أو انتهى فعليًا).
+ */
+export type SubscriptionExpiryWindow = 't-7d' | 't-1d'
+
+export function subscriptionExpiryWindow(
+  endDate: Date | string,
+  now: Date = new Date(),
+): SubscriptionExpiryWindow | null {
+  const end = typeof endDate === 'string' ? new Date(endDate) : endDate
+  const diffMs = end.getTime() - now.getTime()
+  const DAY = 24 * 60 * 60 * 1000
+  if (diffMs <= 0) return null
+  const remainingDays = Math.ceil(diffMs / DAY)
+  if (remainingDays <= 1) return 't-1d'
+  if (remainingDays <= 7) return 't-7d'
+  return null
+}

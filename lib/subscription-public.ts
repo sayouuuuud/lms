@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { normalizeSubscriptionMode, type SubscriptionMode } from '@/lib/subscription-rules'
 
 export type PublicSubscriptionPlan = {
   id: string
@@ -101,4 +102,31 @@ export async function getPublicSubscriptionPlan(planId: string): Promise<PublicS
     select: planPresentation,
   })
   return plan ? serialize(plan) : null
+}
+
+/**
+ * وضع الاشتراكات للأسطح العامة: يحدد ما إذا كان تسويق الخطط والاشتراك ظاهرًا إطلاقًا.
+ * purchases_only => subscriptionsEnabled=false وتُخفى كل عناصر التسويق.
+ */
+export async function getPublicSubscriptionContext(): Promise<{
+  mode: SubscriptionMode
+  subscriptionsEnabled: boolean
+}> {
+  const settings = await prisma.platform_settings.findFirst({ select: { subscription_mode: true } })
+  const mode = normalizeSubscriptionMode(settings?.subscription_mode)
+  return { mode, subscriptionsEnabled: mode !== 'purchases_only' }
+}
+
+/**
+ * الاستعلام المرجعي الوحيد لعرض الخطط للطلاب/الزوار خارج الصفحات الإدارية:
+ * is_active + public_visible مع النطاقات. أي عرض خطة جديد يستدعي هذه الدالة
+ * بدل استعلام مباشر (يمنع تسرّب خطط مخفية أو مؤرشفة).
+ */
+export async function getVisiblePlans(): Promise<PublicSubscriptionPlan[]> {
+  const plans = await prisma.subscription_plans.findMany({
+    where: { is_active: true, public_visible: true },
+    orderBy: [{ featured: 'desc' }, { sort_order: 'asc' }, { created_at: 'desc' }],
+    select: planPresentation,
+  })
+  return plans.map(serialize)
 }

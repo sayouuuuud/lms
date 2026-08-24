@@ -2,15 +2,16 @@ import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const root = resolve(new URL('..', import.meta.url).pathname)
+const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const outDir = join(root, '.tmp-subscription-comprehensive-test')
 rmSync(outDir, { recursive: true, force: true })
 mkdirSync(outDir, { recursive: true })
 
 try {
-  execFileSync(join(root, 'node_modules/.bin/tsc'), [
+  execFileSync(process.execPath, [
+    join(root, 'node_modules/typescript/bin/tsc'),
     'lib/subscription-rules.ts',
     '--target', 'ES2022',
     '--module', 'NodeNext',

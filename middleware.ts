@@ -8,7 +8,7 @@ const { auth } = NextAuth(authConfig)
 
 // HLS is token-gated inside its route handler. Media-element requests may omit the
 // session cookie after a reverse proxy, so middleware must not redirect them first.
-const PUBLIC_PATHS = ['/', '/auth', '/stages', '/api/auth', '/api/track', '/api/media', '/api/attachments', '/api/webhooks', '/api/hls']
+const PUBLIC_PATHS = ['/', '/auth', '/stages', '/subscriptions', '/api/auth', '/api/track', '/api/media', '/api/attachments', '/api/hls', '/api/cron']
 
 function isPublicPath(pathname: string) {
   if (pathname === '/') return true

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User, GraduationCap, MapPin, School, Check, AlertCircle, ShieldCheck, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { recordLogin, resolveLoginDestination } from '@/app/auth/audit-actions'
@@ -43,6 +44,14 @@ export function AuthForm({
   const [awaitingCode, setAwaitingCode] = useState(false)
   const [code, setCode] = useState('')
   const [resending, setResending] = useState(false)
+
+  // planId handoff: قادم من صفحة خطة عامة (/subscriptions/[planId]) — بعد إنشاء
+  // الحساب وتسجيل الدخول يُحوّل الطالب لصفحة اشتراكاته مع فتح حوار الاشتراك تلقائيًا.
+  const searchParams = useSearchParams()
+  const handoffPlanId = searchParams.get('planId')
+  const studentDestination = handoffPlanId
+    ? `/student/subscriptions?planId=${encodeURIComponent(handoffPlanId)}`
+    : '/student'
 
   const switchTab = (next: Tab) => {
     setTab(next)
@@ -128,7 +137,7 @@ export function AuthForm({
             setError('تم إنشاء حسابك. سجّل دخولك للمتابعة.')
             return
           }
-          window.location.assign('/student')
+          window.location.assign(studentDestination)
           return
         }
 
@@ -176,7 +185,7 @@ export function AuthForm({
         return
       }
 
-      window.location.assign('/student')
+      window.location.assign(studentDestination)
       return
     } catch {
       setError('حصل خطأ غير متوقّع. حاول تاني.')

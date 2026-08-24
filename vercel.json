@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/subscriptions-sweep",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

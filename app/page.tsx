@@ -4,11 +4,17 @@ import { getSiteContent } from '@/lib/site-content'
 import { getSiteUrl } from '@/lib/seo'
 import { JsonLd } from '@/components/seo/json-ld'
 import { auth } from '@/auth'
-import { getPublicSubscriptionPlans } from '@/lib/subscription-public'
+import { getPublicSubscriptionContext, getPublicSubscriptionPlans } from '@/lib/subscription-public'
 export default async function Page() {
   const session = await auth()
   const user = session?.user
-  const [stages, siteContent, subscriptionPlans] = await Promise.all([getCurriculum(), getSiteContent(), getPublicSubscriptionPlans({ featuredOnly: true, context: 'home' })])
+  const ctx = await getPublicSubscriptionContext()
+  const [stages, siteContent, subscriptionPlans] = await Promise.all([
+    getCurriculum(),
+    getSiteContent(),
+    // purchases_only: لا تسويق للاشتراكات في الرئيسية إطلاقًا.
+    ctx.subscriptionsEnabled ? getPublicSubscriptionPlans({ featuredOnly: true, context: 'home' }) : Promise.resolve([]),
+  ])
   const siteUrl = getSiteUrl()
 
   const organizationSchema = {

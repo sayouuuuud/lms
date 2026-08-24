@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, SlidersHorizontal } from 'lucide-react'
 import { getCurriculum } from '@/lib/curriculum'
-import { getPublicSubscriptionPlans } from '@/lib/subscription-public'
+import { getPublicSubscriptionContext, getPublicSubscriptionPlans } from '@/lib/subscription-public'
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat('ar-EG').format(value)
@@ -26,6 +26,18 @@ export default async function SubscriptionsPage({
   searchParams: Promise<{ stageId?: string; branchId?: string }>
 }) {
   const params = await searchParams
+  const ctx = await getPublicSubscriptionContext()
+  if (!ctx.subscriptionsEnabled) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-background px-4 py-16" dir="rtl">
+        <div className="max-w-md rounded-[2rem] border border-border bg-card p-10 text-center shadow-sm dark:border-border dark:bg-card">
+          <h1 className="font-heading text-2xl font-extrabold text-foreground">الاشتراكات غير متاحة حاليًا</h1>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">منصة تعمل حاليًا بنظام الشراء الفردي فقط. تابعوا إعلان باقات الاشتراك قريبًا.</p>
+          <Link href="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary-deep"><ArrowLeft className="size-4" />العودة للرئيسية</Link>
+        </div>
+      </main>
+    )
+  }
   const stages = await getCurriculum()
   const selectedStage = stages.find((stage) => stage.id === params.stageId)
   const selectedBranch = selectedStage?.branches.find((branch) => branch.id === params.branchId)

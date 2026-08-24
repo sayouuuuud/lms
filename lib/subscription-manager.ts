@@ -9,6 +9,7 @@ export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number]
 export const SUBSCRIPTION_EVENT_TYPES = [
   'created',
   'renewed',
+  // payment_recorded: محفوظ الآن ويُطلق في Milestone 3.3 عند اعتماد طلب اشتراك مع إيصال.
   'payment_recorded',
   'grace_started',
   'expired',
@@ -417,6 +418,71 @@ export async function setSubscriptionMode(mode: string, gracePeriodDays: number,
   return { mode: normalizedMode, gracePeriodDays: grace, actorId }
 }
 
+export async function assignSubscriptionInTransaction(
+  tx: Prisma.TransactionClient,
+  params: {
+    studentId: string
+    planId: string
+    actorId: string
+    source?: string
+    paymentStatus?: string
+    paymentReference?: string | null
+    startDate?: Date
+    endDate?: Date
+    graceUntil?: Date | null
+    /** يسمح للاعتماد التلقائي من طلبات الاشتراك بتجاوز قيد الإسناد اليدوي. */
+    allowManualAssignmentBypass?: boolean
+  },
+) {
+  if (!params.studentId || !params.planId) throw new Error('الطالب والخطة مطلوبان')
+  const now = params.startDate ?? new Date()
+
+  const [student, plan] = await Promise.all([
+    tx.students.findUnique({ where: { id: params.studentId }, select: { id: true, name: true } }),
+    tx.subscription_plans.findUnique({ where: { id: params.planId }, select: { id: true, title: true, duration_days: true, is_active: true, allow_manual_assignment: true } }),
+  ])
+  if (!student) throw new Error('الطالب غير موجود')
+  if (!plan || !plan.is_active) throw new Error('الخطة غير موجودة أو غير مفعّلة')
+  if (!plan.allow_manual_assignment && !params.allowManualAssignmentBypass) throw new Error('هذه الخطة لا تسمح بالإسناد اليدوي')
+
+  const endDate = params.endDate ?? new Date(now.getTime() + plan.duration_days * 24 * 60 * 60 * 1000)
+  if (endDate <= now) throw new Error('تاريخ انتهاء الاشتراك يجب أن يكون بعد البداية')
+
+  const overlap = await tx.student_subscriptions.findFirst({
+    where: {
+      student_id: student.id,
+      plan_id: plan.id,
+      status: { in: ['active', 'grace'] },
+      start_date: { lt: endDate },
+      OR: [{ end_date: { gt: now } }, { grace_until: { gt: now } }],
+    },
+    select: { id: true },
+  })
+  if (overlap) throw new Error('يوجد اشتراك فعال أو داخل فترة السماح لنفس الطالب والخطة')
+
+  const created = await tx.student_subscriptions.create({
+    data: {
+      student_id: student.id,
+      plan_id: plan.id,
+      start_date: now,
+      end_date: endDate,
+      status: 'active',
+      source: cleanText(params.source, 'manual'),
+      payment_status: cleanText(params.paymentStatus, 'waived'),
+      payment_reference: params.paymentReference || null,
+      grace_until: params.graceUntil || null,
+      assigned_by: params.actorId,
+      updated_by: params.actorId,
+      last_payment_at: params.paymentStatus === 'paid' ? now : null,
+      next_billing_at: endDate,
+      plan_snapshot: { id: plan.id, title: plan.title, durationDays: plan.duration_days },
+      events: { create: { event_type: 'created', actor_profile_id: params.actorId, to_status: 'active', reason: 'إسناد اشتراك' } },
+    },
+    select: { id: true },
+  })
+  return { id: created.id, studentName: student.name, planTitle: plan.title }
+}
+
 export async function assignSubscription(params: {
   studentId: string
   planId: string
@@ -428,55 +494,7 @@ export async function assignSubscription(params: {
   endDate?: Date
   graceUntil?: Date | null
 }) {
-  if (!params.studentId || !params.planId) throw new Error('الطالب والخطة مطلوبان')
-  const now = params.startDate ?? new Date()
-
-  return prisma.$transaction(async (tx) => {
-    const [student, plan] = await Promise.all([
-      tx.students.findUnique({ where: { id: params.studentId }, select: { id: true, name: true } }),
-      tx.subscription_plans.findUnique({ where: { id: params.planId }, select: { id: true, title: true, duration_days: true, is_active: true, allow_manual_assignment: true } }),
-    ])
-    if (!student) throw new Error('الطالب غير موجود')
-    if (!plan || !plan.is_active) throw new Error('الخطة غير موجودة أو غير مفعّلة')
-    if (!plan.allow_manual_assignment) throw new Error('هذه الخطة لا تسمح بالإسناد اليدوي')
-
-    const endDate = params.endDate ?? new Date(now.getTime() + plan.duration_days * 24 * 60 * 60 * 1000)
-    if (endDate <= now) throw new Error('تاريخ انتهاء الاشتراك يجب أن يكون بعد البداية')
-
-    const overlap = await tx.student_subscriptions.findFirst({
-      where: {
-        student_id: student.id,
-        plan_id: plan.id,
-        status: { in: ['active', 'grace'] },
-        start_date: { lt: endDate },
-        OR: [{ end_date: { gt: now } }, { grace_until: { gt: now } }],
-      },
-      select: { id: true },
-    })
-    if (overlap) throw new Error('يوجد اشتراك فعال أو داخل فترة السماح لنفس الطالب والخطة')
-
-    const created = await tx.student_subscriptions.create({
-      data: {
-        student_id: student.id,
-        plan_id: plan.id,
-        start_date: now,
-        end_date: endDate,
-        status: 'active',
-        source: cleanText(params.source, 'manual'),
-        payment_status: cleanText(params.paymentStatus, 'waived'),
-        payment_reference: params.paymentReference || null,
-        grace_until: params.graceUntil || null,
-        assigned_by: params.actorId,
-        updated_by: params.actorId,
-        last_payment_at: params.paymentStatus === 'paid' ? now : null,
-        next_billing_at: endDate,
-        plan_snapshot: { id: plan.id, title: plan.title, durationDays: plan.duration_days },
-        events: { create: { event_type: 'created', actor_profile_id: params.actorId, to_status: 'active', reason: 'إسناد اشتراك' } },
-      },
-      select: { id: true },
-    })
-    return { id: created.id, studentName: student.name, planTitle: plan.title }
-  })
+  return prisma.$transaction((tx) => assignSubscriptionInTransaction(tx, params))
 }
 
 export async function transitionSubscription(input: SubscriptionTransitionInput, actorId: string) {
@@ -537,6 +555,65 @@ export async function getSubscriptionEvents(subscriptionId: string) {
 }
 
 
+export async function renewSubscriptionInTransaction(
+  tx: Prisma.TransactionClient,
+  input: {
+    subscriptionId: string
+    actorId: string
+    durationDays?: number
+    paymentStatus?: string
+    paymentReference?: string | null
+    reason?: string
+  },
+) {
+  const current = await tx.student_subscriptions.findUnique({
+    where: { id: input.subscriptionId },
+    include: { plans: { select: { id: true, title: true, duration_days: true } }, },
+  })
+  if (!current) throw new Error('الاشتراك غير موجود')
+  if (current.status === 'cancelled') throw new Error('لا يمكن تجديد اشتراك ملغى؛ أنشئ اشتراكًا جديدًا')
+
+  const durationDays = Math.floor(finiteNumber(input.durationDays, current.plans.duration_days))
+  if (durationDays < 1 || durationDays > 3650) throw new Error('مدة التجديد يجب أن تكون بين يوم و3650 يومًا')
+
+  const now = new Date()
+  const baseDate = current.end_date > now ? current.end_date : now
+  const endDate = new Date(baseDate.getTime() + durationDays * 24 * 60 * 60 * 1000)
+  const paymentStatus = cleanText(input.paymentStatus, current.payment_status || 'waived')
+
+  await tx.student_subscriptions.update({
+    where: { id: current.id },
+    data: {
+      status: 'active',
+      end_date: endDate,
+      grace_until: null,
+      next_billing_at: endDate,
+      payment_status: paymentStatus,
+      payment_reference: input.paymentReference === undefined ? current.payment_reference : input.paymentReference,
+      last_payment_at: paymentStatus === 'paid' ? now : current.last_payment_at,
+      cancelled_at: null,
+      cancel_reason: null,
+      suspended_at: null,
+      suspend_reason: null,
+      updated_by: input.actorId,
+      updated_at: now,
+    },
+  })
+  await tx.subscription_events.create({
+    data: {
+      subscription_id: current.id,
+      event_type: 'renewed',
+      actor_profile_id: input.actorId,
+      from_status: current.status,
+      to_status: 'active',
+      reason: cleanText(input.reason, 'تجديد اشتراك إداري') || null,
+      payment_reference: input.paymentReference || current.payment_reference || null,
+      metadata: { durationDays, baseDate: baseDate.toISOString(), endDate: endDate.toISOString() },
+    },
+  })
+  return { id: current.id, planTitle: current.plans.title, endDate: endDate.toISOString() }
+}
+
 export async function renewSubscription(input: {
   subscriptionId: string
   actorId: string
@@ -545,54 +622,7 @@ export async function renewSubscription(input: {
   paymentReference?: string | null
   reason?: string
 }) {
-  return prisma.$transaction(async (tx) => {
-    const current = await tx.student_subscriptions.findUnique({
-      where: { id: input.subscriptionId },
-      include: { plans: { select: { id: true, title: true, duration_days: true } }, },
-    })
-    if (!current) throw new Error('الاشتراك غير موجود')
-    if (current.status === 'cancelled') throw new Error('لا يمكن تجديد اشتراك ملغى؛ أنشئ اشتراكًا جديدًا')
-
-    const durationDays = Math.floor(finiteNumber(input.durationDays, current.plans.duration_days))
-    if (durationDays < 1 || durationDays > 3650) throw new Error('مدة التجديد يجب أن تكون بين يوم و3650 يومًا')
-
-    const now = new Date()
-    const baseDate = current.end_date > now ? current.end_date : now
-    const endDate = new Date(baseDate.getTime() + durationDays * 24 * 60 * 60 * 1000)
-    const paymentStatus = cleanText(input.paymentStatus, current.payment_status || 'waived')
-
-    await tx.student_subscriptions.update({
-      where: { id: current.id },
-      data: {
-        status: 'active',
-        end_date: endDate,
-        grace_until: null,
-        next_billing_at: endDate,
-        payment_status: paymentStatus,
-        payment_reference: input.paymentReference === undefined ? current.payment_reference : input.paymentReference,
-        last_payment_at: paymentStatus === 'paid' ? now : current.last_payment_at,
-        cancelled_at: null,
-        cancel_reason: null,
-        suspended_at: null,
-        suspend_reason: null,
-        updated_by: input.actorId,
-        updated_at: now,
-      },
-    })
-    await tx.subscription_events.create({
-      data: {
-        subscription_id: current.id,
-        event_type: 'renewed',
-        actor_profile_id: input.actorId,
-        from_status: current.status,
-        to_status: 'active',
-        reason: cleanText(input.reason, 'تجديد اشتراك إداري') || null,
-        payment_reference: input.paymentReference || current.payment_reference || null,
-        metadata: { durationDays, baseDate: baseDate.toISOString(), endDate: endDate.toISOString() },
-      },
-    })
-    return { id: current.id, planTitle: current.plans.title, endDate: endDate.toISOString() }
-  })
+  return prisma.$transaction((tx) => renewSubscriptionInTransaction(tx, input))
 }
 
 

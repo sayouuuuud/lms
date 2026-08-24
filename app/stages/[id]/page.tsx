@@ -6,7 +6,7 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { SiteFooter } from '@/components/landing/site-footer'
 import { StageDetail } from '@/components/stages/stage-detail'
-import { getPublicSubscriptionPlans } from '@/lib/subscription-public'
+import { getPublicSubscriptionContext, getPublicSubscriptionPlans } from '@/lib/subscription-public'
 
 export async function generateMetadata({
   params,
@@ -45,8 +45,11 @@ export default async function StagePage({
   const stage = await getStageBySlug(id)
   if (!stage) notFound()
 
+  const ctx = await getPublicSubscriptionContext()
   const [subscriptionPlans] = await Promise.all([
-    getPublicSubscriptionPlans({ stageId: stage.id, branchIds: stage.branches.map((branch) => branch.id), context: 'stage' }),
+    ctx.subscriptionsEnabled
+      ? getPublicSubscriptionPlans({ stageId: stage.id, branchIds: stage.branches.map((branch) => branch.id), context: 'stage' })
+      : Promise.resolve([]),
   ])
 
   const siteUrl = getSiteUrl()

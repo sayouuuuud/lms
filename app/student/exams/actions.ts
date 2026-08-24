@@ -14,6 +14,7 @@ import {
   type SubmittedAnswerItem,
   type QuestionsSnapshot,
 } from '@/lib/exams'
+import { checkContentAccess } from '@/lib/lecture-access'
 
 export type StudentExamQuestion = {
   id: string
@@ -72,9 +73,14 @@ export async function studentCanAccessExam(
   student: any,
   exam: { stage_id?: string | null; branch_id?: string | null },
 ): Promise<boolean> {
-  const { hasActiveSubscription } = await import('@/lib/subscriptions')
-  const isSub = await hasActiveSubscription(student.user_id)
-  if (isSub) return true
+  // جانب الاشتراكات: عبر الواجهة الموحّدة — تحترم نطاق الخطة (فرع/مرحلة/all_released)
+  // ووضع subscription_mode (في purchases_only لا تفتح الاشتراكات أي امتحان).
+  const subscriptionAccess = await checkContentAccess(student.user_id, {
+    kind: 'exam',
+    stageId: exam.stage_id ?? null,
+    branchId: exam.branch_id ?? null,
+  })
+  if (subscriptionAccess.allowed) return true
 
   const hasStage = !exam.stage_id
   const hasBranch = !exam.branch_id

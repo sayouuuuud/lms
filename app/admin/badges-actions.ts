@@ -7,18 +7,20 @@ export type AdminSidebarBadges = {
   orders: number
   messages: number
   notifications: number
+  subscriptionRequests: number
 }
 
 export async function getAdminSidebarBadges(): Promise<AdminSidebarBadges> {
   if (!(await isStaff())) {
-    return { orders: 0, messages: 0, notifications: 0 }
+    return { orders: 0, messages: 0, notifications: 0, subscriptionRequests: 0 }
   }
 
-  const [orders, messages, notifications] = await Promise.all([
+  const [orders, messages, notifications, subscriptionRequests] = await Promise.all([
     prisma.orders.count({ where: { status: 'pending' } }),
     prisma.messages.count({ where: { unread_count: { gt: 0 } } }),
     prisma.notifications.count({ where: { read: false } }),
+    prisma.subscription_requests.count({ where: { status: 'pending' } }),
   ])
 
-  return { orders, messages, notifications }
+  return { orders, messages, notifications, subscriptionRequests }
 }

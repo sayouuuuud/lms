@@ -2218,3 +2218,32 @@ model subscription_events {
   @@index([event_type, created_at(sort: Desc)])
   @@schema("public")
 }
+
+/// طلبات الاشتراك: مسار الطالب من كارت الخطة -> رفع إيصال -> اعتماد إداري.
+/// يتبع اصطلاحات orders: معرفات uuid، حالة نصية بقيود تحقق، student_id يشير لـ users.id،
+/// وبيانات الطالب منسوخة داخل الصف لتسريع قائمة الإدارة دون joins.
+model subscription_requests {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code           String    @unique
+  student_id     String    @db.Uuid
+  student_name   String    @default("")
+  student_email  String    @default("")
+  student_phone  String    @default("")
+  plan_id        String    @db.Uuid
+  plan_title     String    @default("")
+  plan_snapshot  Json
+  status         String    @default("pending")
+  receipt_url    String?
+  payment_method String?
+  reference      String?
+  student_note   String?
+  admin_note     String?
+  reviewed_by    String?   @db.Uuid
+  reviewed_at    DateTime? @db.Timestamptz(6)
+  created_at     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([student_id, status])
+  @@index([status, created_at])
+  @@schema("public")
+}
