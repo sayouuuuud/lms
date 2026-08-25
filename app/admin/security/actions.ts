@@ -300,7 +300,7 @@ export async function adminRemoveDevice(
   deviceId: string,
   note: string,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('security', 'manage'))) {
+  if (!(await hasResourceAccess('security', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
   try {
@@ -362,7 +362,7 @@ export async function adminSetScore(
   score: number,
   note: string,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('security', 'manage'))) {
+  if (!(await hasResourceAccess('security', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
   const rounded = Math.round(score)
@@ -406,7 +406,7 @@ export async function adminUnblock(
   studentId: string,
   restoreScore = 100,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('security', 'manage'))) {
+  if (!(await hasResourceAccess('security', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
   try {
@@ -430,7 +430,7 @@ export async function adminBlock(
   studentId: string,
   reason: string,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('security', 'manage'))) {
+  if (!(await hasResourceAccess('security', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
   if (!reason || reason.trim().length < 3) {
@@ -472,7 +472,7 @@ export async function adminBlock(
 export async function adminRevokeAllSessions(
   studentId: string,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('security', 'manage'))) {
+  if (!(await hasResourceAccess('security', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
   try {
@@ -507,7 +507,7 @@ export async function handleRemovalRequest(
   action: 'approve' | 'reject',
   note: string,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('security', 'manage'))) {
+  if (!(await hasResourceAccess('security', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
   try {
@@ -569,7 +569,7 @@ export async function recalcSecurityScores(): Promise<{
   processed?: number
   error?: string
 }> {
-  if (!(await hasResourceAccess('security', 'manage'))) {
+  if (!(await hasResourceAccess('security', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
   try {

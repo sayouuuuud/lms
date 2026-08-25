@@ -13,7 +13,7 @@ export async function updateStudentStatus(
   newStatus: StudentStatus,
 ): Promise<{ success?: boolean; error?: string }> {
   try {
-    if (!(await hasResourceAccess('students', 'manage'))) {
+    if (!(await hasResourceAccess('students', 'edit'))) {
       return { error: 'غير مسموح.' }
     }
 
@@ -44,7 +44,7 @@ export async function sendMessageToStudent(
   body: string,
   channel: 'رسالة داخلية' | 'إشعار',
 ): Promise<{ success?: boolean; error?: string }> {
-  if (!(await hasResourceAccess('students', 'manage'))) {
+  if (!(await hasResourceAccess('students', 'edit'))) {
     return { error: 'غير مسموح.' }
   }
 

@@ -1,7 +1,7 @@
 // Shared permission constants and helpers.
 // SAFE for client, server, and middleware (no server-only imports, no icons).
 
-export type AccessLevel = 'none' | 'view' | 'manage'
+export type AccessLevel = 'none' | 'view' | 'edit' | 'manage'
 
 export type ResourceKey =
   | 'dashboard'
@@ -25,21 +25,21 @@ export type PermissionMap = Record<ResourceKey, AccessLevel>
 
 /** Canonical resource list — mirrors the admin sidebar order. */
 export const RESOURCES: { key: ResourceKey; label: string; href: string }[] = [
-  { key: 'dashboard', label: 'الصفحة الرئيسية', href: '/admin/dashboard' },
+  { key: 'dashboard', label: 'لوحة المعلومات', href: '/admin/dashboard' },
   { key: 'students', label: 'الطلاب', href: '/admin/students' },
   { key: 'categories', label: 'التصنيفات', href: '/admin/categories' },
-  { key: 'courses', label: 'المحاضرات', href: '/admin/courses' },
-  { key: 'exams', label: 'الاختبارات', href: '/admin/exams' },
+  { key: 'courses', label: 'المقررات', href: '/admin/courses' },
+  { key: 'exams', label: 'الامتحانات', href: '/admin/exams' },
   { key: 'question-bank', label: 'بنك الأسئلة', href: '/admin/question-bank' },
   { key: 'assignments', label: 'الواجبات', href: '/admin/assignments' },
-  { key: 'calendar', label: 'التقويم', href: '/admin/calendar' },
-  { key: 'payments', label: 'الطلبات', href: '/admin/payments' },
-  { key: 'subscriptions', label: 'إدارة الاشتراكات', href: '/admin/subscriptions' },
+  { key: 'calendar', label: 'الجدول', href: '/admin/calendar' },
+  { key: 'payments', label: 'المدفوعات', href: '/admin/payments' },
+  { key: 'subscriptions', label: 'خطط الاشتراكات', href: '/admin/subscriptions' },
   { key: 'messages', label: 'الرسائل', href: '/admin/messages' },
   { key: 'notifications', label: 'الإشعارات', href: '/admin/notifications' },
-  { key: 'coupons', label: 'خصومات و الكوبونات', href: '/admin/coupons' },
+  { key: 'coupons', label: 'القسائم و الخصومات', href: '/admin/coupons' },
   { key: 'reports', label: 'التقارير', href: '/admin/reports' },
-  { key: 'security', label: 'الأمان والأجهزة', href: '/admin/security' },
+  { key: 'security', label: 'أمان المنصة', href: '/admin/security' },
   { key: 'settings', label: 'الإعدادات', href: '/admin/settings' },
 ]
 
@@ -65,7 +65,8 @@ export function mapPathToResource(pathname: string): ResourceKey | null {
 
 /** Does an access level satisfy a required level? */
 export function satisfies(level: AccessLevel, required: AccessLevel): boolean {
-  if (required === 'view') return level === 'view' || level === 'manage'
+  if (required === 'view') return level === 'view' || level === 'edit' || level === 'manage'
+  if (required === 'edit') return level === 'edit' || level === 'manage'
   if (required === 'manage') return level === 'manage'
   return true // required === 'none'
 }

@@ -219,7 +219,7 @@ export async function gradeSubmission(
   submissionId: string,
   manualGrades: { answerId: string; awardedPoints: number }[],
 ) {
-  if (!(await hasResourceAccess('exams', 'manage'))) {
+  if (!(await hasResourceAccess('exams', 'edit'))) {
     return { success: false, error: 'غير مصرح لك' }
   }
 
@@ -313,7 +313,7 @@ export async function updateExam(
     status?: string
   },
 ) {
-  if (!(await hasResourceAccess('exams', 'manage'))) {
+  if (!(await hasResourceAccess('exams', 'edit'))) {
     return { success: false, error: 'غير مصرح لك' }
   }
 

@@ -33,7 +33,7 @@ export async function getStages(): Promise<StageOption[]> {
 }
 
 async function requireAdmin() {
-  return hasResourceAccess('students', 'manage')
+  return hasResourceAccess('students', 'edit')
 }
 
 function formatJoinedAt(date: string | Date): string {

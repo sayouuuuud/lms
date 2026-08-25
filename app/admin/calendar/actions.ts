@@ -51,7 +51,7 @@ export async function createEvent(values: {
   branchId?: string | null
   lectureId?: string | null
 }) {
-  if (!(await hasResourceAccess('calendar', 'manage'))) {
+  if (!(await hasResourceAccess('calendar', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -113,7 +113,7 @@ export async function updateEvent(
     lectureId?: string | null
   },
 ) {
-  if (!(await hasResourceAccess('calendar', 'manage'))) {
+  if (!(await hasResourceAccess('calendar', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 

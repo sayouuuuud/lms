@@ -511,7 +511,7 @@ export async function gradeAssignmentSubmission(input: {
   studentId: string
   score: number
 }) {
-  if (!(await hasResourceAccess('assignments', 'manage'))) {
+  if (!(await hasResourceAccess('assignments', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
   if (!UUID_RE.test(input.assignmentId) || !UUID_RE.test(input.studentId)) {
@@ -595,7 +595,7 @@ export async function gradeAssignmentSubmission(input: {
 }
 
 export async function updateAssignmentDueDate(assignmentId: string, dueDate: string | null) {
-  if (!(await hasResourceAccess('assignments', 'manage'))) {
+  if (!(await hasResourceAccess('assignments', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
   if (!UUID_RE.test(assignmentId)) return { error: 'معرّف غير صالح.' }

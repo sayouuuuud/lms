@@ -6,10 +6,10 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { exportToCsv } from '@/lib/export-csv'
 import type { ExamRecord } from '@/lib/exams-data'
-import { useCanManage } from '@/components/dashboard/permissions-context'
+import { useCanEdit } from '@/components/dashboard/permissions-context'
 
 export function ExamsPageHeader({ exams }: { exams: ExamRecord[] }) {
-  const canManage = useCanManage('exams')
+  const canManage = useCanEdit('exams')
   const exportData = () => {
     if (exams.length === 0) {
       toast.error('لا توجد بيانات اختبارات للتصدير')

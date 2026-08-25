@@ -3,11 +3,11 @@
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLectures } from './lectures-context'
-import { useCanManage } from '@/components/dashboard/permissions-context'
+import { useCanEdit } from '@/components/dashboard/permissions-context'
 
 export function LecturesPageHeader() {
   const { openCreateLecture } = useLectures()
-  const canManage = useCanManage('courses')
+  const canManage = useCanEdit('courses')
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

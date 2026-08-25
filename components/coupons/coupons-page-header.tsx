@@ -3,11 +3,11 @@
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCoupons } from './coupons-context'
-import { useCanManage } from '@/components/dashboard/permissions-context'
+import { useCanEdit } from '@/components/dashboard/permissions-context'
 
 export function CouponsPageHeader() {
   const { openCreate } = useCoupons()
-  const canManage = useCanManage('coupons')
+  const canManage = useCanEdit('coupons')
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

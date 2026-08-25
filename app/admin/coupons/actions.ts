@@ -79,7 +79,7 @@ export async function createCoupon(values: {
   scope?: 'all' | 'lectures'
   lectureIds?: string[]
 }) {
-  if (!(await hasResourceAccess('coupons', 'manage'))) {
+  if (!(await hasResourceAccess('coupons', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -142,7 +142,7 @@ export async function updateCoupon(
     lectureIds?: string[]
   },
 ) {
-  if (!(await hasResourceAccess('coupons', 'manage'))) {
+  if (!(await hasResourceAccess('coupons', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 

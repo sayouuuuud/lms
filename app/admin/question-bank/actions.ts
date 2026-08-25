@@ -237,7 +237,7 @@ export type SaveBankQuestionInput = {
 }
 
 export async function saveBankQuestion(input: SaveBankQuestionInput): Promise<{ success?: true; id?: string; error?: string }> {
-  if (!(await hasResourceAccess('question-bank', 'manage'))) {
+  if (!(await hasResourceAccess('question-bank', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -342,7 +342,7 @@ export async function saveBankQuestion(input: SaveBankQuestionInput): Promise<{ 
 }
 
 export async function archiveBankQuestions(ids: string[]): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('question-bank', 'manage'))) return { error: 'غير مسموح.' }
+  if (!(await hasResourceAccess('question-bank', 'edit'))) return { error: 'غير مسموح.' }
   if (!ids.length) return { error: 'لم تحدد أي أسئلة.' }
   await prisma.question_bank_questions.updateMany({ where: { id: { in: ids } }, data: { archived_at: new Date() } })
   revalidatePath('/admin/question-bank')
@@ -350,7 +350,7 @@ export async function archiveBankQuestions(ids: string[]): Promise<{ success?: t
 }
 
 export async function restoreBankQuestions(ids: string[]): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('question-bank', 'manage'))) return { error: 'غير مسموح.' }
+  if (!(await hasResourceAccess('question-bank', 'edit'))) return { error: 'غير مسموح.' }
   if (!ids.length) return { error: 'لم تحدد أي أسئلة.' }
   await prisma.question_bank_questions.updateMany({ where: { id: { in: ids } }, data: { archived_at: null } })
   revalidatePath('/admin/question-bank')
@@ -669,7 +669,7 @@ export async function pickReplacementQuestion(input: {
 export async function importQuestionsFromExam(examId: string, scopes: ScopeInput[]): Promise<{
   success?: true; imported?: number; skipped?: number; error?: string
 }> {
-  if (!(await hasResourceAccess('question-bank', 'manage'))) return { error: 'غير مسموح.' }
+  if (!(await hasResourceAccess('question-bank', 'edit'))) return { error: 'غير مسموح.' }
 
   const exam = await prisma.exams.findUnique({ where: { id: examId }, select: { id: true, code: true } })
   if (!exam) return { error: 'الاختبار مش موجود.' }
@@ -724,7 +724,7 @@ export async function bulkUpdateBankQuestions(input: {
   addScopes?:    ScopeInput[]
   removeScopes?: ScopeInput[]
 }): Promise<{ success?: true; updated?: number; error?: string }> {
-  if (!(await hasResourceAccess('question-bank', 'manage'))) return { error: 'غير مسموح.' }
+  if (!(await hasResourceAccess('question-bank', 'edit'))) return { error: 'غير مسموح.' }
   if (!input.ids.length || input.ids.length > 500) return { error: 'عدد الأسئلة لازم يكون بين 1 و500.' }
 
   if (input.difficulty) {
@@ -775,7 +775,7 @@ export async function bulkUpdateBankQuestions(input: {
 // ─── تحديث الإحصائيات ────────────────────────────────────────────────────────
 
 export async function refreshBankQuestionStats(): Promise<{ success: true; updated: number }> {
-  if (!(await hasResourceAccess('question-bank', 'manage'))) return { success: true, updated: 0 }
+  if (!(await hasResourceAccess('question-bank', 'edit'))) return { success: true, updated: 0 }
 
   await prisma.$executeRaw`
     WITH uses AS (
@@ -833,7 +833,7 @@ export async function refreshBankQuestionStats(): Promise<{ success: true; updat
 // ─── صيانة النطاقات اليتيمة ────────────────────────────────────────────────────
 
 export async function cleanupOrphanScopes(): Promise<{ success: true } | { error: string }> {
-  if (!(await hasResourceAccess('question-bank', 'manage')))
+  if (!(await hasResourceAccess('question-bank', 'edit')))
     return { error: 'غير مسموح' }
   try {
     await prisma.$executeRaw`SELECT public.qb_cleanup_orphan_scopes()`
@@ -858,7 +858,7 @@ export async function bulkCreateBankQuestions(input: {
   scopes: { scopeType: ScopeType; scopeId: string }[]
   topics: string[]
 }): Promise<{ success?: true; created?: number; failed?: number; error?: string }> {
-  if (!(await hasResourceAccess('question-bank', 'manage')))
+  if (!(await hasResourceAccess('question-bank', 'edit')))
     return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   if (!input.questions.length || input.questions.length > 200)

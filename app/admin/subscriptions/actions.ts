@@ -38,7 +38,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 async function requireSubscriptionManager() {
-  const allowed = await hasResourceAccess('subscriptions', 'manage')
+  const allowed = await hasResourceAccess('subscriptions', 'edit')
   if (!allowed) throw new Error('ليس لديك صلاحية إدارة الاشتراكات')
   const session = await auth()
   const actorId = session?.user?.id

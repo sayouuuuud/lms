@@ -26,7 +26,7 @@ export async function getConversations(): Promise<Conversation[]> {
 }
 
 export async function markAsRead(id: string) {
-  if (!(await hasResourceAccess('messages', 'manage'))) {
+  if (!(await hasResourceAccess('messages', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -43,7 +43,7 @@ export async function markAsRead(id: string) {
 }
 
 export async function markAllAsRead() {
-  if (!(await hasResourceAccess('messages', 'manage'))) {
+  if (!(await hasResourceAccess('messages', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -60,7 +60,7 @@ export async function markAllAsRead() {
 }
 
 export async function replyToConversation(id: string, message: string) {
-  if (!(await hasResourceAccess('messages', 'manage'))) {
+  if (!(await hasResourceAccess('messages', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -104,7 +104,7 @@ export async function replyToConversation(id: string, message: string) {
 }
 
 export async function setTicketStatus(id: string, status: TicketStatus) {
-  if (!(await hasResourceAccess('messages', 'manage'))) {
+  if (!(await hasResourceAccess('messages', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 

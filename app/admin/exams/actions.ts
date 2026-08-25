@@ -57,7 +57,7 @@ function makeExamCode() {
 }
 
 export async function saveExam(payload: SaveExamPayload) {
-  if (!(await hasResourceAccess('exams', 'manage'))) {
+  if (!(await hasResourceAccess('exams', 'edit'))) {
     return { success: false, error: 'غير مصرح لك' }
   }
 

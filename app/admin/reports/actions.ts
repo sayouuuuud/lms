@@ -36,7 +36,7 @@ export async function getReports(): Promise<ReportItem[]> {
 }
 
 export async function generateReport() {
-  if (!(await hasResourceAccess('reports', 'manage'))) {
+  if (!(await hasResourceAccess('reports', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 

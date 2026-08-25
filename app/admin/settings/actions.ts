@@ -15,7 +15,7 @@ export async function updateSiteContentSection(
   section: string,
   value: unknown,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('settings', 'manage'))) {
+  if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -41,7 +41,7 @@ export async function updateSiteContentSection(
 export async function resetSiteContentSection(
   section: string,
 ): Promise<{ success?: true; error?: string }> {
-  if (!(await hasResourceAccess('settings', 'manage'))) {
+  if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -84,7 +84,7 @@ export async function updateAdminProfile(input: {
   phone: string
   avatarUrl?: string | null
 }) {
-  if (!(await hasResourceAccess('settings', 'manage'))) {
+  if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
   const session = await auth()
@@ -149,7 +149,7 @@ export async function getSiteLightPreset(): Promise<string> {
 }
 
 export async function updateSettings(newSettings: any) {
-  if (!(await hasResourceAccess('settings', 'manage'))) {
+  if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -198,7 +198,7 @@ export async function updatePlatformSettings(input: {
   is_streaming_enabled: boolean
   whatsapp_payment_notify: boolean
 }) {
-  if (!(await hasResourceAccess('settings', 'manage'))) {
+  if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -229,7 +229,7 @@ export async function updatePlatformSettings(input: {
 import bcrypt from 'bcryptjs'
 
 export async function updateAdminEmail(input: { newEmail: string; currentPassword: string }) {
-  if (!(await hasResourceAccess('settings', 'manage'))) {
+  if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
   const session = await auth()
@@ -287,7 +287,7 @@ export async function updateAdminEmail(input: { newEmail: string; currentPasswor
 }
 
 export async function updateAdminPassword(newPassword: string) {
-  if (!(await hasResourceAccess('settings', 'manage'))) {
+  if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
   const session = await auth()

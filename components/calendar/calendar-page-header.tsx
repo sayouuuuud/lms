@@ -5,11 +5,11 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { exportToCsv } from '@/lib/export-csv'
 import { useCalendar } from './calendar-context'
-import { useCanManage } from '@/components/dashboard/permissions-context'
+import { useCanEdit } from '@/components/dashboard/permissions-context'
 
 export function CalendarPageHeader() {
   const { events, openCreate } = useCalendar()
-  const canManage = useCanManage('calendar')
+  const canManage = useCanEdit('calendar')
 
   const exportData = () => {
     if (events.length === 0) {

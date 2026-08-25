@@ -128,7 +128,7 @@ async function notifyOrderApproved(orderId: string) {
 }
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
-  if (!(await hasResourceAccess('payments', 'manage'))) {
+  if (!(await hasResourceAccess('payments', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -161,7 +161,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
 }
 
 export async function messageStudent(orderId: string) {
-  if (!(await hasResourceAccess('payments', 'manage'))) {
+  if (!(await hasResourceAccess('payments', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 

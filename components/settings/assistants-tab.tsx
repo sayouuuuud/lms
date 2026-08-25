@@ -23,9 +23,10 @@ import {
 } from '@/app/admin/settings/assistants-actions'
 
 const LEVEL_OPTIONS: { value: AccessLevel; label: string }[] = [
-  { value: 'none', label: 'ممنوع' },
-  { value: 'view', label: 'عرض فقط' },
-  { value: 'manage', label: 'تحكم كامل' },
+  { value: 'none', label: 'مخفي' },
+  { value: 'view', label: 'رؤية فقط' },
+  { value: 'edit', label: 'محرر' },
+  { value: 'manage', label: 'إدارة كاملة' },
 ]
 
 function emptyPermissions(): Record<ResourceKey, AccessLevel> {
@@ -70,11 +71,13 @@ function PermissionGrid({
                     'rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
                     active
                       ? opt.value === 'manage'
-                        ? 'bg-primary text-primary-foreground'
-                        : opt.value === 'view'
-                          ? 'bg-secondary text-secondary-foreground ring-1 ring-primary/40'
-                          : 'bg-muted text-muted-foreground'
-                      : 'bg-muted/50 text-muted-foreground hover:bg-muted',
+                        ? 'bg-destructive/15 text-destructive font-semibold ring-1 ring-destructive/40'
+                        : opt.value === 'edit'
+                          ? 'bg-primary text-primary-foreground'
+                          : opt.value === 'view'
+                            ? 'bg-secondary text-secondary-foreground ring-1 ring-primary/40'
+                            : 'bg-muted text-muted-foreground'
+                      : 'text-muted-foreground hover:bg-muted',
                   )}
                 >
                   {opt.label}

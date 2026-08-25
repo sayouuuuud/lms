@@ -239,7 +239,7 @@ export async function getCurriculumAdmin(): Promise<AdminStage[]> {
 }
 
 export async function createStage(input: StageInput) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const count = await prisma.stages.count()
   const sortOrder = count + 1
@@ -268,7 +268,7 @@ export async function createStage(input: StageInput) {
 }
 
 export async function updateStage(id: string, input: StageInput) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   try {
     await prisma.stages.update({
@@ -338,7 +338,7 @@ export async function deleteStage(id: string) {
 }
 
 export async function createBranch(input: BranchInput) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const count = await prisma.branches.count({ where: { stage_id: input.stageId } })
   const sortOrder = count + 1
@@ -365,7 +365,7 @@ export async function createBranch(input: BranchInput) {
 }
 
 export async function updateBranch(id: string, input: Omit<BranchInput, 'stageId'>) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   try {
     await prisma.branches.update({
@@ -423,7 +423,7 @@ export async function deleteBranch(id: string) {
 }
 
 export async function createMonthlyCourse(input: MonthlyCourseInput) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const count = await prisma.monthly_courses.count({ where: { branch_id: input.branchId } })
   const sortOrder = count + 1
@@ -454,7 +454,7 @@ export async function createMonthlyCourse(input: MonthlyCourseInput) {
 }
 
 export async function updateMonthlyCourse(id: string, input: Omit<MonthlyCourseInput, 'branchId'>) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   try {
     await prisma.monthly_courses.update({
@@ -507,7 +507,7 @@ export async function deleteMonthlyCourse(id: string) {
 }
 
 export async function createTerm(input: TermInput) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح.' }
 
   const count = await prisma.terms.count({ where: { stage_id: input.stageId } })
 
@@ -530,7 +530,7 @@ export async function createTerm(input: TermInput) {
 }
 
 export async function updateTerm(id: string, input: Omit<TermInput, 'stageId'>) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح.' }
 
   try {
     await prisma.terms.update({
@@ -582,7 +582,7 @@ export type CourseSectionInput = {
 }
 
 export async function createCourseSection(input: CourseSectionInput) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const title = input.title.trim()
   if (!title || !input.courseId) return { error: 'اكتب اسم التصنيف.' }
@@ -609,7 +609,7 @@ export async function createCourseSection(input: CourseSectionInput) {
 }
 
 export async function updateCourseSection(id: string, input: { title: string }) {
-  if (!(await hasResourceAccess('categories', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('categories', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const title = input.title.trim()
   if (!title) return { error: 'اكتب اسم التصنيف.' }

@@ -3,11 +3,11 @@
 import { UserPlus, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useStudents } from './students-context'
-import { useCanManage } from '@/components/dashboard/permissions-context'
+import { useCanEdit } from '@/components/dashboard/permissions-context'
 
 export function StudentsPageHeader() {
   const { openCreate, exportData } = useStudents()
-  const canManage = useCanManage('students')
+  const canManage = useCanEdit('students')
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

@@ -30,6 +30,12 @@ export function useAccessLevel(resource: ResourceKey): AccessLevel {
   return map[resource] ?? 'none'
 }
 
+/** True when the current user can create/update within a resource. */
+export function useCanEdit(resource: ResourceKey): boolean {
+  const level = useAccessLevel(resource)
+  return level === 'edit' || level === 'manage'
+}
+
 /** True when the current user can create/update/delete within a resource. */
 export function useCanManage(resource: ResourceKey): boolean {
   return useAccessLevel(resource) === 'manage'

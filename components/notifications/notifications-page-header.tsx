@@ -2,7 +2,7 @@
 
 import { CheckCheck, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useCanManage } from '@/components/dashboard/permissions-context'
+import { useCanEdit } from '@/components/dashboard/permissions-context'
 
 export function NotificationsPageHeader({
   onMarkAllRead,
@@ -13,7 +13,7 @@ export function NotificationsPageHeader({
   unreadCount: number
   onCompose: () => void
 }) {
-  const canManage = useCanManage('notifications')
+  const canManage = useCanEdit('notifications')
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="text-right">

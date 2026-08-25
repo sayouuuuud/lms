@@ -28,7 +28,7 @@ export async function sendAnnouncement(input: {
   branchId?: string | null
   lectureId?: string | null
 }) {
-  if (!(await hasResourceAccess('notifications', 'manage'))) {
+  if (!(await hasResourceAccess('notifications', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
   const title = input.title.trim()
@@ -66,7 +66,7 @@ export async function getNotifications(): Promise<NotificationRecord[]> {
 }
 
 export async function markAsRead(id: string) {
-  if (!(await hasResourceAccess('notifications', 'manage'))) {
+  if (!(await hasResourceAccess('notifications', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 
@@ -83,7 +83,7 @@ export async function markAsRead(id: string) {
 }
 
 export async function markAllAsRead() {
-  if (!(await hasResourceAccess('notifications', 'manage'))) {
+  if (!(await hasResourceAccess('notifications', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
   }
 

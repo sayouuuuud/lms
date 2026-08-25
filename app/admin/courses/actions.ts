@@ -237,7 +237,7 @@ export async function createMonthlyCourseQuick(input: {
   isPublished?: boolean
   releaseDate?: Date | string | null
 }): Promise<{ id: string; title: string } | { error: string }> {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const title = input.title.trim()
   if (!title || !input.branchId) return { error: 'اكتب اسم الكورس واختر الفرع.' }
@@ -269,7 +269,7 @@ export async function createMonthlyCourseQuick(input: {
 }
 
 export async function createLecture(input: LectureInput) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const count = await prisma.lectures.count({ where: { branch_id: input.branchId } })
 
@@ -358,7 +358,7 @@ async function notifyLectureGrade(branchId: string, lectureTitle: string) {
 }
 
 export async function updateLecture(id: string, input: LectureInput) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   try {
     await prisma.lectures.update({
@@ -465,7 +465,7 @@ export async function deleteLecture(id: string) {
 }
 
 export async function createLesson(lectureId: string, input: LessonInput) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const sortOrder = await nextContentOrder(lectureId)
 
@@ -516,7 +516,7 @@ export async function createLesson(lectureId: string, input: LessonInput) {
 }
 
 export async function updateLesson(id: string, input: LessonInput) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   // لو الفيديو عن طريق الـ R2 streaming
   const isStreamingVideo = input.videoUrl?.startsWith('__video_id:')
@@ -790,7 +790,7 @@ async function replaceAssignmentQuestions(assignmentId: string, questions: Admin
 }
 
 export async function createAssignment(lectureId: string, input: AssignmentInput) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const sortOrder = await nextContentOrder(lectureId)
 
@@ -826,7 +826,7 @@ export async function createAssignment(lectureId: string, input: AssignmentInput
 }
 
 export async function updateAssignment(id: string, input: AssignmentInput) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   try {
     await prisma.assignments.update({
@@ -874,7 +874,7 @@ export async function reorderLectureContent(
   lectureId: string,
   items: { kind: 'lesson' | 'assignment'; id: string }[],
 ) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   try {
     const promises = items.map((item, i) => {
@@ -902,7 +902,7 @@ export async function reorderLectureContent(
 }
 
 export async function getAttachmentUploadUrl(filename: string, contentType: string) {
-  if (!(await hasResourceAccess('courses', 'manage'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
+  if (!(await hasResourceAccess('courses', 'edit'))) return { error: 'غير مسموح. لازم تكون أدمن.' }
 
   const ext = filename.split('.').pop() || 'bin'
   const randomName = `${crypto.randomUUID()}.${ext}`
