@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { computeCoupon } from '@/app/coupon-actions'
 import { auth } from '@/auth'
 import { getSiteContent } from '@/lib/site-content'
-import { getSubscriptionMode } from '@/lib/subscription-access'
+import { getSubscriptionMode, getSubscriptionAccessibleContent } from '@/lib/subscription-access'
 
 export type CartItem = {
   lectureId: string | null
@@ -85,6 +85,8 @@ function generateOrderCode() {
   return `ORD-${year}-${suffix}`
 }
 
+import { checkContentAccess } from '@/lib/lecture-access'
+
 export async function addToCart(lectureId: string) {
   const mode = await getSubscriptionMode()
   if (mode === 'subscriptions_only') return { error: 'الشراء المفرد غير متاح حالياً. يرجى الاشتراك.' }
@@ -92,6 +94,11 @@ export async function addToCart(lectureId: string) {
   const session = await auth()
   const user = session?.user
   if (!user || !user.id) return { error: 'unauthenticated' as const }
+
+  const access = await checkContentAccess(user.id, { kind: 'lecture', lectureId })
+  if (access.source === 'subscription' && !access.graceActive) {
+    return { error: 'لا يمكنك شراء هذا المحتوى لأنك تملك وصولاً إليه بالفعل عبر باقتك الحالية.' }
+  }
 
   const lecture = await prisma.lectures.findUnique({
     where: { id: lectureId },
@@ -175,6 +182,11 @@ export async function addCourseToCart(monthlyCourseId: string) {
   const session = await auth()
   const user = session?.user
   if (!user || !user.id) return { error: 'unauthenticated' as const }
+
+  const subscribed = await getSubscriptionAccessibleContent(user.id, new Date(), true)
+  if (subscribed.courseIds.includes(monthlyCourseId)) {
+    return { error: 'لا يمكنك شراء هذا المحتوى لأنك تملك وصولاً إليه بالفعل عبر باقتك الحالية.' }
+  }
 
   const course = await prisma.monthly_courses.findUnique({
     where: { id: monthlyCourseId },
@@ -263,6 +275,11 @@ export async function addTermToCart(termId: string) {
     where: { term_id: termId },
     select: { id: true }
   })
+
+  const subscribed = await getSubscriptionAccessibleContent(user.id, new Date(), true)
+  if (termCourses.length > 0 && termCourses.every(c => subscribed.courseIds.includes(c.id))) {
+    return { error: 'لا يمكنك شراء هذا المحتوى لأنك تملك وصولاً إليه بالفعل عبر باقتك الحالية.' }
+  }
   const courseIds = termCourses.map((c) => c.id)
   
   if (courseIds.length > 0) {

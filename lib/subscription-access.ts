@@ -226,14 +226,23 @@ export async function getSubscriptionAccessState(
   }
 }
 
-export async function getSubscriptionAccessibleContent(userId: string, now = new Date()): Promise<{
+export async function getSubscriptionAccessibleContent(
+  userId: string, 
+  now = new Date(),
+  excludeGrace = false
+): Promise<{
   lectureIds: string[]
   courseIds: string[]
 }> {
   const mode = await getSubscriptionMode()
   if (mode === 'purchases_only') return { lectureIds: [], courseIds: [] }
 
-  const plans = await getUsablePlansForUser(userId, now)
+  let plans = await getUsablePlansForUser(userId, now)
+  if (excludeGrace) {
+    const nowMs = now.getTime()
+    plans = plans.filter(p => p.end_date.getTime() >= nowMs)
+  }
+
   if (plans.length === 0) return { lectureIds: [], courseIds: [] }
 
   const lectures = await prisma.lectures.findMany({
