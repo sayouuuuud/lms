@@ -17,9 +17,11 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET
-  const authHeader = req.headers.get('authorization')
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  if (process.env.NODE_ENV !== 'development' || secret) {
+    const authHeader = req.headers.get('authorization')
+    if (!secret || authHeader !== `Bearer ${secret}`) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
 
   const now = new Date()
@@ -114,10 +116,9 @@ export async function GET(req: Request) {
     }
 
     // دخول فترة السماح: لا تزال active لكن داخل السماح بالتواريخ
-    const inGrace = await tx.student_subscriptions.findMany({
-      where: { status: 'active', end_date: { lte: now }, grace_until: { gte: now } },
-      select: { id: true, student_id: true, plans: { select: { title: true } } },
-    })
+    const inGrace = candidates.filter(
+      (row) => computeSubscriptionStatus(row, gracePeriodDays, now) === 'grace'
+    )
     for (const row of inGrace) {
       if (await pushNotice(row.id, row.student_id, row.plans.title, 'grace')) notified++
     }

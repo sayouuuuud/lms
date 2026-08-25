@@ -17,6 +17,7 @@ import {
   addCourseToCart,
   removeCourseFromCart,
   removeTermFromCart,
+  getCartConfig,
   type CartItem,
 } from '@/app/cart-actions'
 import { applyCoupon as applyCouponAction, type AppliedCoupon } from '@/app/coupon-actions'
@@ -26,6 +27,7 @@ type CartContextValue = {
   count: number
   total: number // subtotal before discount
   loggedIn: boolean
+  allowPurchases: boolean
   open: boolean
   setOpen: (open: boolean) => void
   inCart: (lectureId: string) => boolean
@@ -52,11 +54,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [items, setItems] = useState<CartItem[]>([])
   const [loggedIn, setLoggedIn] = useState(false)
+  const [allowPurchases, setAllowPurchases] = useState(true)
   const [open, setOpen] = useState(false)
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null)
   const [couponLoading, setCouponLoading] = useState(false)
 
   const refresh = useCallback(async () => {
+    const config = await getCartConfig()
+    setAllowPurchases(config.allowPurchases)
     const data = await getCartItems()
     if (data === null) {
       setLoggedIn(false)
@@ -199,12 +204,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const grandTotal = Math.max(0, total - discount)
 
   return (
-    <CartContext.Provider
+      <CartContext.Provider
       value={{
         items,
         count: items.length,
         total,
         loggedIn,
+        allowPurchases,
         open,
         setOpen,
         inCart,

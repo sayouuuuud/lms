@@ -42,7 +42,10 @@ export async function createSubscriptionRequest(rawInput: unknown) {
     const method = input.method
     const receiptUrl = input.receiptUrl
 
-    const plan = await prisma.subscription_plans.findUnique({ where: { id: planId } })
+    const plan = await prisma.subscription_plans.findUnique({ 
+      where: { id: planId },
+      include: { scopes: true }
+    })
     if (!plan || !plan.is_active || !plan.public_visible) {
       fail(new Error('هذه الخطة غير متاحة للاشتراك حالياً'))
     }
@@ -78,7 +81,7 @@ export async function createSubscriptionRequest(rawInput: unknown) {
       durationDays: plan.duration_days,
       billingPeriod: plan.billing_period,
       scopeMode: plan.scope_mode,
-      scopes: [],
+      scopes: plan.scopes || [],
     }
 
     const created = await prisma.subscription_requests.create({

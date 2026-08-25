@@ -82,13 +82,25 @@ export async function studentCanAccessExam(
   })
   if (subscriptionAccess.allowed) return true
 
-  const hasStage = !exam.stage_id
-  const hasBranch = !exam.branch_id
+  const requiresStage = !!exam.stage_id
+  const requiresBranch = !!exam.branch_id
 
-  if (!hasStage && !hasBranch) return true
-  if (hasStage && student.stage_id && exam.stage_id === student.stage_id) return true
+  // If it requires neither, it's open to all logged in students
+  if (!requiresStage && !requiresBranch) return true
 
-  if (hasBranch) {
+  // If it requires a stage but NO branch, check student's stage
+  if (requiresStage && !requiresBranch) {
+     return student.stage_id === exam.stage_id
+  }
+
+  // If it requires a branch (with or without stage)
+  // Check if student has purchased any lecture in that branch
+  if (requiresBranch) {
+    // If it also requires a stage, check that first
+    if (requiresStage && student.stage_id !== exam.stage_id) {
+       return false
+    }
+
     const orders = await prisma.orders.findMany({
       where: { student_id: student.user_id, status: 'approved' },
       include: { order_items: { select: { lecture_id: true } } }

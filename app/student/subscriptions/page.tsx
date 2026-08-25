@@ -44,8 +44,8 @@ export default async function StudentSubscriptionsPage({
   const mySubscriptions = await prisma.student_subscriptions.findMany({
     where: {
       student_id: student.id,
-      status: { in: ['active', 'grace'] },
-      end_date: { gt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) },
+      status: { in: ['active', 'grace', 'expired'] },
+      end_date: { gt: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000) },
     },
     include: { plans: true },
     orderBy: { start_date: 'desc' }

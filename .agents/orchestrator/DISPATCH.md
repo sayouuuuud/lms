@@ -1,6 +1,4 @@
-# Original User Request
-
-## Initial Request — 2026-08-24T14:39:38Z
+## 2026-08-24T14:39:38Z
 
 You are the Project Orchestrator. Your working directory is `d:\Workspace\LMS\.agents\orchestrator`.
 Please read the original user request at `d:\Workspace\LMS\.agents\ORIGINAL_REQUEST.md`.
@@ -29,9 +27,3 @@ Acceptance Criteria:
 - Programmatic Verification: Write a script or automated test demonstrating exams are correctly restricted according to the new access logic.
 - Functionality: Verify `plan_snapshot` in the DB contains `price` and `scopes` arrays after an update.
 - Functionality: Verify in `subscriptions_only` mode, students cannot add items to cart or checkout.
-
-Constraints & Rules:
-- Small team (3 agents): Structure your team cleanly (e.g., investigator/explorer, implementer, tester/reviewer).
-- All terminal commands must use `cmd /c` on Windows.
-- Update your `progress.md` and `BRIEFING.md` regularly in your working directory `d:\Workspace\LMS\.agents\orchestrator`.
-- When done, provide a comprehensive handoff report.

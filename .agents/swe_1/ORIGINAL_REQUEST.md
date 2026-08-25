@@ -1,4 +1,6 @@
-## 2026-08-24T15:39:13Z
+# Original User Request
+
+## Initial Request — 2026-08-24T15:39:13Z
 
 You are the SWE Orchestrator. Working directory: `d:\Workspace\LMS\.agents\swe_1`.
 Please read `d:\Workspace\LMS\.agents\ORIGINAL_REQUEST.md` and `d:\Workspace\LMS\.agents\explorer_1\analysis.md`.

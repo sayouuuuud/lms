@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { computeCoupon } from '@/app/coupon-actions'
 import { auth } from '@/auth'
 import { getSiteContent } from '@/lib/site-content'
+import { getSubscriptionMode } from '@/lib/subscription-access'
 
 export type CartItem = {
   lectureId: string | null
@@ -15,6 +16,11 @@ export type CartItem = {
   branchTitle: string
   stageTitle: string
   price: number
+}
+
+export async function getCartConfig() {
+  const mode = await getSubscriptionMode()
+  return { allowPurchases: mode !== 'subscriptions_only' }
 }
 
 export async function getCartItems(): Promise<CartItem[] | null> {
@@ -80,6 +86,9 @@ function generateOrderCode() {
 }
 
 export async function addToCart(lectureId: string) {
+  const mode = await getSubscriptionMode()
+  if (mode === 'subscriptions_only') return { error: 'الشراء المفرد غير متاح حالياً. يرجى الاشتراك.' }
+  
   const session = await auth()
   const user = session?.user
   if (!user || !user.id) return { error: 'unauthenticated' as const }
@@ -160,6 +169,9 @@ export async function addToCart(lectureId: string) {
 }
 
 export async function addCourseToCart(monthlyCourseId: string) {
+  const mode = await getSubscriptionMode()
+  if (mode === 'subscriptions_only') return { error: 'الشراء المفرد غير متاح حالياً. يرجى الاشتراك.' }
+
   const session = await auth()
   const user = session?.user
   if (!user || !user.id) return { error: 'unauthenticated' as const }
@@ -240,6 +252,9 @@ export async function addCourseToCart(monthlyCourseId: string) {
 }
 
 export async function addTermToCart(termId: string) {
+  const mode = await getSubscriptionMode()
+  if (mode === 'subscriptions_only') return { error: 'الشراء المفرد غير متاح حالياً. يرجى الاشتراك.' }
+
   const session = await auth()
   const user = session?.user
   if (!user || !user.id) return { error: 'unauthenticated' as const }
@@ -360,6 +375,9 @@ export async function createOrder(input: {
   receiptUrl?: string
   couponCode?: string
 }) {
+  const mode = await getSubscriptionMode()
+  if (mode === 'subscriptions_only') return { error: 'الشراء المفرد غير متاح حالياً. يرجى الاشتراك.' }
+
   const session = await auth()
   const user = session?.user
   if (!user || !user.id) return { error: 'unauthenticated' as const }

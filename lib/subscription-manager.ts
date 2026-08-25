@@ -439,7 +439,7 @@ export async function assignSubscriptionInTransaction(
 
   const [student, plan] = await Promise.all([
     tx.students.findUnique({ where: { id: params.studentId }, select: { id: true, name: true } }),
-    tx.subscription_plans.findUnique({ where: { id: params.planId }, select: { id: true, title: true, duration_days: true, is_active: true, allow_manual_assignment: true } }),
+    tx.subscription_plans.findUnique({ where: { id: params.planId }, select: { id: true, title: true, duration_days: true, is_active: true, allow_manual_assignment: true, price: true, scope_mode: true, scopes: true } }),
   ])
   if (!student) throw new Error('الطالب غير موجود')
   if (!plan || !plan.is_active) throw new Error('الخطة غير موجودة أو غير مفعّلة')
@@ -475,7 +475,14 @@ export async function assignSubscriptionInTransaction(
       updated_by: params.actorId,
       last_payment_at: params.paymentStatus === 'paid' ? now : null,
       next_billing_at: endDate,
-      plan_snapshot: { id: plan.id, title: plan.title, durationDays: plan.duration_days },
+      plan_snapshot: { 
+        id: plan.id, 
+        title: plan.title, 
+        durationDays: plan.duration_days,
+        price: plan.price ? Number(plan.price) : 0,
+        scopeMode: plan.scope_mode,
+        scopes: plan.scopes || []
+      },
       events: { create: { event_type: 'created', actor_profile_id: params.actorId, to_status: 'active', reason: 'إسناد اشتراك' } },
     },
     select: { id: true },

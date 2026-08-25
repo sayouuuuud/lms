@@ -1,19 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createR2DownloadUrl, r2ObjectExists } from '@/lib/r2'
+import { auth } from '@/auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 type Params = { key: string[] }
 
-/**
- * GET /api/attachments/<object-name>
- *
- * روابط المرفقات المحفوظة في قاعدة البيانات تكون بالشكل:
- * /api/attachments/<uuid>.
- * وبما أن [...key] تحتوي فقط على الجزء بعد /api/attachments،
- * يجب إضافة بادئة attachments/ قبل الوصول إلى R2.
- */
 export async function GET(
   _req: NextRequest,
   context: { params: Promise<Params> },
@@ -23,6 +16,11 @@ export async function GET(
 
   if (!routeKey || routeKey.includes('..') || routeKey.startsWith('/')) {
     return NextResponse.json({ error: 'المسار غير صحيح' }, { status: 400 })
+  }
+
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'يجب تسجيل الدخول لتحميل المرفقات' }, { status: 401 })
   }
 
   // دعم الروابط القديمة والجديدة دون تغيير أي ملف مرفوع.

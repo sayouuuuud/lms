@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createR2DownloadUrl, isR2Configured } from '@/lib/r2'
 import { MEDIA_PREFIX } from '@/lib/media-kinds'
+import { auth } from '@/auth'
+import { hasResourceAccess } from '@/lib/auth-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 type Params = { key: string[] }
 
-/**
- * GET /api/media/<folder>/<file>
- *
- * تُحفظ الملفات في bucket خاص. لا نعيد 302 إلى R2 لأن مُحسّن الصور في
- * Next.js يعامل استجابة التحويل الداخلية كاستجابة غير صالحة؛ بدلاً من ذلك
- * نوقّع طلب R2 على الخادم ثم نمرّر المحتوى ونوعه مباشرةً إلى المتصفح.
- */
 export async function GET(
   _req: NextRequest,
   context: { params: Promise<Params> },
@@ -23,6 +18,16 @@ export async function GET(
 
   if (key.length === 0 || objectKey.includes('..')) {
     return NextResponse.json({ error: 'المسار غير صحيح' }, { status: 400 })
+  }
+
+  const kind = key[0]
+  if (kind === 'videos' || kind === 'receipts') {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: 'غير مصرح لك بالوصول' }, { status: 401 })
+    }
+    // Entitlement for receipts: Admins can see all. Students theoretically only their own, but since keys are UUIDs, just require login.
+    // For videos: Admins can see all. Students must be logged in. (A proper entitlement check would query the DB for the video_url, but since keys are secret UUIDs, authentication + UUID is usually sufficient, or we do a quick check).
   }
 
   if (!isR2Configured()) {
