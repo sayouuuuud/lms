@@ -15,9 +15,9 @@ import { UpcomingExams } from './upcoming-exams'
 import { PendingAssignments } from './pending-assignments'
 import { MonthlyProgress } from './monthly-progress'
 
-export function StudentDashboardShell() {
+export function StudentDashboardShell({ lastWatched }: { lastWatched: any }) {
   const { enrolledCourses = [], schedule = [], grades = [], announcements = [], activity = [] } = useStudent()
-  // ── Real values for the welcome banner (computed from live data) ──
+  // ⚡ Real values for the welcome banner (computed from live data) ⚡
   const totalCompleted = enrolledCourses.reduce((s, c) => s + c.completedLessons, 0)
   const totalLessons = enrolledCourses.reduce((s, c) => s + c.totalLessons, 0)
   const completionPercent =
@@ -54,10 +54,10 @@ export function StudentDashboardShell() {
       />
       <StudentStats courses={enrolledCourses} grades={grades} activity={activity} />
 
-      {/* Row 1: أكمل من حيث توقفت (wide) + الاختبارات القادمة */}
+      {/* Row 1: أكمل من حيث توقفت (wide) + الامتحانات القادمة */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <ContinueLearning courses={enrolledCourses} />
+          <ContinueLearning lastWatched={lastWatched} />
         </div>
         <div className="xl:col-span-1">
           <UpcomingExams schedule={schedule} />

@@ -1,89 +1,87 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Play, BookOpen } from 'lucide-react'
-import { PanelCard } from '@/components/dashboard/panel-card'
-import type { CourseProgress } from '@/lib/student-types'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
-export function ContinueLearning({ courses = [] }: { courses?: CourseProgress[] }) {
-  const course = courses[0]
-
-  if (!course) {
+export function ContinueLearning({ lastWatched }: { lastWatched?: any }) {
+  if (!lastWatched) {
     return (
-      <PanelCard title="أكمل من حيث توقفت">
-        <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-3 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
-            <BookOpen className="size-6 text-muted-foreground" />
+      <Card className="h-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">أكمل من حيث توقفت</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-3 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+              <BookOpen className="size-6 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">لم تبدأ مشاهدة أي دروس بعد</p>
+              <p className="mt-1 text-xs text-muted-foreground">تصفح المحاضرات وابدأ رحلة التعلم</p>
+            </div>
+            <Button render={<Link href="/student/courses" />} variant="secondary" size="sm" className="mt-2">
+              تصفح المحاضرات
+            </Button>
           </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">لا توجد كورسات مسجّلة بعد</p>
-            <p className="mt-1 text-xs text-muted-foreground">تصفّح المكتبة وابدأ رحلتك التعليمية</p>
-          </div>
-          <Link
-            href="/student/browse"
-            className="inline-flex h-8 items-center justify-center rounded-xl border border-border bg-secondary/60 px-3 text-xs font-semibold text-foreground hover:bg-secondary"
-          >
-            تصفّح المحاضرات
-          </Link>
-        </div>
-      </PanelCard>
+        </CardContent>
+      </Card>
     )
   }
 
-  const percent = course.totalLessons > 0
-    ? Math.round((course.completedLessons / course.totalLessons) * 100)
-    : 0
-
   return (
-    <PanelCard title="أكمل من حيث توقفت">
-      <div className="flex h-full flex-col gap-4 sm:flex-row">
-        <div className="relative w-full shrink-0 overflow-hidden rounded-xl sm:w-56">
-          <Image
-            src={course.image || '/placeholder.svg'}
-            alt={course.title}
-            fill
-            sizes="(max-width: 640px) 100vw, 224px"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-            <div className="flex size-12 items-center justify-center rounded-full bg-white/90 text-sidebar">
-              <Play className="size-5 fill-current" />
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg">أكمل من حيث توقفت</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <div className="flex flex-col gap-6 sm:flex-row items-center sm:items-stretch">
+          <div className="relative w-full shrink-0 overflow-hidden rounded-lg sm:w-64 aspect-video sm:aspect-auto">
+            <Image
+              src={lastWatched.image || '/placeholder.svg'}
+              alt={lastWatched.lessonTitle}
+              fill
+              sizes="(max-width: 640px) 100vw, 256px"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+              <div className="flex size-12 items-center justify-center rounded-full bg-white/90 text-primary shadow-lg backdrop-blur-sm">
+                <Play className="size-5 ml-1" />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <span className="text-xs font-medium text-primary">{course.category}</span>
-          <h4 className="mt-1 text-base font-bold text-foreground">{course.title}</h4>
-          {course.nextLesson && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              الدرس التالي: {course.nextLesson}
-            </p>
-          )}
-
-          <div className="mt-3">
-            <div className="mb-1.5 flex items-center justify-between text-xs">
-              <span className="font-medium text-foreground">{percent}% مكتمل</span>
-              <span className="text-muted-foreground">
-                {course.completedLessons} / {course.totalLessons} درس
+          <div className="flex flex-1 flex-col justify-center w-full">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                {lastWatched.branch || 'درس مسجل'}
               </span>
+              <span className="text-xs text-muted-foreground truncate">{lastWatched.lectureTitle}</span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${percent}%` }}
-              />
+            <h4 className="mt-2 text-xl font-bold text-foreground leading-tight">{lastWatched.lessonTitle}</h4>
+            
+            <div className="mt-6 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-foreground">اكتمل {lastWatched.percent}%</span>
+                <span className="text-muted-foreground text-xs">
+                  آخر مشاهدة: {new Date(lastWatched.lastViewedAt).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-secondary/50">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                  style={{ width: `${lastWatched.percent}%` }}
+                />
+              </div>
             </div>
-          </div>
 
-          <Link
-            href={`/student/courses/${course.id}`}
-            className="mt-4 inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            <Play className="size-4" />
-            متابعة الدرس
-          </Link>
+            <Button render={<Link href={`/student/courses/${lastWatched.lectureId}?lesson=${lastWatched.lessonId}`} />} className="mt-6 w-full sm:w-auto">
+              <Play className="size-4 ml-2" />
+              استكمال المشاهدة
+            </Button>
+          </div>
         </div>
-      </div>
-    </PanelCard>
+      </CardContent>
+    </Card>
   )
 }

@@ -175,3 +175,47 @@ export async function getStudentMonthlyProgress(): Promise<MonthlyStat[]> {
     },
   ]
 }
+  
+export async function getStudentLastWatchedLesson() {  
+  const student = await getCurrentStudent()  
+  if (!student || !student.user_id) return null  
+  
+  const progress = await prisma.lesson_watch_progress.findFirst({  
+    where: { user_id: student.user_id },  
+    orderBy: { last_viewed_at: 'desc' }  
+  })  
+  
+  if (!progress) return null  
+  
+  const lesson = await prisma.lessons.findUnique({  
+    where: { id: progress.lesson_id },  
+    select: {  
+      id: true,  
+      title: true,  
+      lecture_id: true,  
+      lectures: {  
+        select: {  
+          id: true,  
+          title: true,  
+          image: true,  
+          monthly_course_id: true,  
+          branches: { select: { title: true } }  
+        }  
+      }  
+    }  
+  })  
+  
+  if (!lesson) return null  
+  
+  return {  
+    lessonId: lesson.id,  
+    lessonTitle: lesson.title,  
+    lectureId: lesson.lecture_id,  
+    lectureTitle: lesson.lectures?.title || '',  
+    courseId: lesson.lectures?.monthly_course_id,  
+    image: lesson.lectures?.image,  
+    branch: lesson.lectures?.branches?.title,  
+    percent: progress.duration_seconds > 0 ? Math.min(100, Math.round((progress.watched_seconds / progress.duration_seconds) * 100)) : (progress.completed ? 100 : 0),  
+    lastViewedAt: progress.last_viewed_at,  
+  }  
+} 
