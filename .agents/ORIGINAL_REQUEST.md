@@ -1,37 +1,42 @@
 # Original User Request
 
-## Initial Request — 2026-08-24T14:39:38Z
+## 2026-08-30T01:45:26Z
 
-You are the Project Orchestrator. Your working directory is `d:\Workspace\LMS\.agents\orchestrator`.
-Please read the original user request at `d:\Workspace\LMS\.agents\ORIGINAL_REQUEST.md`.
+This is a single self-contained fix; keep it small and focused.
 
-## Request Summary & Scope
-The user requests a single set of related fixes using a small focused team (3 agents) to fix remaining critical and major functional gaps identified in the SUBSCRIPTION_REMEDIATION_PLAN audit for the LMS project at `d:\Workspace\LMS`.
+إضافة مفتاح تبديل (Toggle Switch) في لوحة تحكم الإدارة تحت تبويب "إعدادات المنصة العامة" للتحكم في مصدر بيانات الصفحات العامة (الربط بقاعدة البيانات مقابل استخدام البيانات الافتراضية الثابتة للنسخة القديمة بالكامل)، مع بقاء عمليات المصادقة وتسجيل الدخول متصلة دائماً بقاعدة البيانات.
 
-Requirements to satisfy:
-1. **R1. Fix TypeScript Build Blocker**:
-   - Restore missing `lib/subscription-validation.ts` by searching git history for the nearest commit where it existed. Ensure it is correct, updated if needed, and resolves import errors in `app/admin/subscriptions/actions.ts` and `app/student/subscriptions/actions.ts`.
-2. **R2. Fix Security and Access Issues**:
-   - Secure `/api/media/[...key]` and `/api/attachments/[...key]` to require proper authentication and entitlement checks.
-   - Fix logic in `app/student/exams/actions.ts` so exams without a specific stage/branch are not incorrectly opened to any student.
-3. **R3. Address Functional Gaps**:
-   - Update `plan_snapshot` generation to include price, scope type, and all actual scopes at the time of purchase/assignment.
-   - Fix `subscriptions_only` mode UI to correctly hide buy buttons and cart access when active.
-4. **R4. Fix Operational and Cron Issues**:
-   - Ensure `CRON_SECRET` is properly configured or handled gracefully for local builds.
-   - Fix cron job to correctly identify subscriptions relying on the platform's default grace period.
-   - Ensure student UI fetches and displays `ended`/`expired` subscriptions rather than hiding them.
+Working directory: d:\Workspace\LMS
+Integrity mode: demo
 
-Acceptance Criteria:
-- `npx tsc --noEmit` completes without errors.
-- `npm run build` succeeds.
-- Programmatic Verification: Write a Node.js verification script to test direct access to `/api/media/...` without valid session/subscription asserting 401/403.
-- Programmatic Verification: Write a script or automated test demonstrating exams are correctly restricted according to the new access logic.
-- Functionality: Verify `plan_snapshot` in the DB contains `price` and `scopes` arrays after an update.
-- Functionality: Verify in `subscriptions_only` mode, students cannot add items to cart or checkout.
+## Requirements
 
-Constraints & Rules:
-- Small team (3 agents): Structure your team cleanly (e.g., investigator/explorer, implementer, tester/reviewer).
-- All terminal commands must use `cmd /c` on Windows.
-- Update your `progress.md` and `BRIEFING.md` regularly in your working directory `d:\Workspace\LMS\.agents\orchestrator`.
-- When done, provide a comprehensive handoff report.
+### R1. إضافة إعداد تبديل مصدر بيانات الصفحات العامة في لوحة التحكم
+- إضافة خيار في جدول إعدادات المنصة (`platform_settings`) تحت اسم `sync_public_with_db` (القيمة الافتراضية: `true` لتفعيل الربط بالداتابيز).
+- إضافة زر سويتش أنيق في صفحة إعدادات المنصة (`Platform Settings`) في لوحة الإدارة (`components/settings/settings-panel.tsx`) يتيح للمشرف تفعيل أو إيقاف ربط الصفحات العامة بقاعدة البيانات بسهولة مع حفظ التغيير فوراً.
+
+### R2. تطبيق وضع البيانات الافتراضية الثابتة (Static Mode) على الصفحات العامة
+عند إيقاف المفتاح (`sync_public_with_db = false`):
+- الصفحة الرئيسية (`/`): تستخدم نصوص وصور وهيكل البيانات الافتراضية الكاملة من `DEFAULT_SITE_CONTENT` و `lib/landing-data.ts`.
+- صفحات المراحل والمناهج (`/stages/*`): تعرض المراحل الثلاث الثابتة (الصف الأول، الثاني، الثالث الثانوي) بكامل المواد والدروس والمحاضرات والأسعار والأسماء والأوصاف المستوردة من `lib/landing-data.ts` بدون استعلام جداول `stages`, `branches`, `lectures` من الداتابيز.
+- روابط الشراء في الوضع الثابت: توجّه الزائر/الطالب إلى شاشات الدخول والتسجيل (`/auth`) مع إتاحة مشاهدة المحاضرات المجانية.
+
+### R3. استثناء المصادقة وتسجيل الدخول من التبديل
+- تظل صفحات ونماذج تسجيل الدخول، إنشاء الحساب، إعادة تعيين كلمة المرور (`/auth/*`) متصلة دائماً بقاعدة البيانات وجلسات NextAuth بغض النظر عن حالة المفتاح.
+
+## Acceptance Criteria
+
+### إعدادات لوحة التحكم (Admin Settings)
+- [ ] يظهر زر السويتش في تبويب "إعدادات المنصة العامة" بشكل تفاعلي وواضح.
+- [ ] عند تغيير حالة السويتش وحفظ الإعدادات، يتم تحديث القيمة في قاعدة البيانات وتطبيقها فوراً على الموقع (`revalidatePath`).
+
+### وضع البيانات الافتراضية الثابتة (Static Default Mode)
+- [ ] عند تعطيل الربط، يتم عرض البيانات الافتراضية الكاملة (المراحل، المواد، المدرس، الأسعار، الآراء، النصوص) المطابقة للنسخة القديمة في الصفحة الرئيسية وصفحات المراحل (`/stages/*`).
+- [ ] تعمل المحاضرات التجريبية المجانية وتفاصيل الدروس بسلاسة دون أخطاء.
+- [ ] أزرار الشراء في الوضع الثابت تقود لتسجيل الدخول `/auth`.
+
+### وضع الربط بقاعدة البيانات (Dynamic DB Mode)
+- [ ] عند تفعيل الربط، تستمر الصفحات العامة في جلب المراحل والمحتوى والمناهج الديناميكية من قاعدة البيانات كالمعتاد.
+
+### سلامة البناء (Build Integrity)
+- [ ] يكتمل أمر البناء `cmd /c npm run build` بنجاح دون أي أخطاء في TypeScript أو استيراد المكونات.

@@ -1,6 +1,6 @@
-import 'server-only'
 import { logError } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
+import { isPublicSyncWithDbEnabled } from '@/lib/platform-settings'
 import {
   DEFAULT_SITE_CONTENT,
   deepMerge,
@@ -43,6 +43,11 @@ export type {
 
 export async function getSiteContent(): Promise<SiteContent> {
   try {
+    const isSyncEnabled = await isPublicSyncWithDbEnabled()
+    if (!isSyncEnabled) {
+      return DEFAULT_SITE_CONTENT
+    }
+
     const data = await prisma.site_content.findMany({
       select: { section: true, value: true }
     })

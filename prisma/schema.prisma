@@ -1332,6 +1332,7 @@ model platform_settings {
   rescue_hourly_limit            Int       @default(50)
   subscription_mode              String    @default("purchases_only")
   grace_period_days              Int       @default(3)
+  sync_public_with_db            Boolean   @default(true)
 
   @@schema("public")
 }

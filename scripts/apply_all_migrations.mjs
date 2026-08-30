@@ -21,6 +21,7 @@ async function runMigrations() {
   console.log('Connected to database.')
 
   const sqlFiles = [
+    path.join('scripts', 'R01_rls_and_security_setup.sql'),
     path.join('prisma', 'sql', 'A01_assignments_resource.sql'),
     path.join('prisma', 'sql', 'Q01_question_bank.sql'),
     path.join('prisma', 'sql', 'S01_devices_security.sql'),
@@ -32,7 +33,6 @@ async function runMigrations() {
     path.join('scripts', '002_taxonomy_mastery.sql'),
     path.join('scripts', '003_rescue_system.sql'),
     path.join('scripts', '004_release_and_subscriptions.sql'),
-    path.join('scripts', 'R01_rls_and_security_setup.sql'),
   ]
 
   for (const file of sqlFiles) {

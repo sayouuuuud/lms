@@ -217,11 +217,11 @@ export function CurriculumFormModals() {
         <form onSubmit={handleStageSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="sm:col-span-2">
-              <Field label="اسم التصنيف (مثل: الصف العاشر)">
+              <Field label="اسم التصنيف (مثل: الصف الأول الثانوي)">
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="مثال: الصف العاشر"
+                  placeholder="مثال: الصف الأول الثانوي"
                   autoFocus
                 />
               </Field>

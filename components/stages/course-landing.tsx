@@ -1,8 +1,7 @@
 'use client'
 
-import { TopographicBackground } from '@/components/topo-background'
-
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   ArrowRight,
@@ -57,31 +56,35 @@ function LectureRow({
   index: number
   watchHref: string
 }) {
+  const router = useRouter()
   const { add, inCart, setOpen: setCartOpen } = useCart()
   // A lecture is "free to watch" if explicitly flagged OR its price is 0.
   // Don't show "مجانية" badge when the lecture has a price > 0 even if isFree
   // is set, because isFree just means "preview" in that context.
-  const freeAccess = !!lecture.isFree || lecture.lessons.some((lesson) => lesson.isFree)
+  const freeAccess = !!lecture.isFree
   const free = freeAccess && (lecture.price === 0 || lecture.price == null)
   const lessonsCount = lecture.lessons.length
   const lectureInCart = lecture.dbId ? inCart(lecture.dbId) : false
 
   // Buys ONLY this lecture (lecture_id), never the whole course bundle.
   async function handleBuyLecture() {
-    if (!lecture.dbId) return
+    if (!lecture.dbId) {
+      router.push('/auth')
+      return
+    }
     if (!lectureInCart) await add(lecture.dbId, lecture.title)
     setCartOpen(true)
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-3 rounded-2xl border border-border bg-card p-3 transition-colors hover:bg-[#eee6d5]/60 sm:gap-4 sm:p-4 dark:border-border dark:bg-card dark:hover:bg-ink-base/60">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-border bg-[#eee6d5] font-mono text-xs font-bold text-foreground sm:size-10 sm:text-sm dark:border-border dark:bg-[#120e0a] dark:text-foreground">
+    <div className="flex items-center gap-4 rounded-2xl border border-navy/10 bg-white p-4 transition-colors hover:bg-cream/60 dark:border-ink-line dark:bg-ink-raised dark:hover:bg-ink-base/60">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-navy/10 bg-cream font-mono text-sm font-bold text-navy dark:border-ink-line dark:bg-ink-base dark:text-ink-fg">
         {String(index + 1).padStart(2, '0')}
       </span>
 
-      <div className="min-w-0 flex-1 basis-40">
+      <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h4 className="min-w-0 text-pretty break-words font-heading text-sm font-bold text-foreground sm:text-base dark:text-foreground">
+          <h4 className="truncate font-heading text-base font-bold text-navy dark:text-ink-fg">
             {lecture.title}
           </h4>
           {free && (
@@ -91,7 +94,7 @@ function LectureRow({
             </span>
           )}
         </div>
-        <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-foreground-soft dark:text-muted-foreground">
+        <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-navy-soft dark:text-ink-dim">
           <BookOpen className="size-3.5" />
           {lessonsCount} درس
         </p>
@@ -100,20 +103,20 @@ function LectureRow({
       {freeAccess ? (
         <Link
           href={watchHref}
-          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-emerald-deep px-4 py-2.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-emerald-brand sm:text-sm dark:bg-teal-glow dark:text-ink-base dark:hover:bg-teal-glow/90"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-deep px-4 py-2.5 text-sm font-bold text-cream transition-colors hover:bg-emerald-brand dark:bg-teal-glow dark:text-ink-base dark:hover:bg-teal-glow/90"
         >
           <Play className="size-4" />
           شاهد الآن
         </Link>
       ) : (
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="flex flex-col items-end">
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="hidden flex-col items-end sm:flex">
             {lecture.oldPrice ? (
-              <span className="text-xs text-foreground-soft/60 line-through dark:text-muted-foreground/60">
+              <span className="text-xs text-navy-soft/60 line-through dark:text-ink-dim/60">
                 {formatEGP(lecture.oldPrice)}
               </span>
             ) : null}
-            <span className="font-heading text-base font-extrabold text-foreground dark:text-foreground">
+            <span className="font-heading text-base font-extrabold text-navy dark:text-ink-fg">
               {formatEGP(lecture.price)}
               <span className="mr-1 text-xs font-bold text-gold-deep dark:text-teal-glow">ج.م</span>
             </span>
@@ -121,8 +124,7 @@ function LectureRow({
           <button
             type="button"
             onClick={handleBuyLecture}
-            disabled={!lecture.dbId}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm dark:bg-primary dark:text-white dark:hover:bg-violet-deep"
+            className="inline-flex items-center gap-1.5 rounded-full bg-navy px-4 py-2.5 text-sm font-bold text-cream transition-colors hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
           >
             {lectureInCart ? (
               <>
@@ -151,101 +153,101 @@ export function CourseLanding({
   branch: Branch
   course: MonthlyCourse
 }) {
+  const router = useRouter()
   const { addCourse, courseInCart, setOpen: setCartOpen } = useCart()
   const added = course.dbId ? courseInCart(course.dbId) : false
 
   const groups = groupLecturesBySection(course)
   const totalLessons = course.lectures.reduce((sum, l) => sum + l.lessons.length, 0)
-  const freeCount = course.lectures.filter(
-    (lecture) =>
-      (lecture.isFree || lecture.lessons.some((lesson) => lesson.isFree)) &&
-      (lecture.price === 0 || lecture.price == null),
-  ).length
+  const freeCount = course.lectures.filter((l) => l.isFree && (l.price === 0 || l.price == null)).length
   const basePath = `/stages/${stage.id}/${branch.id}/${course.id}`
 
   async function handleSubscribe() {
-    if (!course.dbId) return
+    if (!course.dbId) {
+      router.push('/auth')
+      return
+    }
     if (!added) await addCourse(course.dbId, course.title)
     setCartOpen(true)
   }
 
   return (
-    <main className="min-h-screen bg-[#eee6d5] dark:bg-[#120e0a]">
+    <main className="min-h-screen bg-cream dark:bg-ink-base">
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        <TopographicBackground lightOpacity={0.4} darkOpacity={0.3} />
+      <section className="relative overflow-hidden bg-navy dark:bg-ink-raised">
+        <div className="graph-paper-light pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
         <div
           className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-gold/10 blur-3xl"
           aria-hidden="true"
         />
-        <div className="relative mx-auto max-w-7xl px-4 pb-12 pt-24 sm:px-5 sm:pb-16 sm:pt-28 md:px-8 md:pb-24 md:pt-32">
+        <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-28 md:px-8 md:pb-24 md:pt-32">
           {/* breadcrumb */}
-          <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-foreground-soft sm:text-sm dark:text-muted-foreground">
-            <Link href="/#stages" className="transition-colors hover:text-foreground dark:hover:text-ink-fg">
+          <nav className="flex flex-wrap items-center gap-2 text-sm font-semibold text-cream/60">
+            <Link href="/#stages" className="transition-colors hover:text-gold dark:hover:text-teal-glow">
               المراحل
             </Link>
             <ArrowRight className="size-3.5" />
-            <Link href={`/stages/${stage.id}`} className="transition-colors hover:text-foreground dark:hover:text-ink-fg">
+            <Link href={`/stages/${stage.id}`} className="transition-colors hover:text-gold dark:hover:text-teal-glow">
               {stage.title}
             </Link>
             <ArrowRight className="size-3.5" />
             <Link
               href={`/stages/${stage.id}/${branch.id}`}
-              className="transition-colors hover:text-foreground dark:hover:text-ink-fg"
+              className="transition-colors hover:text-gold dark:hover:text-teal-glow"
             >
               {branch.title}
             </Link>
             <ArrowRight className="size-3.5" />
-            <span className="text-foreground dark:text-foreground">{course.title}</span>
+            <span className="text-cream/90">{course.title}</span>
           </nav>
 
-          <div className="mt-6 grid items-center gap-8 sm:mt-8 md:gap-12 lg:grid-cols-[1.3fr_0.7fr]">
-            <div className="min-w-0">
-              <span className="inline-flex items-center gap-2 rounded-full border border-border bg-primary/5 px-4 py-1.5 text-sm font-semibold text-gold-deep backdrop-blur dark:border-white/10 dark:bg-card/5 dark:text-teal-glow">
+          <div className="mt-8 grid items-center gap-12 lg:grid-cols-[1.3fr_0.7fr]">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-semibold text-gold backdrop-blur dark:text-teal-glow">
                 <Sparkles className="size-4" />
                 محاضرة من {branch.title}
               </span>
-              <h1 className="mt-4 text-balance font-heading text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold leading-tight text-foreground sm:mt-5 md:text-5xl lg:text-6xl dark:text-foreground">
+              <h1 className="mt-5 text-balance font-heading text-4xl font-extrabold leading-tight text-cream md:text-6xl">
                 {course.title}
               </h1>
-              <p className="mt-3 max-w-2xl text-pretty text-base leading-relaxed text-foreground-soft sm:mt-4 sm:text-lg dark:text-muted-foreground">
+              <p className="mt-4 max-w-2xl text-pretty text-lg leading-relaxed text-cream/70">
                 {course.description}
               </p>
 
-              <div className="mt-6 flex flex-wrap gap-2 sm:mt-8 sm:gap-3">
-                <span className="inline-flex items-center gap-2 rounded-xl border border-border bg-[#eee6d5]/60 px-3 py-2 text-xs text-foreground-soft sm:px-4 sm:py-2.5 sm:text-sm dark:border-border dark:bg-[#120e0a] dark:text-muted-foreground">
-                  <Layers className="size-4 shrink-0 text-gold-deep dark:text-teal-glow" />
+              <div className="mt-8 flex flex-wrap gap-3">
+                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-2.5 text-sm text-cream/90">
+                  <Layers className="size-4 text-gold" />
                   {course.lectures.length} محاضرة
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-xl border border-border bg-[#eee6d5]/60 px-3 py-2 text-xs text-foreground-soft sm:px-4 sm:py-2.5 sm:text-sm dark:border-border dark:bg-[#120e0a] dark:text-muted-foreground">
-                  <PlayCircle className="size-4 shrink-0 text-emerald-deep dark:text-emerald-brand" />
+                <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-navy-deep/40 px-4 py-2.5 text-sm text-cream/90">
+                  <PlayCircle className="size-4 text-emerald-brand" />
                   {totalLessons} درس
                 </span>
                 {freeCount > 0 && (
-                  <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-brand/30 bg-emerald-brand/10 px-3 py-2 text-xs text-emerald-deep sm:px-4 sm:py-2.5 sm:text-sm dark:text-emerald-brand">
-                    <Play className="size-4 shrink-0 text-emerald-deep dark:text-emerald-brand" />
+                  <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-brand/30 bg-emerald-brand/10 px-4 py-2.5 text-sm text-emerald-100">
+                    <Play className="size-4 text-emerald-brand" />
                     {freeCount} محاضرة مجانية
                   </span>
                 )}
               </div>
 
               {/* price + subscribe */}
-              <div className="mt-6 flex flex-wrap items-center gap-4 sm:mt-8">
+              <div className="mt-8 flex flex-wrap items-center gap-4">
                 <div className="flex items-baseline gap-2">
                   {course.oldPrice && (
-                    <span className="text-lg text-foreground-soft/60 line-through dark:text-muted-foreground/60">
+                    <span className="text-lg text-cream/40 line-through">
                       {formatEGP(course.oldPrice)}
                     </span>
                   )}
-                  <strong className="font-heading text-3xl font-extrabold text-foreground dark:text-foreground">
+                  <strong className="font-heading text-3xl font-extrabold text-cream">
                     {formatEGP(course.price)}
                   </strong>
-                  <span className="text-sm font-bold text-gold-deep dark:text-teal-glow">ج.م</span>
+                  <span className="text-sm font-bold text-gold dark:text-teal-glow">ج.م</span>
                 </div>
                 <button
                   type="button"
                   onClick={handleSubscribe}
-                  className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-deep dark:bg-primary dark:text-white dark:hover:bg-violet-deep"
+                  className="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3.5 text-sm font-bold text-navy transition-colors hover:bg-gold-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
                 >
                   {added ? (
                     <>
@@ -262,7 +264,7 @@ export function CourseLanding({
               </div>
             </div>
 
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl border border-border shadow-2xl shadow-navy/10 sm:aspect-[16/9] md:rounded-[2rem] lg:aspect-[4/5] dark:border-border">
+            <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl shadow-navy-deep/50 lg:aspect-[4/5]">
               <Image
                 src={course.image || course.lectures[0]?.image || '/lessons/complex-numbers.png'}
                 alt={course.title}
@@ -272,7 +274,7 @@ export function CourseLanding({
                 priority
               />
               <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/30 to-transparent dark:from-ink-base/80"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-navy/60 to-transparent"
                 aria-hidden="true"
               />
             </div>
@@ -280,21 +282,21 @@ export function CourseLanding({
         </div>
 
         <div className="relative h-12 md:h-16">
-          <div className="absolute inset-x-0 bottom-0 h-12 rounded-t-[2.5rem] bg-[#eee6d5] md:h-16 md:rounded-t-[3.5rem] dark:bg-[#120e0a]" />
+          <div className="absolute inset-x-0 bottom-0 h-12 rounded-t-[2.5rem] bg-cream md:h-16 md:rounded-t-[3.5rem] dark:bg-ink-base" />
         </div>
       </section>
 
       {/* ── Curriculum ───────────────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-4xl px-4 py-10 sm:px-5 sm:py-12 md:px-8 md:py-16">
+      <section className="relative mx-auto max-w-4xl px-5 py-12 md:px-8 md:py-16">
         <div className="flex flex-col items-center text-center">
           <span className="text-sm font-semibold text-gold-deep dark:text-teal-glow">
             <span className="font-mono">{'// '}</span>
             محتوى الكورس
           </span>
-          <h2 className="mt-3 text-balance font-heading text-3xl font-extrabold text-foreground md:text-4xl dark:text-foreground">
+          <h2 className="mt-3 text-balance font-heading text-3xl font-extrabold text-navy md:text-4xl dark:text-ink-fg">
             محتوى الكورس
           </h2>
-          <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-foreground-soft dark:text-muted-foreground">
+          <p className="mt-3 max-w-2xl text-pretty leading-relaxed text-navy-soft dark:text-ink-dim">
             كل المحاضرات ودروسها بالترتيب. المحاضرات المجانية تقدر تتفرج عليها فورًا، والباقي يتفتح بالاشتراك.
           </p>
         </div>
@@ -309,13 +311,13 @@ export function CourseLanding({
               return (
                 <div key={group.id}>
                   <div className="mb-4 flex items-center gap-3">
-                    <span className="grid size-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground dark:bg-primary dark:text-white">
+                    <span className="grid size-8 place-items-center rounded-lg bg-navy text-sm font-bold text-cream dark:bg-violet-glow dark:text-white">
                       {gi + 1}
                     </span>
-                    <h3 className="font-heading text-lg font-bold text-foreground dark:text-foreground">
+                    <h3 className="font-heading text-lg font-bold text-navy dark:text-ink-fg">
                       {group.title}
                     </h3>
-                    <span className="text-xs font-semibold text-foreground-soft dark:text-muted-foreground">
+                    <span className="text-xs font-semibold text-navy-soft dark:text-ink-dim">
                       ({group.lectures.length} محاضرة)
                     </span>
                   </div>
@@ -334,7 +336,7 @@ export function CourseLanding({
             })}
           </div>
         ) : (
-          <div className="mx-auto mt-12 max-w-xl rounded-2xl border border-dashed border-border bg-card p-10 text-center text-foreground-soft dark:border-border dark:bg-card dark:text-muted-foreground">
+          <div className="mx-auto mt-12 max-w-xl rounded-2xl border border-dashed border-navy/15 bg-white p-10 text-center text-navy-soft dark:border-ink-line dark:bg-ink-raised dark:text-ink-dim">
             لم تتم إضافة محاضرات لهذا الكورس حتى الآن.
           </div>
         )}
@@ -343,7 +345,7 @@ export function CourseLanding({
         <div className="mt-12 flex justify-center">
           <Link
             href={`/stages/${stage.id}/${branch.id}`}
-            className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-bold text-foreground transition-colors hover:bg-primary/5 dark:border-border dark:text-foreground dark:hover:bg-ink-raised"
+            className="inline-flex items-center gap-2 rounded-full border border-navy/15 px-6 py-3 text-sm font-bold text-navy transition-colors hover:bg-navy/5 dark:border-ink-line dark:text-ink-fg dark:hover:bg-ink-raised"
           >
             <ArrowRight className="size-4" />
             رجوع لكورسات {branch.title}

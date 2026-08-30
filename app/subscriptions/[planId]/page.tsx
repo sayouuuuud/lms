@@ -49,7 +49,7 @@ export default async function SubscriptionPlanPage({ params }: { params: Promise
   const isStudent = !!session?.user?.id && role !== 'admin' && role !== 'assistant'
   const ctaHref = isStudent
     ? `/student/subscriptions?planId=${encodeURIComponent(plan.id)}`
-    : `/auth/register?planId=${encodeURIComponent(plan.id)}`
+    : `/auth?mode=register&planId=${encodeURIComponent(plan.id)}`
   const ctaLabel = isStudent ? 'اشترك الآن' : 'ابدأ الاشتراك'
 
   return (

@@ -84,8 +84,35 @@ export type Stage = {
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
+export function buildStaticMonthlyCourses(lectures: Lecture[]): MonthlyCourse[] {
+  return lectures.map((lecture) => ({
+    id: lecture.id,
+    dbId: lecture.dbId,
+    title: lecture.title,
+    description: lecture.description,
+    image: lecture.image || `/lessons/${lecture.id}.png`,
+    price: lecture.price,
+    oldPrice: lecture.oldPrice,
+    badge: lecture.badge,
+    isPublished: true,
+    lectures: [lecture],
+  }))
+}
+
+export function getStaticStages(): Stage[] {
+  return stages.map((stage) => ({
+    ...stage,
+    branches: stage.branches.map((branch) => ({
+      ...branch,
+      monthlyCourses: branch.monthlyCourses && branch.monthlyCourses.length > 0
+        ? branch.monthlyCourses
+        : buildStaticMonthlyCourses(branch.lectures),
+    })),
+  }))
+}
+
 export function getStage(id: string) {
-  return stages.find((s) => s.id === id)
+  return getStaticStages().find((s) => s.id === id)
 }
 
 export function getBranch(stageId: string, branchId: string) {
@@ -100,7 +127,7 @@ export const stages: Stage[] = [
   {
     id: 'sec-1',
     index: '٠١',
-    title: 'الصف العاشر',
+    title: 'الصف الأول الثانوي',
     subtitle: 'الأساس المتين: جبر، حساب مثلثات، وهندسة تحليلية تبني بيها باقي السنين.',
     rows: ['الجبر والمتطابقات', 'حساب المثلثات', 'الهندسة التحليلية'],
     formula: 'sin²θ + cos²θ = 1',
@@ -220,7 +247,7 @@ export const stages: Stage[] = [
   {
     id: 'sec-2',
     index: '٠٢',
-    title: 'الصف الحادي عشر',
+    title: 'الصف الثاني الثانوي',
     subtitle: 'نقطة التحول: تفاضل وتكامل، ميكانيكا، وإحصاء بأسلوب يخلّيها سهلة.',
     rows: ['التفاضل والتكامل', 'الميكانيكا', 'الإحصاء والاحتمالات'],
     formula: 'd/dx [xⁿ] = n·xⁿ⁻¹',
@@ -337,7 +364,7 @@ export const stages: Stage[] = [
   {
     id: 'sec-3',
     index: '٠٣',
-    title: 'الصف الثاني عشر',
+    title: 'الصف الثالث الثانوي',
     subtitle: 'سنة الحسم: مراجعة شاملة واستعداد كامل لامتحان الثانوية العامة.',
     rows: ['الرياضيات البحتة', 'الرياضيات التطبيقية', 'الديناميكا'],
     formula: '∫ₐᵇ f(x) dx',

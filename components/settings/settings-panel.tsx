@@ -110,7 +110,7 @@ function applyColorPreset(id: PresetId) {
 const baseTabs = [
   { id: 'profile',    label: 'الملف الشخصي',     icon: User },
   { id: 'security',   label: 'الأمان',            icon: Shield },
-  { id: 'preferences',label: 'التفضيلات',         icon: SlidersHorizontal },
+  { id: 'preferences',label: 'إعدادات المنصة العامة', icon: SlidersHorizontal },
   { id: 'content',    label: 'محتوى الموقع',      icon: LayoutTemplate },
   { id: 'streaming',  label: 'الفيديو والـ Streaming', icon: Video },
   { id: 'assistants', label: 'المساعدون',         icon: UsersRound },
@@ -148,7 +148,11 @@ export function SettingsPanel({
     initials: string
   } | null
   initialSiteContent?: SiteContent
-  initialPlatformSettings?: { is_streaming_enabled: boolean; whatsapp_payment_notify: boolean } | null
+  initialPlatformSettings?: {
+    is_streaming_enabled: boolean
+    whatsapp_payment_notify: boolean
+    sync_public_with_db?: boolean
+  } | null
   initialStreamingSettings?: any
   initialStreamingJobs?: any[]
   initialStreamingVideos?: any[]
@@ -310,6 +314,10 @@ export function SettingsPanel({
 
   const [showGeoKey, setShowGeoKey] = useState(false)
 
+  const [syncPublicWithDb, setSyncPublicWithDb] = useState(
+    initialPlatformSettings?.sync_public_with_db ?? true,
+  )
+
   const [isStreamingEnabled, setIsStreamingEnabled] = useState(
     initialPlatformSettings?.is_streaming_enabled ?? false,
   )
@@ -317,6 +325,28 @@ export function SettingsPanel({
   const [whatsappPaymentNotify, setWhatsappPaymentNotify] = useState(
     initialPlatformSettings?.whatsapp_payment_notify ?? true,
   )
+
+  function handleSyncPublicWithDbToggle(val: boolean) {
+    setSyncPublicWithDb(val)
+    startTransition(async () => {
+      const res = await updatePlatformSettings({
+        is_streaming_enabled: isStreamingEnabled,
+        whatsapp_payment_notify: whatsappPaymentNotify,
+        sync_public_with_db: val,
+      })
+      if (res?.error) {
+        toast.error(res.error)
+        setSyncPublicWithDb(!val)
+      } else {
+        toast.success(
+          val
+            ? 'تم تفعيل ربط الصفحات العامة بقاعدة البيانات'
+            : 'تم تفعيل وضع البيانات الافتراضية الثابتة (Static Mode)',
+        )
+        router.refresh()
+      }
+    })
+  }
 
   // Whether new students can register (defaults to ON when not previously saved).
   const [allowRegistrations, setAllowRegistrations] = useState(
@@ -376,6 +406,7 @@ export function SettingsPanel({
       const resPlatform = await updatePlatformSettings({
         is_streaming_enabled: isStreamingEnabled,
         whatsapp_payment_notify: whatsappPaymentNotify,
+        sync_public_with_db: syncPublicWithDb,
       })
 
       if (res.error || resPlatform?.error) {
@@ -882,14 +913,45 @@ export function SettingsPanel({
         )}
 
         {activeTab === 'preferences' && (
-          <div className="space-y-2">
+          <div className="space-y-4">
             <div className="text-right">
-              <h3 className="text-lg font-bold text-foreground">التفضيلات</h3>
+              <h3 className="text-lg font-bold text-foreground">إعدادات المنصة العامة</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                خصّص تجربتك داخل لوحة الإدارة
+                خصّص مصدر بيانات المنصة وإعدادات التشغيل والمظهر داخل لوحة الإدارة
               </p>
             </div>
             <Separator className="my-4" />
+
+            {/* Platform data source toggle */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 dark:border-primary/30 dark:bg-primary/10">
+              <div className="flex items-start justify-between gap-4">
+                <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold',
+                        syncPublicWithDb
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                      )}
+                    >
+                      {syncPublicWithDb ? 'قاعدة البيانات (Dynamic DB)' : 'البيانات الافتراضية (Static Mode)'}
+                    </span>
+                    <h4 className="font-bold text-foreground">مصدر بيانات الصفحات العامة</h4>
+                  </div>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                    عند تفعيل هذا الخيار، يتم جلب محتوى ومناهج الصفحات العامة من قاعدة البيانات ديناميكياً. عند تعطيله، يتم استخدام البيانات الافتراضية الثابتة للنسخة الأصلية كاملة مع بقاء نظام المصادقة وتسجيل الدخول متصلاً بالداتابيز.
+                  </p>
+                </div>
+                <ToggleSwitch
+                  checked={syncPublicWithDb}
+                  onChange={handleSyncPublicWithDbToggle}
+                  label=""
+                  description=""
+                />
+              </div>
+            </div>
+
             <div className="divide-y divide-border">
               <ToggleSwitch
                 checked={darkMode}
@@ -1030,7 +1092,7 @@ export function SettingsPanel({
             </div>
 
             <div className="flex justify-start pt-4">
-              <Button onClick={handleSave} disabled={isPending}>حفظ التفضيلات</Button>
+              <Button onClick={handleSave} disabled={isPending}>حفظ إعدادات المنصة والتفضيلات</Button>
             </div>
           </div>
         )}

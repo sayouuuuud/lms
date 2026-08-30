@@ -1,46 +1,38 @@
 'use client'
 
 import { AnimatedNumber } from './animated-number'
-import { useReveal } from '@/lib/use-reveal'
-import { TopographicBackground } from '@/components/topo-background'
+import type { StatsContent } from '@/lib/site-content-defaults'
+import { DEFAULT_SITE_CONTENT } from '@/lib/site-content-defaults'
 
-export function StatsSection({ content }: { content?: any }) {
-  const headRef = useReveal<HTMLDivElement>(undefined, { y: 30 })
-  const gridRef = useReveal<HTMLDivElement>(undefined, { y: 40 })
-
-  if (!content) return null
-
+export function StatsSection({ content = DEFAULT_SITE_CONTENT.stats }: { content?: StatsContent }) {
   return (
-    <section id="stats" className="relative overflow-hidden bg-[#F5F0E6] dark:bg-[#0A0703] py-14 sm:py-20 md:py-28">
-      <TopographicBackground />
-      <div className="mx-auto max-w-7xl px-4 sm:px-5 md:px-8 relative z-10">
-        <div ref={headRef} className="mx-auto mb-10 max-w-2xl text-center sm:mb-12">
-          <span className="text-sm font-bold tracking-widest text-gold uppercase" style={{ fontFamily: 'var(--font-cairo)' }}>
+    <section id="stats" className="py-20 md:py-28">
+      <div className="mx-auto max-w-7xl px-5 md:px-8">
+        <div className="mx-auto mb-12 max-w-2xl text-center">
+          <span className="text-sm font-semibold text-gold-deep dark:text-teal-glow">
+            <span className="font-mono">{'// '}</span>
             {content.badge}
           </span>
-          <h2 className="mt-3 text-balance text-[clamp(1.5rem,6.5vw,1.875rem)] font-black leading-tight text-[#2B2114] dark:text-[#FAF8F5] sm:text-4xl lg:text-5xl" style={{ fontFamily: 'var(--font-aref-ruqaa), serif' }}>
+          <h2 className="font-thmanyah font-bold mt-3 text-balance text-3xl leading-tight text-navy sm:text-4xl lg:text-5xl dark:text-ink-fg">
             {content.title}
           </h2>
-          <p className="mt-4 text-pretty text-base leading-relaxed text-[#2B2114]/70 sm:text-lg dark:text-[#FAF8F5]/70">
+          <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-muted dark:text-ink-dim">
             {content.description}
           </p>
         </div>
 
-        <div
-          ref={gridRef}
-          className="grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-gold/20 bg-gold/10 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {content.items?.map((s: any) => (
-            <div key={s.label} className="bg-[#FBF7EF] dark:bg-[#110E0A] p-6 backdrop-blur sm:p-8 md:p-10">
-              <div className="flex items-baseline gap-1 text-[#2B2114] dark:text-[#FAF8F5]">
-                <span className="text-4xl font-black tabular-nums sm:text-5xl md:text-4xl lg:text-5xl xl:text-6xl">
-                  <AnimatedNumber value={s.value} duration={2200} />
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-3xl border border-navy/10 bg-navy/10 sm:grid-cols-2 lg:grid-cols-4 dark:border-white/10 dark:bg-white/10">
+          {content.items.map((s) => (
+            <div key={s.label} className="bg-cream/80 p-8 backdrop-blur md:p-10 dark:bg-ink-raised/70">
+              <div className="flex items-baseline gap-1 text-navy dark:text-ink-fg">
+                <span className="stat-num font-thmanyah text-5xl font-bold md:text-4xl lg:text-5xl xl:text-6xl">
+                  <AnimatedNumber value={s.value} duration={2.5} />
                 </span>
-                <span className="text-2xl font-black text-gold sm:text-3xl md:text-2xl lg:text-3xl xl:text-4xl">
-                  {s.suffix === '+' ? '+' : s.suffix === '%' ? '٪' : s.suffix}
+                <span className="font-thmanyah text-3xl font-bold text-gold-deep md:text-2xl lg:text-3xl xl:text-4xl dark:text-teal-glow">
+                  {s.suffix === '+' ? '+' : s.suffix === '%' ? '٪' : s.suffix === 'k' ? ' ألف' : s.suffix}
                 </span>
               </div>
-              <p className="mt-3 text-pretty text-sm leading-relaxed text-[#2B2114]/70 sm:text-base dark:text-[#FAF8F5]/70 font-medium">{s.label}</p>
+              <p className="mt-3 text-pretty leading-relaxed text-ink-muted dark:text-ink-dim">{s.label}</p>
             </div>
           ))}
         </div>

@@ -1,8 +1,30 @@
 import { logError, logDebug } from '@/lib/logger'
 import { prisma } from '@/lib/prisma'
 import type { Stage, Branch, Lecture, Lesson, MonthlyCourse, Term } from '@/lib/landing-data'
+import { getStaticStages } from '@/lib/landing-data'
+import { isPublicSyncWithDbEnabled } from '@/lib/platform-settings'
 
 export async function getCurriculum(includeUnpublished = false): Promise<Stage[]> {
+  try {
+    const isSyncEnabled = await isPublicSyncWithDbEnabled()
+    if (!isSyncEnabled) {
+      return getStaticStages()
+    }
+  } catch (err) {
+    if (
+      err &&
+      typeof err === 'object' &&
+      'digest' in err &&
+      typeof (err as any).digest === 'string' &&
+      ((err as any).digest === 'DYNAMIC_SERVER_USAGE' ||
+        (err as any).digest.startsWith('NEXT_'))
+    ) {
+      throw err
+    }
+    // Fall back to static stages on error
+    return getStaticStages()
+  }
+
   let stagesRes: any[] = []
   try {
     stagesRes = await prisma.stages.findMany({
@@ -47,7 +69,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
       throw err
     }
     logError('curriculum.getCurriculum', err)
-    return []
+    return getStaticStages()
   }
 
   return stagesRes.map((stageRow) => {
@@ -75,7 +97,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
           price: Number(lectureRow.price ?? 0),
           oldPrice: lectureRow.old_price != null ? Number(lectureRow.old_price) : undefined,
           badge: lectureRow.badge ?? undefined,
-          image: lectureRow.image ?? undefined,
+          image: lectureRow.image || (lectureRow.slug ? `/lectures/${lectureRow.slug}.png` : '/lectures/alg-identities.png'),
           lessons,
           sectionId: lectureRow.monthly_course_section_id ?? null,
           isFree: lectureRow.is_free ?? false,
@@ -101,7 +123,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
           dbId: courseRow.id,
           title: courseRow.title ?? '',
           description: courseRow.description ?? '',
-          image: courseRow.image ?? undefined,
+          image: courseRow.image || (courseRow.slug ? `/courses/${courseRow.slug}.png` : '/courses/marketing.png'),
           price: Number(courseRow.price ?? 0),
           oldPrice: courseRow.old_price != null ? Number(courseRow.old_price) : undefined,
           badge: courseRow.badge ?? undefined,
@@ -115,7 +137,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
         id: branchRow.slug ?? '',
         title: branchRow.title ?? '',
         description: branchRow.description ?? '',
-        image: branchRow.image ?? '',
+        image: branchRow.image || (branchRow.slug ? `/lectures/${branchRow.slug}.png` : '/lectures/alg-identities.png'),
         topics: (branchRow.topics as string[]) ?? [],
         lectures: branchLectures.map(({ courseSortOrder, monthlyCourseId, ...rest }: { courseSortOrder: number; monthlyCourseId: string | null; [key: string]: unknown }) => rest),
         monthlyCourses,
@@ -129,7 +151,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
       subtitle: stageRow.subtitle ?? '',
       rows: (stageRow.rows as string[]) ?? [],
       formula: stageRow.formula ?? '',
-      image: stageRow.image ?? '',
+      image: stageRow.image || (stageRow.slug ? `/stages/${stageRow.slug}.png` : '/stages/sec-1.png'),
       accent: (stageRow.accent as Stage['accent']) ?? 'emerald',
       termPrice: Number(stageRow.term_price ?? 0),
       termOldPrice: stageRow.term_old_price != null ? Number(stageRow.term_old_price) : undefined,

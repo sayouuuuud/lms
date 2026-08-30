@@ -188,15 +188,16 @@ export async function updateSettings(newSettings: any) {
 export async function getPlatformSettings() {
   const data = await prisma.platform_settings.findUnique({
     where: { id: 1 },
-    select: { is_streaming_enabled: true, whatsapp_payment_notify: true }
+    select: { is_streaming_enabled: true, whatsapp_payment_notify: true, sync_public_with_db: true }
   })
 
-  return data || { is_streaming_enabled: false, whatsapp_payment_notify: true }
+  return data || { is_streaming_enabled: false, whatsapp_payment_notify: true, sync_public_with_db: true }
 }
 
 export async function updatePlatformSettings(input: {
   is_streaming_enabled: boolean
   whatsapp_payment_notify: boolean
+  sync_public_with_db?: boolean
 }) {
   if (!(await hasResourceAccess('settings', 'edit'))) {
     return { error: 'غير مسموح. لازم تكون أدمن.' }
@@ -208,17 +209,23 @@ export async function updatePlatformSettings(input: {
       update: {
         is_streaming_enabled: input.is_streaming_enabled,
         whatsapp_payment_notify: input.whatsapp_payment_notify,
+        ...(input.sync_public_with_db !== undefined ? { sync_public_with_db: input.sync_public_with_db } : {}),
         updated_at: new Date(),
       },
       create: {
         id: 1,
         is_streaming_enabled: input.is_streaming_enabled,
         whatsapp_payment_notify: input.whatsapp_payment_notify,
+        sync_public_with_db: input.sync_public_with_db ?? true,
         updated_at: new Date(),
       },
     })
 
-    logActivity({ action: 'update', resource: 'settings', targetLabel: `إعدادات المنصة - الاستريمنج: ${input.is_streaming_enabled} - واتساب: ${input.whatsapp_payment_notify}` }).catch(() => {})
+    logActivity({
+      action: 'update',
+      resource: 'settings',
+      targetLabel: `إعدادات المنصة - ربط الداتابيز: ${input.sync_public_with_db ?? true} - الاستريمنج: ${input.is_streaming_enabled} - واتساب: ${input.whatsapp_payment_notify}`,
+    }).catch(() => {})
     revalidatePath('/', 'layout')
     return { success: true }
   } catch (error: any) {

@@ -37,7 +37,40 @@ export async function getFreeLectureWatch(
   lectureSlug: string,
 ): Promise<FreeLectureWatch | undefined> {
   const result = await getFreeLectureBySlug(stageSlug, branchSlug, courseSlug, lectureSlug)
-  if (!result || !result.lecture.dbId) return undefined
+  if (!result) return undefined
+
+  if (!result.lecture.dbId) {
+    const wholeLectureIsFree =
+      result.lecture.isFree || Number(result.course.price) === 0
+
+    const sourceLessons = result.lecture.lessons || []
+    const filteredLessons = wholeLectureIsFree
+      ? sourceLessons
+      : sourceLessons.filter((l) => l.isFree)
+
+    const lessons: FreeWatchLesson[] = (
+      filteredLessons.length > 0 ? filteredLessons : sourceLessons
+    ).map((lesson) => ({
+      id: lesson.id,
+      title: lesson.title,
+      duration: lesson.duration,
+      description: null,
+      videoUrl: lesson.videoUrl || FALLBACK_VIDEO,
+      attachments: [],
+    }))
+
+    return {
+      stage: result.stage,
+      branch: result.branch,
+      course: result.course,
+      lecture: {
+        id: result.lecture.id,
+        title: result.lecture.title,
+        description: result.lecture.description,
+      },
+      lessons,
+    }
+  }
 
   try {
     const wholeLectureIsFree =

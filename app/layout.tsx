@@ -4,7 +4,7 @@ import { Cairo, Geist_Mono, Aref_Ruqaa } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme-provider'
-import { SiteLoader } from '@/components/site-loader'
+import { MathLoader } from '@/components/landing/math-loader'
 import { CartProvider } from '@/components/cart/cart-provider'
 import { CartModal } from '@/components/cart/cart-modal'
 import { PageViewTracker } from '@/components/analytics/page-view-tracker'
@@ -32,22 +32,6 @@ const arefRuqaa = Aref_Ruqaa({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
-})
-const reemKufi = localFont({
-  src: [
-    {
-      path: '../public/fonts/Reem_Kufi/static/ReemKufi-Bold.ttf',
-      weight: '700',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/Reem_Kufi/static/ReemKufi-Regular.ttf',
-      weight: '400',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-reem-kufi',
-  display: 'swap',
 })
 const lemonBrush = localFont({
   src: '../public/fonts/lemon-brush-arabic.otf',
@@ -139,7 +123,7 @@ export default async function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${cairo.variable} ${arefRuqaa.variable} ${reemKufi.variable} ${lemonBrush.variable} ${geistMono.variable} bg-background`}
+      className={`${cairo.variable} ${arefRuqaa.variable} ${lemonBrush.variable} ${geistMono.variable} bg-background`}
       suppressHydrationWarning
     >
       <head>
@@ -151,18 +135,23 @@ export default async function RootLayout({
               if(isDark){document.documentElement.classList.add('dark')}
               
               var presets=${JSON.stringify(colorPresets)};
+              // القيمة المحفوظة في قاعدة البيانات لها الأولوية (تزامن عبر الأجهزة)،
+              // وبعدها localStorage كنسخة محلية سريعة، وأخيراً الافتراضي.
               var serverColor=${JSON.stringify(savedColor)};
               var c=serverColor||localStorage.getItem('color-preset')||'navy';
               try{localStorage.setItem('color-preset',c)}catch(e){}
               var preset=presets.find(function(p){return p.id===c});
               if(preset){
-                var style = document.createElement('style');
-                style.id = 'dynamic-theme';
-                style.innerHTML = '.theme-dashboard { --primary: ' + preset.light.primary + '; --ring: ' + preset.light.ring + '; --sidebar-primary: ' + preset.light.sidebar + '; --sidebar-accent: ' + preset.light.sidebar + '; --sidebar-ring: ' + preset.light.ring + '; } ' +
-                                  '.dark .theme-dashboard { --primary: ' + preset.dark.primary + '; --ring: ' + preset.dark.ring + '; --sidebar-primary: ' + preset.dark.sidebar + '; --sidebar-accent: ' + preset.dark.sidebar + '; --sidebar-ring: ' + preset.dark.ring + '; }';
-                document.head.appendChild(style);
+                var vals=isDark?preset.dark:preset.light;
+                var root=document.documentElement;
+                root.style.setProperty('--primary', vals.primary);
+                root.style.setProperty('--ring', vals.ring);
+                root.style.setProperty('--sidebar-primary', vals.sidebar);
+                root.style.setProperty('--sidebar-accent', vals.sidebar);
+                root.style.setProperty('--sidebar-ring', vals.ring);
               }
 
+              // ألوان النيون للدارك مود — تُطبّق دائماً (لا تؤثر إلا تحت dark:)
               var neons=${JSON.stringify(neonPresets)};
               var serverNeon=${JSON.stringify(savedNeon)};
               var n=serverNeon||localStorage.getItem('neon-preset')||'teal-violet';
@@ -176,6 +165,7 @@ export default async function RootLayout({
                 r2.style.setProperty('--color-violet-deep', neon.violetDeep);
               }
 
+              // ثيمات الوضع الفاتح
               var lights=${JSON.stringify(lightPresets)};
               var serverLight=${JSON.stringify(savedLight)};
               var l=serverLight||localStorage.getItem('light-preset')||'navy-gold';
@@ -199,7 +189,7 @@ export default async function RootLayout({
       <body className={`${cairo.className} font-sans antialiased`}>
         <ThemeProvider>
           <CartProvider>
-            <SiteLoader loaderText={seoContent?.loaderText} />
+            <MathLoader text={seoContent?.loaderText} equation={seoContent?.loaderEquation} />
             {children}
             <CartModal />
             <PageViewTracker />

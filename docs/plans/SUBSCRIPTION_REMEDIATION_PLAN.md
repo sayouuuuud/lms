@@ -661,7 +661,7 @@ Grep sweep confirms every subscription action parses its inputs post-guard; none
 |---|---|---|---|---|
 | 6.1 Integrity audit + idempotency test | Yes | audit only + temp probe (deleted) | Yes — see tables above | |
 | 6.2 Zod layer | Yes | `lib/subscription-validation.ts` (new), admin + student action files, `package.json` (+zod) | With deviation D30 | Zod was NOT in the project — installed per plan's explicit mandate. |
-| 6.3 Seed script | Yes | `scripts/seed-subscriptions.ts` (new) | With deviations D31, D32 | Dry-run by default; real run gated behind `SEED_SUBSCRIPTIONS_CONFIRM=yes`. Idempotent deterministic keys; states recomputed on re-run; events written on creation. Scope targets resolved live (stage «الصف العاشر», course «كورس الشهر الاول» verified present). |
+| 6.3 Seed script | Yes | `scripts/seed-subscriptions.ts` (new) | With deviations D31, D32 | Dry-run by default; real run gated behind `SEED_SUBSCRIPTIONS_CONFIRM=yes`. Idempotent deterministic keys; states recomputed on re-run; events written on creation. Scope targets resolved live (stage «الصف الأول الثانوي», course «كورس الشهر الاول» verified present). |
 | 6.4 FINAL E2E browser checklist | Prepared — execution requires user session (D33) | — | Checklist handed over in final message | |
 
 **Verification evidence:** `tsc --noEmit` exit 0 · build passes · both suites pass · seed dry-run executes clean.
@@ -748,7 +748,7 @@ Every milestone has a compliance table above; all code-verifiable acceptance box
 
 - **D30 — 2026-08-23 (M6, dependency added).** `zod` was absent from package.json; the plan mandates Zod schemas explicitly. Installed via pnpm (`pnpm add zod`). Single new dependency, no other changes.
 
-- **D31 — 2026-08-23 (M6, seed script execution policy).** The configured database is PRODUCTION. The seed is therefore dry-run-by-default and requires `SEED_SUBSCRIPTIONS_CONFIRM=yes` to write; it was validated in dry-run mode only (targets resolved: stage «الصف العاشر», monthly course «كورس الشهر الاول»). Executing the real seed against production remains a user decision — recommended only if a disposable environment isn't available.
+- **D31 — 2026-08-23 (M6, seed script execution policy).** The configured database is PRODUCTION. The seed is therefore dry-run-by-default and requires `SEED_SUBSCRIPTIONS_CONFIRM=yes` to write; it was validated in dry-run mode only (targets resolved: stage «الصف الأول الثانوي», monthly course «كورس الشهر الاول»). Executing the real seed against production remains a user decision — recommended only if a disposable environment isn't available.
 
 - **D32 — 2026-08-23 (M6, seed runtime).** Project has no ts-node/tsx runner; Node ≥24 executes erasable TypeScript natively, so the script runs with plain `node scripts/seed-subscriptions.ts`. Kept free of non-erasable syntax and of `@/` alias imports.
 

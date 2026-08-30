@@ -148,7 +148,6 @@ export type StageOfferContent = {
   guaranteeText: string
 }
 
-/** حساب استقبال دفع — رقم محفظة / إنستاباي / IBAN يحوّل الطالب عليه */
 export type PaymentAccountItem = {
   /** لازم يطابق اسم وسيلة الدفع في نموذج الدفع (مثال: فودافون كاش) */
   method: string
@@ -185,20 +184,20 @@ export type SiteContent = {
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   hero: {
-    badge: 'منصة اللغة العربية الأولى للثانوية العامة',
-    titleLine1: 'اللغة العربية مش صعبة،',
+    badge: 'منصة الرياضيات الأولى للثانوية العامة',
+    titleLine1: 'الرياضيات مش صعبة،',
     titleLine2: 'هي بس محتاجة {highlight} صح',
     titleHighlight: 'مُعلّم',
     description:
-      'مع أكاديمية شفاء العليل هتفهم كل فكرة من جذورها، وتتدرّب لحد ما المسألة تبقى أسهل حاجة. اختار مرحلتك وابدأ رحلتك للتفوق.',
+      'مع الأستاذ عبد السلام هتفهم كل فكرة من جذورها، وتتدرّب لحد ما المسألة تبقى أسهل حاجة. اختار مرحلتك وابدأ رحلتك للتفوق.',
     cta1Text: 'اختار مرحلتك الدراسية',
     cta1Href: '#stages',
     cta2Text: 'اعرف أكتر عن المنصة',
     cta2Href: '#features',
     trustPoints: ['أول حصة مجانًا', 'إلغاء في أي وقت', 'متابعة مع ولي الأمر'],
-    teacherImageLight: '/teacher.webp',
-    teacherImageDark: '/teacher.webp',
-    teacherImageAlt: 'أكاديمية شفاء العليل، مدرس اللغة العربية',
+    teacherImageLight: '/teacher-abdelsalam.webp',
+    teacherImageDark: '/teacher-abdelsalam-dark.webp',
+    teacherImageAlt: 'الأستاذ عبد السلام، مدرس الرياضيات',
     pillLabels: ['تكامل', 'تفاضل', 'جبر', 'إحصاء'],
     miniStats: [
       { value: 25, prefix: '+', suffix: '', label: 'سنة خبرة' },
@@ -248,12 +247,12 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     badge: 'أرقامنا',
     title: 'نتائج بتتكلم عن نفسها',
     description:
-      'سنين من الخبرة وآلاف الطلاب اللي وصلوا لأعلى الدرجات مع أكاديمية شفاء العليل.',
+      'سنين من الخبرة وآلاف الطلاب اللي وصلوا لأعلى الدرجات مع مستر عبد السلام.',
     items: [
-      { value: 25, suffix: '+', label: 'سنة خبرة في تدريس اللغة العربية' },
+      { value: 25, suffix: '+', label: 'سنة خبرة في تدريس الرياضيات' },
       { value: 48000, suffix: '+', label: 'طالب وطالبة على المنصة' },
       { value: 1200, suffix: '+', label: 'فيديو ودرس تعليمي' },
-      { value: 98, suffix: '%', label: 'نسبة رضا الط��اب' },
+      { value: 98, suffix: '%', label: 'نسبة رضا الطلاب' },
     ],
   },
 
@@ -268,7 +267,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         grade: 'الثالث الثانوي',
         subject: 'الرياضيات البحتة',
         quote:
-          'أكاديمية شفاء العليل غيّر علاقتي باللغة العربية تمامًا، بقيت بفهم المسألة قبل ما أحلّها. جبت أعلى درجة في حياتي!',
+          'مستر عبد السلام غيّر علاقتي بالرياضيات تمامًا، بقيت بفهم المسألة قبل ما أحلّها. جبت أعلى درجة في حياتي!',
         before: 42,
         after: 98,
         journey: [
@@ -325,9 +324,9 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
 
   cta: {
     badge: 'ابدأ النهاردة',
-    title: 'جاهز تبدأ رحلة التفوق في اللغة العربية؟',
+    title: 'جاهز تبدأ رحلة التفوق في الرياضيات؟',
     description:
-      'انضم لآلاف الطلاب اللي حقّقوا أعلى الدرجات مع أكاديمية شفاء العليل. سجّل دلوقتي وابدأ أول حصة مجانًا.',
+      'انضم لآلاف الطلاب اللي حقّقوا أعلى الدرجات مع مستر عبد السلام. سجّل دلوقتي وابدأ أول حصة مجانًا.',
     cta1Text: 'سجّل الآن مجانًا',
     cta1Href: '/student',
     cta2Text: 'تصفّح المراحل',
@@ -336,10 +335,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
 
   footer: {
-    siteName: 'أكاديمية شفاء العليل',
-    siteTagline: 'أستاذ اللغة العربية',
+    siteName: 'عبد السلام',
+    siteTagline: 'أستاذ الرياضيات',
     description:
-      'منصة تعليمية متخصصة في اللغة العربية لجميع المراحل الدراسية، بأسلوب شرح مبسّط ومتابعة مستمرة لضمان تفوّق كل طالب.',
+      'منصة تعليمية متخصصة في الرياضيات لجميع المراحل الدراسية، بأسلوب شرح مبسّط ومتابعة مستمرة لضمان تفوّق كل طالب.',
     phone: '+20 100 000 0000',
     address: 'القاهرة، جمهورية مصر العربية',
     quickLinks: [
@@ -348,21 +347,21 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { label: 'المراحل الدراسية', href: '#stages' },
       { label: 'تسجيل الدخول', href: '/student' },
     ],
-    copyright: '© {year} منصة أكاديمية شفاء العليل ل اللغة العربية — جميع الحقوق محفوظة.',
-    socialLinks: [
-      { platform: 'website' as SocialPlatform, href: '#', enabled: true },
-      { platform: 'telegram' as SocialPlatform, href: '#', enabled: true },
-      { platform: 'whatsapp' as SocialPlatform, href: '#', enabled: true },
-      { platform: 'youtube' as SocialPlatform, href: '#', enabled: false },
-      { platform: 'facebook' as SocialPlatform, href: '#', enabled: false },
-      { platform: 'instagram' as SocialPlatform, href: '#', enabled: false },
-      { platform: 'tiktok' as SocialPlatform, href: '#', enabled: false },
-      { platform: 'twitter' as SocialPlatform, href: '#', enabled: false },
-    ],
+    copyright: '© {year} منصة الأستاذ عبد السلام للرياضيات — جميع الحقوق محفوظة.',
+  socialLinks: [
+    { platform: 'website' as SocialPlatform,   href: '#', enabled: true },
+    { platform: 'telegram' as SocialPlatform,  href: '#', enabled: true },
+    { platform: 'whatsapp' as SocialPlatform,  href: '#', enabled: true },
+    { platform: 'youtube' as SocialPlatform,   href: '#', enabled: false },
+    { platform: 'facebook' as SocialPlatform,  href: '#', enabled: false },
+    { platform: 'instagram' as SocialPlatform, href: '#', enabled: false },
+    { platform: 'tiktok' as SocialPlatform,    href: '#', enabled: false },
+    { platform: 'twitter' as SocialPlatform,   href: '#', enabled: false },
+  ],
   },
 
   navbar: {
-    siteName: 'أكاديمية شفاء العليل',
+    siteName: 'عبد السلام',
     logoUrl: '',
     links: [
       { label: 'المنهج', href: '#features' },
@@ -376,9 +375,9 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
 
   seo: {
-    title: 'أكاديمية شفاء العليل | منصة اللغة العربية للثانوية العامة',
+    title: 'الأستاذ عبد السلام | منصة الرياضيات للثانوية العامة',
     description:
-      'منصة تعليمية متكاملة لشرح مادة اللغة العربية للمرحلة الثانوية. ابدأ الآن واضمن تفوقك.',
+      'منصة تعليمية متكاملة لشرح مادة الرياضيات للمرحلة الثانوية. ابدأ الآن واضمن تفوقك.',
     loaderText: 'جاري تجهيز المنصة...',
     loaderEquation: 'f(x) = ∫ e^x dx',
     keywords: 'رياضيات ثانوي, شرح رياضيات, أولى ثانوي, تانية ثانوي, تالتة ثانوي, كورسات رياضيات',
@@ -402,8 +401,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
 
   login_panel: {
-    badge: 'منصة اللغة العربية الأولى للثانوية العامة',
-    headline: 'اللغة العربية مش صعبة، هي بس محتاجة مُعلّم صح.',
+    badge: 'منصة الرياضيات الأولى للثانوية العامة',
+    headline: 'الرياضيات مش صعبة، هي بس محتاجة مُعلّم صح.',
     perks: [
       'شرح مبسّط لكل درس خطوة بخطوة',
       'امتحانات بعد كل درس تثبّت المعلومة',
@@ -414,12 +413,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       { value: '98%', label: 'نسبة رضا' },
       { value: '+25', label: 'سنة خبرة' },
     ],
-    brandName: 'أكاديمية شفاء العليل',
+    brandName: 'عبد السلام',
     logoUrl: '',
   },
 
-  // فاضية بشكل افتراضي — الأدمن لازم يضيف أرقام المحافظ/إنستاباي/الحسابات البنكية
-  // من الإعدادات، وبعدها هتظهر للطالب في نموذج الدفع.
   payment_accounts: {
     items: [
       { method: 'فودافون كاش', account: '', holder: '' },
@@ -434,7 +431,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Deep merge — source overrides target at every key.
 // Arrays replace entirely (not concat). Missing keys fall back to default.
-// ─────────────────────────────────────────────────────────────────────��───────
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function deepMerge<T>(target: T, source: Partial<T>): T {
   if (!source || typeof source !== 'object' || Array.isArray(source)) {

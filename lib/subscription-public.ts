@@ -104,6 +104,8 @@ export async function getPublicSubscriptionPlan(planId: string): Promise<PublicS
   return plan ? serialize(plan) : null
 }
 
+import { isPublicSyncWithDbEnabled } from '@/lib/platform-settings'
+
 /**
  * وضع الاشتراكات للأسطح العامة: يحدد ما إذا كان تسويق الخطط والاشتراك ظاهرًا إطلاقًا.
  * purchases_only => subscriptionsEnabled=false وتُخفى كل عناصر التسويق.
@@ -112,6 +114,10 @@ export async function getPublicSubscriptionContext(): Promise<{
   mode: SubscriptionMode
   subscriptionsEnabled: boolean
 }> {
+  const isSyncEnabled = await isPublicSyncWithDbEnabled()
+  if (!isSyncEnabled) {
+    return { mode: 'purchases_only', subscriptionsEnabled: false }
+  }
   const settings = await prisma.platform_settings.findFirst({ select: { subscription_mode: true } })
   const mode = normalizeSubscriptionMode(settings?.subscription_mode)
   return { mode, subscriptionsEnabled: mode !== 'purchases_only' }
