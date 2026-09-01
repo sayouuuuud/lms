@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma'
-import { normalizeSubscriptionMode, type SubscriptionMode } from '@/lib/subscription-rules'
+import { prisma } from './prisma.ts'
+import { normalizeSubscriptionMode, type SubscriptionMode } from './subscription-rules.ts'
 
 export type PublicSubscriptionPlan = {
   id: string
@@ -61,67 +61,83 @@ function serialize(plan: any): PublicSubscriptionPlan {
   }
 }
 
-export async function getPublicSubscriptionPlans(input: {
+import { cache } from 'react'
+import { isPublicSyncWithDbEnabled } from './platform-settings.ts'
+
+export const getPublicSubscriptionPlans = cache(async function getPublicSubscriptionPlans(input: {
   stageId?: string
   branchId?: string
   branchIds?: string[]
   featuredOnly?: boolean
   context?: 'home' | 'stage' | 'branch'
 } = {}): Promise<PublicSubscriptionPlan[]> {
-  const branchIds = input.branchIds ?? (input.branchId ? [input.branchId] : [])
-  const scopeOr: any[] = [{ scope_mode: 'all_released', scopes: { none: {} } }]
-  if (input.stageId) scopeOr.push({ scopes: { some: { scope_type: 'stage', scope_id: input.stageId } } })
-  if (branchIds.length) scopeOr.push({ scopes: { some: { scope_type: 'branch', scope_id: { in: branchIds } } } })
+  try {
+    const isSyncEnabled = await isPublicSyncWithDbEnabled()
+    if (!isSyncEnabled) return []
 
-  const plans = await prisma.subscription_plans.findMany({
-    where: {
-      is_active: true,
-      public_visible: true,
-      ...(input.featuredOnly ? { featured: true } : {}),
-      ...(input.context === 'home' || (!input.stageId && !input.branchId) ? {} : { OR: scopeOr }),
-    },
-    orderBy: [{ featured: 'desc' }, { sort_order: 'asc' }, { created_at: 'desc' }],
-    select: planPresentation,
-  })
+    const branchIds = input.branchIds ?? (input.branchId ? [input.branchId] : [])
+    const scopeOr: any[] = [{ scope_mode: 'all_released', scopes: { none: {} } }]
+    if (input.stageId) scopeOr.push({ scopes: { some: { scope_type: 'stage', scope_id: input.stageId } } })
+    if (branchIds.length) scopeOr.push({ scopes: { some: { scope_type: 'branch', scope_id: { in: branchIds } } } })
 
-  const filtered = input.context === 'stage' && branchIds.length > 0
-    ? plans.filter((plan) => {
-        if (plan.scope_mode === 'all_released' && plan.scopes.length === 0) return true
-        if (plan.scopes.some((scope) => scope.scope_type === 'stage' && scope.scope_id === input.stageId)) return true
-        const scopedBranches = new Set(plan.scopes.filter((scope) => scope.scope_type === 'branch').map((scope) => scope.scope_id))
-        return branchIds.every((branchId) => scopedBranches.has(branchId))
-      })
-    : plans
+    const plans = await prisma.subscription_plans.findMany({
+      where: {
+        is_active: true,
+        public_visible: true,
+        ...(input.featuredOnly ? { featured: true } : {}),
+        ...(input.context === 'home' || (!input.stageId && !input.branchId) ? {} : { OR: scopeOr }),
+      },
+      orderBy: [{ featured: 'desc' }, { sort_order: 'asc' }, { created_at: 'desc' }],
+      select: planPresentation,
+    })
 
-  return filtered.map(serialize)
-}
+    const filtered = input.context === 'stage' && branchIds.length > 0
+      ? plans.filter((plan) => {
+          if (plan.scope_mode === 'all_released' && plan.scopes.length === 0) return true
+          if (plan.scopes.some((scope) => scope.scope_type === 'stage' && scope.scope_id === input.stageId)) return true
+          const scopedBranches = new Set(plan.scopes.filter((scope) => scope.scope_type === 'branch').map((scope) => scope.scope_id))
+          return branchIds.every((branchId) => scopedBranches.has(branchId))
+        })
+      : plans
 
-export async function getPublicSubscriptionPlan(planId: string): Promise<PublicSubscriptionPlan | null> {
-  const plan = await prisma.subscription_plans.findFirst({
-    where: { id: planId, is_active: true, public_visible: true },
-    select: planPresentation,
-  })
-  return plan ? serialize(plan) : null
-}
+    return filtered.map(serialize)
+  } catch {
+    return []
+  }
+})
 
-import { isPublicSyncWithDbEnabled } from '@/lib/platform-settings'
+export const getPublicSubscriptionPlan = cache(async function getPublicSubscriptionPlan(planId: string): Promise<PublicSubscriptionPlan | null> {
+  try {
+    const plan = await prisma.subscription_plans.findFirst({
+      where: { id: planId, is_active: true, public_visible: true },
+      select: planPresentation,
+    })
+    return plan ? serialize(plan) : null
+  } catch {
+    return null
+  }
+})
 
 /**
  * وضع الاشتراكات للأسطح العامة: يحدد ما إذا كان تسويق الخطط والاشتراك ظاهرًا إطلاقًا.
  * purchases_only => subscriptionsEnabled=false وتُخفى كل عناصر التسويق.
  */
-export async function getPublicSubscriptionContext(): Promise<{
+export const getPublicSubscriptionContext = cache(async function getPublicSubscriptionContext(): Promise<{
   mode: SubscriptionMode
   subscriptionsEnabled: boolean
 }> {
-  const isSyncEnabled = await isPublicSyncWithDbEnabled()
-  if (!isSyncEnabled) {
+  try {
+    const isSyncEnabled = await isPublicSyncWithDbEnabled()
+    if (!isSyncEnabled) {
+      return { mode: 'purchases_only', subscriptionsEnabled: false }
+    }
+    const settings = await prisma.platform_settings.findFirst({ select: { subscription_mode: true } })
+    const mode = normalizeSubscriptionMode(settings?.subscription_mode)
+    return { mode, subscriptionsEnabled: mode !== 'purchases_only' }
+  } catch {
     return { mode: 'purchases_only', subscriptionsEnabled: false }
   }
-  const settings = await prisma.platform_settings.findFirst({ select: { subscription_mode: true } })
-  const mode = normalizeSubscriptionMode(settings?.subscription_mode)
-  return { mode, subscriptionsEnabled: mode !== 'purchases_only' }
-}
+})
 
 /**
  * الاستعلام المرجعي الوحيد لعرض الخطط للطلاب/الزوار خارج الصفحات الإدارية:

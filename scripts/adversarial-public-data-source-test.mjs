@@ -90,7 +90,8 @@ async function runAdversarialTests() {
     for (const st of staticStages) {
       assert(st.title && st.title.length > 0, `Stage ${st.id} has title: ${st.title}`)
       assert(st.image && st.image.startsWith('/stages/'), `Stage ${st.id} has valid image path: ${st.image}`)
-      assert(Array.isArray(st.branches) && st.branches.length === 3, `Stage ${st.id} has exactly 3 branches`)
+      const expectedBranchCount = st.id === 'sec-3' ? 5 : 3
+      assert(Array.isArray(st.branches) && st.branches.length === expectedBranchCount, `Stage ${st.id} has exactly ${expectedBranchCount} branches`)
 
       const stageLookup = await getStageBySlug(st.id)
       assert(stageLookup !== undefined && stageLookup.id === st.id, `getStageBySlug('${st.id}') resolves correctly`)
@@ -140,17 +141,17 @@ async function runAdversarialTests() {
     console.log('\n--- SECTION 4: Adversarial Edge Cases & Bogus Slugs ---')
     assert(await getStageBySlug('non-existent-stage') === undefined, 'getStageBySlug returns undefined for non-existent stage')
     assert(await getBranchBySlug('sec-1', 'bogus-branch') === undefined, 'getBranchBySlug returns undefined for bogus branch')
-    assert(await getBranchBySlug('bogus-stage', 'alg-identities') === undefined, 'getBranchBySlug returns undefined for bogus stage')
-    assert(await getCourseBySlug('sec-1', 'alg-identities', 'bogus-course') === undefined, 'getCourseBySlug returns undefined for bogus course')
-    assert(await getFreeLectureBySlug('sec-1', 'alg-identities', 'complex-numbers', 'bogus-lecture') === undefined, 'getFreeLectureBySlug returns undefined for bogus lecture')
-    assert(await getFreeLectureWatch('sec-1', 'alg-identities', 'complex-numbers', 'bogus-lecture') === undefined, 'getFreeLectureWatch returns undefined for bogus lecture')
+    assert(await getBranchBySlug('bogus-stage', 'chem-center') === undefined, 'getBranchBySlug returns undefined for bogus stage')
+    assert(await getCourseBySlug('sec-1', 'chem-center', 'bogus-course') === undefined, 'getCourseBySlug returns undefined for bogus course')
+    assert(await getFreeLectureBySlug('sec-1', 'chem-center', 'measurement', 'bogus-lecture') === undefined, 'getFreeLectureBySlug returns undefined for bogus lecture')
+    assert(await getFreeLectureWatch('sec-1', 'chem-center', 'measurement', 'bogus-lecture') === undefined, 'getFreeLectureWatch returns undefined for bogus lecture')
 
     // SECTION 5: Site Content & Subscription Isolation
     console.log('\n--- SECTION 5: Site Content & Subscription Isolation ---')
     const staticSiteContent = await getSiteContent()
     assert(staticSiteContent.hero.title === DEFAULT_SITE_CONTENT.hero.title, 'getSiteContent() exactly matches DEFAULT_SITE_CONTENT hero.title')
     assert(staticSiteContent.hero.badge === DEFAULT_SITE_CONTENT.hero.badge, 'getSiteContent() exactly matches DEFAULT_SITE_CONTENT hero.badge')
-    assert(staticSiteContent.navbar.title === DEFAULT_SITE_CONTENT.navbar.title, 'getSiteContent() exactly matches DEFAULT_SITE_CONTENT navbar.title')
+    assert(staticSiteContent.navbar.siteName === DEFAULT_SITE_CONTENT.navbar.siteName, 'getSiteContent() exactly matches DEFAULT_SITE_CONTENT navbar.siteName')
 
     const staticSubCtx = await getPublicSubscriptionContext()
     assert(staticSubCtx.mode === 'purchases_only', 'getPublicSubscriptionContext mode is purchases_only in static mode')

@@ -353,7 +353,7 @@ export function LectureFormModals() {
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="مثال: الأعداد المركّبة"
+              placeholder="مثال: الكيمياء العضوية الشاملة"
               autoFocus
             />
           </Field>
@@ -477,7 +477,7 @@ export function LectureFormModals() {
             <Input
               value={lTitle}
               onChange={(e) => setLTitle(e.target.value)}
-              placeholder="مثال: مقدمة عن الأعداد المركّبة"
+              placeholder="مثال: مقدمة عن الكيمياء والقياس المعملي"
               autoFocus
             />
           </Field>

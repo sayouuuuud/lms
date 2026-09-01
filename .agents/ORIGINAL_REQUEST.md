@@ -1,42 +1,36 @@
 # Original User Request
 
-## 2026-08-30T01:45:26Z
+## Initial Request — 2026-08-30T23:22:18+03:00
 
-This is a single self-contained fix; keep it small and focused.
+You are the SWE Orchestrator for this task.
+Your role: teamwork_preview_swe
+Your working directory: d:\Workspace\LMS\.agents\teamwork_preview_swe_2
+Project workspace: d:\Workspace\LMS
+Path to ORIGINAL_REQUEST.md: d:\Workspace\LMS\.agents\ORIGINAL_REQUEST.md
 
-إضافة مفتاح تبديل (Toggle Switch) في لوحة تحكم الإدارة تحت تبويب "إعدادات المنصة العامة" للتحكم في مصدر بيانات الصفحات العامة (الربط بقاعدة البيانات مقابل استخدام البيانات الافتراضية الثابتة للنسخة القديمة بالكامل)، مع بقاء عمليات المصادقة وتسجيل الدخول متصلة دائماً بقاعدة البيانات.
+User Request Summary:
+تطبيق نظام المظهر المزدوج الكامل (Dual-Theme System: Dark Neon Lab & Warm Cream Lab) لموقع الكيمياء، مع إعادة زر التبديل (Theme Toggle) في النافبار ودعم تفضيل نظام الجهاز، وتنسيق كافة المكونات البصرية التفاعلية لتبدو مبهرة ومتوافقة 100% في كلا الوضعين وفق معايير UI/UX Pro Max.
 
-Working directory: d:\Workspace\LMS
-Integrity mode: demo
+Requirements:
+R1. Theme Toggle & System Default:
+- Restore ThemeToggle in Navbar for both desktop and mobile.
+- Support system theme detection automatically + save manual toggle in localStorage.
+- Smooth transition via `.dark` class on `html` without flicker.
+R2. Dark Mode: Deep Neon Chemistry Lab:
+- Deep dark background (`#0a0f1a`), molecular lattice dots, neon glows (`#00ff88`, `#a855f7`, `#06b6d4`).
+- Falling gravity capsules (`GravityPills`) with neon glows (`boxShadow`, `dropShadow`).
+- Activation energy curve (`FunctionCurve`) with bright glowing green and chemistry annotations.
+- 3D benzene, atom, floating chemistry symbols with dark teacher image.
+- pH scale with colored mL gradations.
+R3. Light Mode: Warm Cream & Emerald Lab:
+- Warm cream background (`#fbfaf6` / `bg-cream`), subtle atomic grid.
+- Emerald deep, academic navy, warm gold with high contrast (>4.5:1).
+- Coordinated light gravity pills, gold/emerald energy curve, light teacher image, clear pH scale, elegant glass navbar.
+R4. Full Integration:
+- Accurate Tailwind `dark:` variants and CSS variables across all sections (Hero, Stages, Features, Subscriptions, CTA, Footer).
 
-## Requirements
+Integrity check:
+- Ensure `cmd /c npm run build` succeeds with 0 errors.
 
-### R1. إضافة إعداد تبديل مصدر بيانات الصفحات العامة في لوحة التحكم
-- إضافة خيار في جدول إعدادات المنصة (`platform_settings`) تحت اسم `sync_public_with_db` (القيمة الافتراضية: `true` لتفعيل الربط بالداتابيز).
-- إضافة زر سويتش أنيق في صفحة إعدادات المنصة (`Platform Settings`) في لوحة الإدارة (`components/settings/settings-panel.tsx`) يتيح للمشرف تفعيل أو إيقاف ربط الصفحات العامة بقاعدة البيانات بسهولة مع حفظ التغيير فوراً.
-
-### R2. تطبيق وضع البيانات الافتراضية الثابتة (Static Mode) على الصفحات العامة
-عند إيقاف المفتاح (`sync_public_with_db = false`):
-- الصفحة الرئيسية (`/`): تستخدم نصوص وصور وهيكل البيانات الافتراضية الكاملة من `DEFAULT_SITE_CONTENT` و `lib/landing-data.ts`.
-- صفحات المراحل والمناهج (`/stages/*`): تعرض المراحل الثلاث الثابتة (الصف الأول، الثاني، الثالث الثانوي) بكامل المواد والدروس والمحاضرات والأسعار والأسماء والأوصاف المستوردة من `lib/landing-data.ts` بدون استعلام جداول `stages`, `branches`, `lectures` من الداتابيز.
-- روابط الشراء في الوضع الثابت: توجّه الزائر/الطالب إلى شاشات الدخول والتسجيل (`/auth`) مع إتاحة مشاهدة المحاضرات المجانية.
-
-### R3. استثناء المصادقة وتسجيل الدخول من التبديل
-- تظل صفحات ونماذج تسجيل الدخول، إنشاء الحساب، إعادة تعيين كلمة المرور (`/auth/*`) متصلة دائماً بقاعدة البيانات وجلسات NextAuth بغض النظر عن حالة المفتاح.
-
-## Acceptance Criteria
-
-### إعدادات لوحة التحكم (Admin Settings)
-- [ ] يظهر زر السويتش في تبويب "إعدادات المنصة العامة" بشكل تفاعلي وواضح.
-- [ ] عند تغيير حالة السويتش وحفظ الإعدادات، يتم تحديث القيمة في قاعدة البيانات وتطبيقها فوراً على الموقع (`revalidatePath`).
-
-### وضع البيانات الافتراضية الثابتة (Static Default Mode)
-- [ ] عند تعطيل الربط، يتم عرض البيانات الافتراضية الكاملة (المراحل، المواد، المدرس، الأسعار، الآراء، النصوص) المطابقة للنسخة القديمة في الصفحة الرئيسية وصفحات المراحل (`/stages/*`).
-- [ ] تعمل المحاضرات التجريبية المجانية وتفاصيل الدروس بسلاسة دون أخطاء.
-- [ ] أزرار الشراء في الوضع الثابت تقود لتسجيل الدخول `/auth`.
-
-### وضع الربط بقاعدة البيانات (Dynamic DB Mode)
-- [ ] عند تفعيل الربط، تستمر الصفحات العامة في جلب المراحل والمحتوى والمناهج الديناميكية من قاعدة البيانات كالمعتاد.
-
-### سلامة البناء (Build Integrity)
-- [ ] يكتمل أمر البناء `cmd /c npm run build` بنجاح دون أي أخطاء في TypeScript أو استيراد المكونات.
+Follow your workflow strictly: dispatch implementer, conduct adversarial review rounds, verify build, write handoff.md, and report victory.
+Always execute terminal commands with `cmd /c` prefix.

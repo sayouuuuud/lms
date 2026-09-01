@@ -266,7 +266,7 @@ export function CourseLanding({
 
             <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl shadow-navy-deep/50 lg:aspect-[4/5]">
               <Image
-                src={course.image || course.lectures[0]?.image || '/lessons/complex-numbers.png'}
+                src={course.image || course.lectures[0]?.image || '/lessons/measurement.png'}
                 alt={course.title}
                 fill
                 className="object-cover"

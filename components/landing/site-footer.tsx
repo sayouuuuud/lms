@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import {
-  Sigma, Globe, Send, MessageCircle, Phone,
+  FlaskConical, Globe, Send, MessageCircle, Phone,
   Video, Camera, X, Share2,
 } from 'lucide-react'
 import type { FooterContent, SocialPlatform } from '@/lib/site-content-defaults'
@@ -38,23 +38,23 @@ export function SiteFooter({ content = DEFAULT_SITE_CONTENT.footer }: { content?
   const copyright = content.copyright.replace('{year}', String(new Date().getFullYear()))
 
   return (
-    <footer className="bg-navy-deep text-cream/70 dark:bg-ink-base dark:text-ink-dim">
+    <footer className="bg-[#0f172a] text-slate-300 dark:bg-[#070b14] dark:text-ink-dim">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-8">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-gold text-navy dark:bg-teal-glow dark:text-ink-base">
-              <Sigma className="size-6" />
+            <span className="flex size-11 items-center justify-center rounded-2xl bg-brand text-navy shadow-md dark:bg-brand dark:text-[#0a0f1a] dark:shadow-[0_0_15px_rgba(218, 173, 76,0.3)]">
+              <FlaskConical className="size-6" />
             </span>
             <span className="leading-tight">
               <span className="block text-lg font-extrabold text-cream">
                 {content.siteName}
               </span>
-              <span className="block text-xs text-emerald-brand">
+              <span className="block text-xs text-brand dark:text-purple-brand">
                 {content.siteTagline}
               </span>
             </span>
           </div>
-          <p className="mt-4 max-w-sm text-pretty leading-relaxed">
+          <p className="mt-4 max-w-sm text-pretty leading-relaxed text-slate-300/80 dark:text-ink-dim">
             {content.description}
           </p>
           {(content.socialLinks ?? DEFAULT_SITE_CONTENT.footer.socialLinks)
@@ -71,7 +71,7 @@ export function SiteFooter({ content = DEFAULT_SITE_CONTENT.footer }: { content?
                       href={social.href || '#'}
                       target={social.href && social.href !== '#' ? '_blank' : undefined}
                       rel="noopener noreferrer"
-                      className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-cream transition-colors hover:bg-gold hover:text-navy dark:hover:bg-teal-glow dark:hover:text-ink-base"
+                      className="flex size-10 items-center justify-center rounded-xl bg-white/10 text-cream transition-colors hover:bg-brand hover:text-navy dark:hover:bg-brand dark:hover:text-[#0a0f1a]"
                       aria-label={SOCIAL_LABEL[social.platform]}
                     >
                       <Icon className="size-5" />
@@ -87,7 +87,7 @@ export function SiteFooter({ content = DEFAULT_SITE_CONTENT.footer }: { content?
           <ul className="mt-4 space-y-2 text-sm">
             {content.quickLinks.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="hover:text-gold">{link.label}</Link>
+                <Link href={link.href} className="transition-colors hover:text-brand dark:hover:text-brand">{link.label}</Link>
               </li>
             ))}
           </ul>
@@ -97,7 +97,7 @@ export function SiteFooter({ content = DEFAULT_SITE_CONTENT.footer }: { content?
           <h3 className="font-bold text-cream">تواصل معنا</h3>
           <ul className="mt-4 space-y-2 text-sm">
             <li className="flex items-center gap-2">
-              <Phone className="size-4 text-gold dark:text-teal-glow" />
+              <Phone className="size-4 text-brand dark:text-brand" />
               <span dir="ltr">{content.phone}</span>
             </li>
             <li>{content.address}</li>
@@ -105,7 +105,7 @@ export function SiteFooter({ content = DEFAULT_SITE_CONTENT.footer }: { content?
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-5 text-center text-sm">
+      <div className="border-t border-white/10 py-5 text-center text-sm text-slate-400 dark:text-ink-dim">
         {copyright}
       </div>
     </footer>

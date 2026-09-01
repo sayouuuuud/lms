@@ -233,7 +233,7 @@ function MonthlyCourseCard({ course, index, href }: { course: MonthlyCourse; ind
   return (
     <article className="flex flex-col overflow-hidden rounded-[1.75rem] border border-navy/10 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-ink-line dark:bg-ink-raised">
       <Link href={href} className="relative block aspect-[16/10] overflow-hidden bg-cream dark:bg-ink-base">
-        <Image src={course.image || course.lectures[0]?.image || '/lessons/complex-numbers.png'} alt={course.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-500 hover:scale-105" />
+        <Image src={course.image || course.lectures[0]?.image || '/lessons/measurement.png'} alt={course.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-500 hover:scale-105" />
         <span className="absolute right-4 top-4 grid size-10 place-items-center rounded-xl bg-white/90 font-mono text-sm font-bold text-navy">{String(index + 1).padStart(2, '0')}</span>
         {course.badge && <span className="absolute left-4 top-4 rounded-full bg-gold px-3 py-1 text-xs font-bold text-navy">{course.badge}</span>}
         {freeCount > 0 && <span className="absolute bottom-4 right-4 inline-flex items-center gap-1 rounded-full bg-emerald-deep px-3 py-1 text-xs font-bold text-cream"><Play className="size-3" />{freeCount} مجانية</span>}

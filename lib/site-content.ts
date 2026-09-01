@@ -1,6 +1,6 @@
-import { logError } from '@/lib/logger'
-import { prisma } from '@/lib/prisma'
-import { isPublicSyncWithDbEnabled } from '@/lib/platform-settings'
+import { logError } from './logger.ts'
+import { prisma } from './prisma.ts'
+import { isPublicSyncWithDbEnabled } from './platform-settings.ts'
 import {
   DEFAULT_SITE_CONTENT,
   deepMerge,
@@ -16,7 +16,7 @@ import {
   type LoginPanelContent,
   type StageOfferContent,
   type PaymentAccountsContent,
-} from '@/lib/site-content-defaults'
+} from './site-content-defaults.ts'
 
 export { DEFAULT_SITE_CONTENT }
 export type {
@@ -41,7 +41,17 @@ export type {
   PaymentAccountItem,
 } from '@/lib/site-content-defaults'
 
-export async function getSiteContent(): Promise<SiteContent> {
+import { cache } from 'react'
+
+let cachedSiteContent: { value: SiteContent; timestamp: number } | null = null
+const CONTENT_CACHE_TTL_MS = 10_000 // 10 seconds cache
+
+export const getSiteContent = cache(async function getSiteContent(): Promise<SiteContent> {
+  const now = Date.now()
+  if (cachedSiteContent && now - cachedSiteContent.timestamp < CONTENT_CACHE_TTL_MS) {
+    return cachedSiteContent.value
+  }
+
   try {
     const isSyncEnabled = await isPublicSyncWithDbEnabled()
     if (!isSyncEnabled) {
@@ -52,14 +62,17 @@ export async function getSiteContent(): Promise<SiteContent> {
       select: { section: true, value: true }
     })
 
-    if (!data || data.length === 0) return DEFAULT_SITE_CONTENT
+    if (!data || data.length === 0) {
+      cachedSiteContent = { value: DEFAULT_SITE_CONTENT, timestamp: now }
+      return DEFAULT_SITE_CONTENT
+    }
 
     const dbMap: Record<string, unknown> = {}
     for (const row of data) {
       dbMap[row.section] = row.value
     }
 
-    return {
+    const result: SiteContent = {
       hero:         deepMerge(DEFAULT_SITE_CONTENT.hero,         (dbMap.hero         ?? {}) as Partial<HeroContent>),
       features:     deepMerge(DEFAULT_SITE_CONTENT.features,     (dbMap.features     ?? {}) as Partial<FeaturesContent>),
       stats:        deepMerge(DEFAULT_SITE_CONTENT.stats,        (dbMap.stats        ?? {}) as Partial<StatsContent>),
@@ -72,6 +85,9 @@ export async function getSiteContent(): Promise<SiteContent> {
       stage_offer:  deepMerge(DEFAULT_SITE_CONTENT.stage_offer,  (dbMap.stage_offer  ?? {}) as Partial<StageOfferContent>),
       payment_accounts: deepMerge(DEFAULT_SITE_CONTENT.payment_accounts, (dbMap.payment_accounts ?? {}) as Partial<PaymentAccountsContent>),
     }
+
+    cachedSiteContent = { value: result, timestamp: now }
+    return result
   } catch (err) {
     if (
       err &&
@@ -84,6 +100,6 @@ export async function getSiteContent(): Promise<SiteContent> {
       throw err
     }
     logError('getSiteContent', err)
-    return DEFAULT_SITE_CONTENT
+    return cachedSiteContent?.value ?? DEFAULT_SITE_CONTENT
   }
-}
+})

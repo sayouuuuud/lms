@@ -33,22 +33,41 @@ export function LandingPage({
   subscriptionPlans?: PublicSubscriptionPlan[]
 }) {
   return (
-    <div className="relative min-h-screen bg-cream dark:bg-ink-base">
+    <div className="relative min-h-screen bg-[#fbfaf6] text-navy transition-colors duration-300 dark:bg-[#0a0f1a] dark:text-slate-100">
       <ScrollRefresh />
-      {/* Continuous graph-paper backdrop behind every section */}
+
+      {/* Molecular Lattice dot-grid (Clean, crisp atomic dot grid in light mode & neon in dark mode) */}
       <div
-        className="graph-paper pointer-events-none fixed inset-0 z-0 opacity-[0.45] dark:opacity-[0.22]"
+        className="graph-paper pointer-events-none fixed inset-0 z-0 opacity-80 dark:opacity-50 transition-opacity duration-300"
         aria-hidden="true"
       />
-      {/* Dark-mode ambient glow — teal on the right, violet on the left */}
+
+      {/* Light Mode Chemistry Warm Ambient Glow */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 dark:hidden"
+        aria-hidden="true"
+        style={{
+          background: [
+            'radial-gradient(70rem 50rem at 80% 0%, rgba(218, 173, 76, 0.07) 0%, transparent 55%)',
+            'radial-gradient(50rem 40rem at 5% 90%, rgba(217, 119, 6, 0.06) 0%, transparent 50%)',
+            'radial-gradient(35rem 25rem at 50% 50%, rgba(13, 148, 136, 0.04) 0%, transparent 45%)',
+          ].join(', '),
+        }}
+      />
+
+      {/* Dark Mode Chemistry Neon Ambient Glow — Emerald top-right, Violet bottom-left, Cyan mid */}
       <div
         className="pointer-events-none fixed inset-0 z-0 hidden dark:block"
         aria-hidden="true"
         style={{
-          background:
-            'radial-gradient(60rem 40rem at 78% 12%, oklch(0.84 0.13 184 / 0.12), transparent 60%), radial-gradient(48rem 36rem at 12% 82%, oklch(0.66 0.2 292 / 0.12), transparent 60%)',
+          background: [
+            'radial-gradient(70rem 50rem at 80% 0%, #daad4c22 0%, transparent 55%)',
+            'radial-gradient(50rem 40rem at 5% 90%, #daad4c22 0%, transparent 50%)',
+            'radial-gradient(35rem 25rem at 50% 50%, #06b6d41a 0%, transparent 45%)',
+          ].join(', '),
         }}
       />
+
       <div className="relative z-10">
         <LandingNavbar isLoggedIn={isLoggedIn} content={siteContent.navbar} />
         <main>
@@ -89,3 +108,4 @@ export function LandingPage({
     </div>
   )
 }
+

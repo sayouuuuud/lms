@@ -21,7 +21,7 @@ export default function AuthErrorPage() {
         </p>
         <Link
           href="/auth"
-          className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-navy px-6 text-sm font-bold text-cream transition-colors hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-navy px-6 text-sm font-bold text-cream transition-colors hover:bg-navy-deep dark:bg-purple-glow dark:text-white dark:hover:bg-purple-deep"
         >
           الرجوع لتسجيل الدخول
         </Link>

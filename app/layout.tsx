@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Cairo, Geist_Mono, Aref_Ruqaa } from 'next/font/google'
+import { Geist_Mono, Aref_Ruqaa } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -19,10 +19,26 @@ import { getSiteUrl } from '@/lib/seo'
 import './globals.css'
 
 
-const cairo = Cairo({
-  variable: '--font-cairo',
-  subsets: ['arabic', 'latin'],
-  weight: ['400', '500', '600', '700', '800'],
+const aminFont = localFont({
+  src: [
+    {
+      path: '../public/fonts/amin fonts/Amin Font Regular_1.otf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/amin fonts/Amin Font Medium_0.otf',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/amin fonts/Amin Font Bold.otf',
+      weight: '700',
+      style: 'normal',
+    }
+  ],
+  variable: '--font-amin',
+  display: 'swap',
 })
 const arefRuqaa = Aref_Ruqaa({
   variable: '--font-aref-ruqaa',
@@ -93,7 +109,7 @@ export default async function RootLayout({
   // اللون المحفوظ على مستوى الموقع — يُقرأ من جدول عام (site_theme) يقدر أي زائر
   // أو حساب يقراه، فيفضل ثابت عبر كل الأجهزة وحتى قبل تسجيل الدخول.
   let savedColor = 'navy'
-  let savedNeon = 'teal-violet'
+  let savedNeon = 'teal-purple'
   let savedLight = 'navy-gold'
   let seoContent: any = null
   try {
@@ -123,7 +139,7 @@ export default async function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${cairo.variable} ${arefRuqaa.variable} ${lemonBrush.variable} ${geistMono.variable} bg-background`}
+      className={`${arefRuqaa.variable} ${lemonBrush.variable} ${geistMono.variable} bg-background`}
       suppressHydrationWarning
     >
       <head>
@@ -131,8 +147,8 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(function(){try{
               var t=localStorage.getItem('theme');
-              var isDark = t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);
-              if(isDark){document.documentElement.classList.add('dark')}
+              var isDark = t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+              if(isDark){document.documentElement.classList.add('dark')}else{document.documentElement.classList.remove('dark')}
               
               var presets=${JSON.stringify(colorPresets)};
               // القيمة المحفوظة في قاعدة البيانات لها الأولوية (تزامن عبر الأجهزة)،
@@ -142,27 +158,24 @@ export default async function RootLayout({
               try{localStorage.setItem('color-preset',c)}catch(e){}
               var preset=presets.find(function(p){return p.id===c});
               if(preset){
-                var vals=isDark?preset.dark:preset.light;
-                var root=document.documentElement;
-                root.style.setProperty('--primary', vals.primary);
-                root.style.setProperty('--ring', vals.ring);
-                root.style.setProperty('--sidebar-primary', vals.sidebar);
-                root.style.setProperty('--sidebar-accent', vals.sidebar);
-                root.style.setProperty('--sidebar-ring', vals.ring);
+                var style=document.createElement('style');
+                style.id='dynamic-theme';
+                style.textContent='.theme-dashboard{--primary:'+preset.light.primary+';--ring:'+preset.light.ring+';--sidebar-primary:'+preset.light.sidebar+';--sidebar-accent:'+preset.light.sidebar+';--sidebar-ring:'+preset.light.ring+';} .dark .theme-dashboard{--primary:'+preset.dark.primary+';--ring:'+preset.dark.ring+';--sidebar-primary:'+preset.dark.sidebar+';--sidebar-accent:'+preset.dark.sidebar+';--sidebar-ring:'+preset.dark.ring+';}';
+                document.head.appendChild(style);
               }
 
               // ألوان النيون للدارك مود — تُطبّق دائماً (لا تؤثر إلا تحت dark:)
               var neons=${JSON.stringify(neonPresets)};
               var serverNeon=${JSON.stringify(savedNeon)};
-              var n=serverNeon||localStorage.getItem('neon-preset')||'teal-violet';
+              var n=serverNeon||localStorage.getItem('neon-preset')||'teal-purple';
               try{localStorage.setItem('neon-preset',n)}catch(e){}
               var neon=neons.find(function(p){return p.id===n});
               if(neon){
                 var r2=document.documentElement;
                 r2.style.setProperty('--color-teal-glow', neon.tealGlow);
                 r2.style.setProperty('--color-teal-deep', neon.tealDeep);
-                r2.style.setProperty('--color-violet-glow', neon.violetGlow);
-                r2.style.setProperty('--color-violet-deep', neon.violetDeep);
+                r2.style.setProperty('--color-purple-glow', neon.purpleGlow);
+                r2.style.setProperty('--color-purple-deep', neon.purpleDeep);
               }
 
               // ثيمات الوضع الفاتح
@@ -178,15 +191,15 @@ export default async function RootLayout({
                 r3.style.setProperty('--color-navy-soft', light.navySoft);
                 r3.style.setProperty('--color-gold', light.gold);
                 r3.style.setProperty('--color-gold-deep', light.goldDeep);
-                r3.style.setProperty('--color-emerald-brand', light.emeraldBrand);
-                r3.style.setProperty('--color-emerald-deep', light.emeraldDeep);
+                r3.style.setProperty('--color-purple-brand', light.purpleBrand);
+                r3.style.setProperty('--color-purple-deep', light.purpleDeep);
               }
             }catch(e){}})();`,
           }}
         />
 
       </head>
-      <body className={`${cairo.className} font-sans antialiased`}>
+      <body className={`font-sans font-light antialiased`}>
         <ThemeProvider>
           <CartProvider>
             <MathLoader text={seoContent?.loaderText} equation={seoContent?.loaderEquation} />
@@ -207,7 +220,7 @@ export default async function RootLayout({
               description: 'text-muted-foreground text-[13px] leading-relaxed',
               actionButton: 'bg-primary text-primary-foreground font-semibold rounded-xl px-4 py-2 hover:bg-primary/90 transition-colors shrink-0',
               cancelButton: 'bg-muted text-muted-foreground font-semibold rounded-xl px-4 py-2 hover:bg-muted/80 transition-colors shrink-0',
-              success: 'border-emerald-500/20 bg-emerald-500/10 dark:bg-emerald-500/10 dark:border-emerald-500/20',
+              success: 'border-brand/20 bg-brand/10 dark:bg-brand/10 dark:border-brand/20',
               error: 'border-rose-500/20 bg-rose-500/10 dark:bg-rose-500/10 dark:border-rose-500/20',
               info: 'border-blue-500/20 bg-blue-500/10 dark:bg-blue-500/10 dark:border-blue-500/20',
               warning: 'border-amber-500/20 bg-amber-500/10 dark:bg-amber-500/10 dark:border-amber-500/20',

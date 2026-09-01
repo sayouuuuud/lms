@@ -34,7 +34,7 @@ export function absoluteUrl(path: string): string {
 
 /**
  * ابنِ وصف SEO لصفحة مرحلة دراسية
- * مثال: "كورسات وشرح رياضيات للصف الثالث الثانوي — 3 فروع دراسية، تغطية شاملة لمنهج رياضيات ثانوي"
+ * مثال: "كورسات وشرح كيمياء للصف الثالث الثانوي — 3 فروع دراسية، تغطية شاملة لمنهج كيمياء ثانوي"
  */
 export function buildStageDescription(opts: {
   stageTitle: string
@@ -46,7 +46,7 @@ export function buildStageDescription(opts: {
   if (subtitle && subtitle.length > 20) {
     return subtitle.slice(0, 155)
   }
-  return `كورسات وشرح رياضيات ${stageTitle} على ${siteName} — ${branchCount} فرع دراسي، تغطية شاملة للمنهج`
+  return `كورسات وشرح كيمياء ${stageTitle} على ${siteName} — ${branchCount} فرع دراسي، تغطية شاملة للمنهج`
 }
 
 /**

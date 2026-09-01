@@ -24,6 +24,10 @@ const globalForPrisma = globalThis as unknown as {
 
 export const rawPrisma = globalForPrisma.rawPrisma || new PrismaClient()
 
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.rawPrisma = rawPrisma
+}
+
 /**
  * Configures PostgreSQL session parameters (SET LOCAL ROLE & set_config) for RLS.
  */

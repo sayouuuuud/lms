@@ -53,12 +53,12 @@ type PaymentAccount = { method: string; account: string; holder: string; note?: 
 
 const REQUEST_STATUS: Record<string, { label: string; className: string }> = {
   pending: { label: 'قيد المراجعة', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  approved: { label: 'معتمد', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  approved: { label: 'معتمد', className: 'bg-purple-50 text-brand border-brand' },
   rejected: { label: 'مرفوض', className: 'bg-rose-50 text-rose-700 border-rose-200' },
 }
 
 const SUB_STATE: Record<string, { label: string; className: string }> = {
-  active: { label: 'فعّال', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  active: { label: 'فعّال', className: 'bg-purple-50 text-brand border-brand' },
   grace: { label: 'فترة سماح — جدّد الآن', className: 'bg-amber-100 text-amber-800 border-amber-300' },
   expiring: { label: 'قارب على الانتهاء', className: 'bg-orange-50 text-orange-700 border-orange-200' },
   ended: { label: 'منتهي', className: 'bg-slate-100 text-slate-600 border-slate-200' },

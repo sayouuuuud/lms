@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
 
   return {
     name: siteName,
-    short_name: 'رياضيات',
+    short_name: 'كيمياء',
     description: DEFAULT_SITE_CONTENT.seo.description,
     start_url: '/',
     display: 'standalone',

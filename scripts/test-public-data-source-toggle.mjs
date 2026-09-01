@@ -88,20 +88,20 @@ async function runTests() {
     // Verify stage 1 branches, lectures, and monthlyCourses
     const sec1 = await getStageBySlug('sec-1')
     assert(sec1 !== undefined && sec1.branches.length === 3, 'getStageBySlug("sec-1") returns stage with 3 branches')
-    assert(sec1.branches[0].id === 'alg-identities', 'First branch of sec-1 is alg-identities')
-    assert(sec1.branches[0].monthlyCourses.length === 3, 'Branch alg-identities has 3 static monthly courses')
+    assert(sec1.branches[0].id === 'chem-center', 'First branch of sec-1 is chem-center')
+    assert(sec1.branches[0].monthlyCourses.length === 2, 'Branch chem-center has 2 static monthly courses')
 
-    const branch = await getBranchBySlug('sec-1', 'alg-identities')
-    assert(branch !== undefined, 'getBranchBySlug("sec-1", "alg-identities") finds branch')
+    const branch = await getBranchBySlug('sec-1', 'chem-center')
+    assert(branch !== undefined, 'getBranchBySlug("sec-1", "chem-center") finds branch')
 
-    const course = await getCourseBySlug('sec-1', 'alg-identities', 'complex-numbers')
-    assert(course !== undefined && course.course.id === 'complex-numbers', 'getCourseBySlug("sec-1", "alg-identities", "complex-numbers") finds course')
-    assert(course.course.price === 120, 'Static course complex-numbers has correct price (120)')
+    const course = await getCourseBySlug('sec-1', 'chem-center', 'measurement')
+    assert(course !== undefined && course.course.id === 'measurement', 'getCourseBySlug("sec-1", "chem-center", "measurement") finds course')
+    assert(course.course.price === 120, 'Static course measurement has correct price (120)')
 
-    const freeLecture = await getFreeLectureBySlug('sec-1', 'alg-identities', 'complex-numbers', 'complex-numbers')
-    assert(freeLecture !== undefined, 'getFreeLectureBySlug finds complex-numbers lecture preview')
+    const freeLecture = await getFreeLectureBySlug('sec-1', 'chem-center', 'measurement', 'measurement')
+    assert(freeLecture !== undefined, 'getFreeLectureBySlug finds measurement lecture preview')
 
-    const freeWatch = await getFreeLectureWatch('sec-1', 'alg-identities', 'complex-numbers', 'complex-numbers')
+    const freeWatch = await getFreeLectureWatch('sec-1', 'chem-center', 'measurement', 'measurement')
     assert(freeWatch !== undefined && freeWatch.lessons.length > 0, `getFreeLectureWatch returns ${freeWatch?.lessons?.length} lessons in static mode`)
     assert(freeWatch.lessons[0].videoUrl !== null, 'Free lesson has a playable video URL in static mode')
 

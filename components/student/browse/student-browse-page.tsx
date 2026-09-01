@@ -242,7 +242,7 @@ export function StudentBrowsePage({
             return (
               <article key={course.dbId ?? course.slug} className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-md">
                 <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                  <Image src={course.image || course.lectures[0]?.image || '/lessons/complex-numbers.png'} alt={course.title} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
+                  <Image src={course.image || course.lectures[0]?.image || '/lessons/measurement.png'} alt={course.title} fill sizes="(max-width: 640px) 100vw, 50vw" className="object-cover" />
                   <span className="absolute right-3 top-3 rounded-lg bg-card/90 px-2 py-1 text-[11px] font-semibold text-muted-foreground backdrop-blur">{course.stageTitle}</span>
                   {course.badge && <span className="absolute left-3 top-3 rounded-lg bg-primary px-2 py-1 text-xs font-bold text-primary-foreground">{course.badge}</span>}
                 </div>

@@ -26,9 +26,9 @@ function fromAddress() {
     const user = decodeURIComponent(
       new URL(process.env.SMTP_CONNECTION_URL!).username,
     )
-    return `منصة عبد السلام <${user}>`
+    return `منصة سليمان عارف <${user}>`
   } catch {
-    return 'منصة عبد السلام'
+    return 'منصة سليمان عارف'
   }
 }
 
@@ -39,10 +39,10 @@ function activationEmailHtml(code: string) {
   <body style="margin:0;background:#f5f1e8;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
     <div style="max-width:480px;margin:0 auto;padding:32px 20px;">
       <div style="background:#ffffff;border-radius:16px;border:1px solid #e7e0d2;padding:32px;text-align:center;">
-        <div style="font-family:monospace;font-size:18px;font-weight:bold;color:#13294b;">&fnof;(x) عبد السلام</div>
+        <div style="font-family:sans-serif;font-size:18px;font-weight:bold;color:#13294b;">⚗️ سليمان عارف | كيمياء</div>
         <h1 style="font-size:20px;color:#13294b;margin:24px 0 8px;">فعّل حسابك</h1>
         <p style="font-size:14px;color:#5b6473;margin:0 0 24px;line-height:1.7;">
-          أهلاً بيك في منصة الأستاذ عبد السلام للرياضيات!<br/>
+          أهلاً بيك في منصة الأستاذ سليمان عارف للكيمياء!<br/>
           استخدم كود التفعيل ده عشان تفعّل حسابك:
         </p>
         <div style="display:inline-block;background:#13294b;color:#f5f1e8;font-family:monospace;font-size:32px;font-weight:bold;letter-spacing:10px;padding:16px 28px;border-radius:12px;">
@@ -54,7 +54,7 @@ function activationEmailHtml(code: string) {
         </p>
       </div>
       <p style="font-size:11px;color:#aab2bd;text-align:center;margin:16px 0 0;">
-        منصة عبد السلام للرياضيات — الثانوية العامة
+        منصة الأستاذ سليمان عارف للكيمياء — الثانوية العامة
       </p>
     </div>
   </body>
@@ -68,7 +68,7 @@ export async function sendActivationCode(to: string, code: string) {
     to,
     subject: `كود تفعيل حسابك: ${code}`,
     html: activationEmailHtml(code),
-    text: `كود تفعيل حسابك في منصة عبد السلام هو: ${code}\nالكود صالح لمدة ساعة.`,
+    text: `كود تفعيل حسابك في منصة سليمان عارف هو: ${code}\nالكود صالح لمدة ساعة.`,
   })
 }
 
@@ -79,7 +79,7 @@ function resetPasswordEmailHtml(code: string) {
   <body style="margin:0;background:#f5f1e8;font-family:'Segoe UI',Tahoma,Arial,sans-serif;">
     <div style="max-width:480px;margin:0 auto;padding:32px 20px;">
       <div style="background:#ffffff;border-radius:16px;border:1px solid #e7e0d2;padding:32px;text-align:center;">
-        <div style="font-family:monospace;font-size:18px;font-weight:bold;color:#13294b;">&fnof;(x) عبد السلام</div>
+        <div style="font-family:sans-serif;font-size:18px;font-weight:bold;color:#13294b;">⚗️ سليمان عارف | كيمياء</div>
         <h1 style="font-size:20px;color:#13294b;margin:24px 0 8px;">استعادة كلمة المرور</h1>
         <p style="font-size:14px;color:#5b6473;margin:0 0 24px;line-height:1.7;">
           أهلاً بيك!<br/>
@@ -94,7 +94,7 @@ function resetPasswordEmailHtml(code: string) {
         </p>
       </div>
       <p style="font-size:11px;color:#aab2bd;text-align:center;margin:16px 0 0;">
-        منصة عبد السلام للرياضيات — الثانوية العامة
+        منصة الأستاذ سليمان عارف للكيمياء — الثانوية العامة
       </p>
     </div>
   </body>
@@ -108,6 +108,6 @@ export async function sendPasswordResetCode(to: string, code: string) {
     to,
     subject: `كود استعادة كلمة المرور: ${code}`,
     html: resetPasswordEmailHtml(code),
-    text: `كود استعادة كلمة المرور في منصة عبد السلام هو: ${code}\nالكود صالح لمدة ساعة.`,
+    text: `كود استعادة كلمة المرور في منصة سليمان عارف هو: ${code}\nالكود صالح لمدة ساعة.`,
   })
 }

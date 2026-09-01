@@ -121,32 +121,73 @@ export async function getSettings() {
   return data?.value || null
 }
 
-export async function getSiteColor(): Promise<string> {
-  const data = await prisma.site_theme.findUnique({
-    where: { id: true },
-    select: { active_color: true }
-  })
+import { cache } from 'react'
 
-  return data?.active_color || 'navy'
-}
+let cachedTheme: { color: string; neon: string; light: string; timestamp: number } | null = null
+const THEME_CACHE_TTL_MS = 15_000 // 15 seconds
 
-export async function getSiteNeon(): Promise<string> {
-  const data = await prisma.site_theme.findUnique({
-    where: { id: true },
-    select: { neon_preset: true }
-  })
+export const getSiteColor = cache(async function getSiteColor(): Promise<string> {
+  const now = Date.now()
+  if (cachedTheme && now - cachedTheme.timestamp < THEME_CACHE_TTL_MS) {
+    return cachedTheme.color
+  }
 
-  return data?.neon_preset || 'teal-violet'
-}
+  try {
+    const data = await prisma.site_theme.findUnique({
+      where: { id: true },
+      select: { active_color: true, neon_preset: true, light_preset: true }
+    })
+    const color = data?.active_color || 'navy'
+    const neon = data?.neon_preset || 'teal-purple'
+    const light = data?.light_preset || 'navy-gold'
+    cachedTheme = { color, neon, light, timestamp: now }
+    return color
+  } catch {
+    return cachedTheme?.color || 'navy'
+  }
+})
 
-export async function getSiteLightPreset(): Promise<string> {
-  const data = await prisma.site_theme.findUnique({
-    where: { id: true },
-    select: { light_preset: true }
-  })
+export const getSiteNeon = cache(async function getSiteNeon(): Promise<string> {
+  const now = Date.now()
+  if (cachedTheme && now - cachedTheme.timestamp < THEME_CACHE_TTL_MS) {
+    return cachedTheme.neon
+  }
 
-  return data?.light_preset || 'navy-gold'
-}
+  try {
+    const data = await prisma.site_theme.findUnique({
+      where: { id: true },
+      select: { active_color: true, neon_preset: true, light_preset: true }
+    })
+    const color = data?.active_color || 'navy'
+    const neon = data?.neon_preset || 'teal-purple'
+    const light = data?.light_preset || 'navy-gold'
+    cachedTheme = { color, neon, light, timestamp: now }
+    return neon
+  } catch {
+    return cachedTheme?.neon || 'teal-purple'
+  }
+})
+
+export const getSiteLightPreset = cache(async function getSiteLightPreset(): Promise<string> {
+  const now = Date.now()
+  if (cachedTheme && now - cachedTheme.timestamp < THEME_CACHE_TTL_MS) {
+    return cachedTheme.light
+  }
+
+  try {
+    const data = await prisma.site_theme.findUnique({
+      where: { id: true },
+      select: { active_color: true, neon_preset: true, light_preset: true }
+    })
+    const color = data?.active_color || 'navy'
+    const neon = data?.neon_preset || 'teal-purple'
+    const light = data?.light_preset || 'navy-gold'
+    cachedTheme = { color, neon, light, timestamp: now }
+    return light
+  } catch {
+    return cachedTheme?.light || 'navy-gold'
+  }
+})
 
 export async function updateSettings(newSettings: any) {
   if (!(await hasResourceAccess('settings', 'edit'))) {

@@ -168,8 +168,8 @@ async function runTestSuite() {
       data: {
         stage_id: stageId,
         slug: `branch_${uniqueSuffix}`,
-        title: `رياضيات 3ث ${uniqueSuffix}`,
-        description: 'فرع التفاضل والتكامل للاختبار',
+        title: `كيمياء 3ث ${uniqueSuffix}`,
+        description: 'فرع الكيمياء العضوية للاختبار',
       },
     })
     branchId = branch.id
@@ -196,8 +196,8 @@ async function runTestSuite() {
     const lecture = await prisma.lectures.create({
       data: {
         branch_id: branchId,
-        title: `محاضرة التفاضل ${uniqueSuffix}`,
-        slug: `lecture-calc-${uniqueSuffix}`,
+        title: `محاضرة الهيدروكربونات ${uniqueSuffix}`,
+        slug: `lecture-org-${uniqueSuffix}`,
       },
     })
     lectureId = lecture.id
@@ -206,7 +206,7 @@ async function runTestSuite() {
       data: {
         lecture_id: lectureId,
         slug: `lesson-1-${uniqueSuffix}`,
-        title: 'شرح مشتقات الدوال المثلثية',
+        title: 'شرح تسمية الألكانات والألكينات',
         duration: '45:00',
       },
     })
@@ -216,7 +216,7 @@ async function runTestSuite() {
       data: {
         lecture_id: lectureId,
         slug: `lesson-2-${uniqueSuffix}`,
-        title: 'شرح قاعدة السلسلة وتطبيقاتها',
+        title: 'شرح تفاعلات الإضافة والأكسدة',
         duration: '30:00',
       },
     })
@@ -225,9 +225,9 @@ async function runTestSuite() {
     // Create Taxonomy Hierarchy: Domain -> Topics -> Skills
     const domainRes = await saveDomain({
       branchId,
-      code: `DOM_CALC_${uniqueSuffix}`,
-      title: 'الوحدة الأولى: التفاضل والتكامل',
-      description: 'مفاهيم الاشتقاق والتكامل المتقدمة',
+      code: `DOM_CHEM_${uniqueSuffix}`,
+      title: 'الوحدة الأولى: الكيمياء العضوية',
+      description: 'مفاهيم الهيدروكربونات وتفاعلاتها',
       sortOrder: 1,
     })
     assert(domainRes.success && !!domainRes.id, 'Domain created successfully')
@@ -235,9 +235,9 @@ async function runTestSuite() {
 
     const topic1Res = await saveTopic({
       domainId,
-      code: `TOP_RULES_${uniqueSuffix}`,
-      title: 'قواعد الاشتقاق',
-      description: 'قواعد الاشتقاق الأساسية والمثلثية',
+      code: `TOP_HYDRO_${uniqueSuffix}`,
+      title: 'الهيدروكربونات الأليفاتية',
+      description: 'قواعد التسمية وتفاعلات الألكانات',
       sortOrder: 1,
     })
     assert(topic1Res.success && !!topic1Res.id, 'Topic 1 created successfully')
@@ -245,9 +245,9 @@ async function runTestSuite() {
 
     const topic2Res = await saveTopic({
       domainId,
-      code: `TOP_APPS_${uniqueSuffix}`,
-      title: 'تطبيقات التفاضل',
-      description: 'المعدلات الزمنية المرتبطة والقيم العظمى',
+      code: `TOP_DERIV_${uniqueSuffix}`,
+      title: 'مشتقات الهيدروكربونات',
+      description: 'الكحولات والفينولات والأحماض',
       sortOrder: 2,
     })
     assert(topic2Res.success && !!topic2Res.id, 'Topic 2 created successfully')
@@ -318,8 +318,8 @@ async function runTestSuite() {
     const exam1 = await prisma.exams.create({
       data: {
         code: `EXAM1_${uniqueSuffix}`,
-        title: `امتحان التفاضل الشامل ${uniqueSuffix}`,
-        course: 'تفاضل وتكامل',
+        title: `امتحان الكيمياء العضوية الشامل ${uniqueSuffix}`,
+        course: 'كيمياء عضوية',
         duration: 30,
         questions: 3,
         status: 'منشور',
@@ -477,7 +477,7 @@ async function runTestSuite() {
       data: {
         code: `EXAM2_${uniqueSuffix}`,
         title: `اختبار المتابعة 2 ${uniqueSuffix}`,
-        course: 'تفاضل وتكامل',
+        course: 'كيمياء عضوية',
         duration: 15,
         questions: 1,
         status: 'منشور',
@@ -490,7 +490,7 @@ async function runTestSuite() {
     const eq3_2 = await prisma.exam_questions.create({
       data: {
         exam_id: exam2Id,
-        question_text: 'مسألة أخرى على المعدلات الزمنية',
+        question_text: 'مسألة أخرى على مشتقات الهيدروكربونات',
         options: ['أ', 'ب', 'ج', 'د'],
         correct_answer: 'أ',
         points: 5,
@@ -540,7 +540,7 @@ async function runTestSuite() {
         data: {
           code: `EXAM_P_${i}_${uniqueSuffix}`,
           title: `اختبار تعزيز ${i} ${uniqueSuffix}`,
-          course: 'تفاضل وتكامل',
+          course: 'كيمياء عضوية',
           duration: 10,
           questions: 1,
           status: 'منشور',

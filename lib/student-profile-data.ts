@@ -231,9 +231,9 @@ function buildProfile(student: StudentRecord): StudentProfile {
   }))
 
   const skills = [
-    { subject: 'الجبر والمتطابقات', examAvg: range(rng, 50, 100), courseProgress: range(rng, 40, 100) },
-    { subject: 'التفاضل والتكامل', examAvg: range(rng, 45, 100), courseProgress: range(rng, 35, 95) },
-    { subject: 'الميكانيكا', examAvg: range(rng, 40, 95), courseProgress: range(rng, 40, 95) },
+    { subject: 'الكيمياء العضوية', examAvg: range(rng, 50, 100), courseProgress: range(rng, 40, 100) },
+    { subject: 'الكيمياء الكهربية', examAvg: range(rng, 45, 100), courseProgress: range(rng, 35, 95) },
+    { subject: 'الاتزان والتحليل الكيميائي', examAvg: range(rng, 40, 95), courseProgress: range(rng, 40, 95) },
   ].map((s) => ({
     ...s,
     score: Math.round((s.examAvg + s.courseProgress) / 2),

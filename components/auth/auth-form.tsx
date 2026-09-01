@@ -251,7 +251,7 @@ export function AuthForm({
     return (
       <div className="w-full">
         <div className="mb-8 flex flex-col items-center text-center">
-          <span className="grid size-14 place-items-center rounded-2xl bg-navy/5 text-navy dark:bg-violet-glow/15 dark:text-violet-glow">
+          <span className="grid size-14 place-items-center rounded-2xl bg-navy/5 text-navy dark:bg-purple-glow/15 dark:text-purple-glow">
             <ShieldCheck className="size-7" />
           </span>
           <h2 className="mt-4 text-xl font-extrabold text-navy dark:text-ink-fg">
@@ -267,8 +267,8 @@ export function AuthForm({
 
         {/* Info / success message */}
         {doneMessage && !error && (
-          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-emerald-brand/30 bg-emerald-brand/10 px-4 py-3 text-emerald-deep">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-brand/20">
+          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-purple-brand/30 bg-purple-brand/10 px-4 py-3 text-purple-deep">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-purple-brand/20">
               <Check className="size-4" />
             </span>
             <p className="text-sm font-semibold">{doneMessage}</p>
@@ -312,8 +312,8 @@ export function AuthForm({
             type="submit"
             disabled={submitting || code.length < 6}
             className={cn(
-              'mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-cream transition-all dark:bg-violet-glow dark:text-white',
-              'hover:bg-navy-deep active:translate-y-px disabled:opacity-70 dark:hover:bg-violet-deep',
+              'mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-cream transition-all dark:bg-purple-glow dark:text-white',
+              'hover:bg-navy-deep active:translate-y-px disabled:opacity-70 dark:hover:bg-purple-deep',
             )}
           >
             {submitting && <Loader2 className="size-4 animate-spin" />}
@@ -353,7 +353,7 @@ export function AuthForm({
         <div className="relative grid grid-cols-2 rounded-full border border-navy/10 bg-cream-deep/60 p-1 dark:border-ink-line dark:bg-ink-base/60">
           <span
             className={cn(
-              'absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-full bg-navy shadow-sm transition-transform duration-300 dark:bg-violet-glow',
+              'absolute inset-y-1 w-[calc(50%-0.25rem)] rounded-full bg-navy shadow-sm transition-transform duration-300 dark:bg-purple-glow',
               tab === 'login' ? 'translate-x-0' : '-translate-x-full',
             )}
             aria-hidden="true"
@@ -397,8 +397,8 @@ export function AuthForm({
 
       {/* Success message */}
       {done && (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-brand/30 bg-emerald-brand/10 px-4 py-3 text-emerald-deep">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-brand/20">
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-purple-brand/30 bg-purple-brand/10 px-4 py-3 text-purple-deep">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-purple-brand/20">
             <Check className="size-4" />
           </span>
           <p className="text-sm font-semibold">{doneMessage}</p>
@@ -596,8 +596,8 @@ export function AuthForm({
           type="submit"
           disabled={submitting}
           className={cn(
-            'mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-cream transition-all dark:bg-violet-glow dark:text-white',
-            'hover:bg-navy-deep active:translate-y-px disabled:opacity-70 dark:hover:bg-violet-deep',
+            'mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-cream transition-all dark:bg-purple-glow dark:text-white',
+            'hover:bg-navy-deep active:translate-y-px disabled:opacity-70 dark:hover:bg-purple-deep',
           )}
         >
           {submitting && <Loader2 className="size-4 animate-spin" />}

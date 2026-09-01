@@ -2,7 +2,7 @@ import { Fragment } from 'react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, FlaskConical } from 'lucide-react'
 import { AuthForm } from '@/components/auth/auth-form'
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
@@ -13,7 +13,7 @@ import { getGlobalSettings } from '@/lib/settings-data'
 export const metadata: Metadata = {
   title: 'تسجيل الدخول / حساب جديد',
   description:
-    'سجّل دخولك أو اعمل حساب جديد على منصة الأستاذ عبد السلام للرياضيات للثانوية العامة.',
+    'سجّل دخولك أو اعمل حساب جديد على منصة الأستاذ سليمان عارف للكيمياء للثانوية العامة.',
   robots: { index: false, follow: false },
 }
 
@@ -71,8 +71,8 @@ export default async function AuthPage({
                 className="size-10 rounded-md object-contain"
               />
             ) : (
-              <span className="grid size-10 place-items-center rounded-md bg-cream font-mono text-sm font-bold text-navy">
-                ƒ(x)
+              <span className="grid size-10 place-items-center rounded-md bg-cream text-navy">
+                <FlaskConical className="size-5" />
               </span>
             )}
             <span className="font-heading text-2xl font-bold text-cream">{panel.brandName}</span>
@@ -83,25 +83,25 @@ export default async function AuthPage({
               <span className="font-mono">{'// '}</span>
               {panel.badge}
             </span>
-            <h1 className="mt-4 text-balance font-heading text-4xl font-bold leading-tight text-cream">
+            <h1 className="mt-4 font-heading text-3xl font-bold leading-snug text-cream">
               {panel.headline}
             </h1>
-            <ul className="mt-8 space-y-4">
-              {panel.perks.map((p) => (
-                <li key={p} className="flex items-center gap-3 text-cream/85">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-brand/20 text-emerald-brand">
-                    <Check className="size-3.5" />
+            <ul className="mt-8 space-y-4 text-cream/80">
+              {panel.perks.map((p, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <span className="flex size-5 items-center justify-center rounded-full bg-purple-deep text-cream dark:bg-teal-glow dark:text-ink-base">
+                    <Check className="size-3" />
                   </span>
-                  <span className="text-sm font-medium">{p}</span>
+                  <span>{p}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="flex items-center gap-6 text-cream/70">
+          <div className="flex items-center gap-6 border-t border-cream/10 pt-8 text-cream/60">
             {panel.stats.map((s, i) => (
-              <Fragment key={s.label}>
-                {i > 0 && <span className="h-8 w-px bg-cream/15" />}
+              <Fragment key={i}>
+                {i > 0 && <span className="h-6 w-px bg-cream/10" />}
                 <Stat value={s.value} label={s.label} />
               </Fragment>
             ))}
@@ -110,13 +110,13 @@ export default async function AuthPage({
       </aside>
 
       {/* Form panel */}
-      <section className="relative flex min-h-screen flex-col px-5 py-8 sm:px-8 lg:px-12">
+      <section className="relative flex flex-col justify-between p-6 sm:p-10 lg:p-12">
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-navy-soft transition-colors hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg"
+            className="inline-flex items-center gap-2 text-sm font-medium text-navy-soft transition-colors hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg"
           >
-            <ArrowLeft className="size-4" />
+            <ArrowLeft className="size-4 rotate-180" />
             الرجوع للرئيسية
           </Link>
           {/* mobile-only logo */}
@@ -130,8 +130,8 @@ export default async function AuthPage({
                 className="size-8 rounded-md object-contain"
               />
             ) : (
-              <span className="grid size-8 place-items-center rounded-md bg-navy font-mono text-xs font-bold text-cream dark:bg-violet-glow dark:text-white">
-                ƒ(x)
+              <span className="grid size-8 place-items-center rounded-md bg-navy text-cream dark:bg-purple-glow dark:text-white">
+                <FlaskConical className="size-4" />
               </span>
             )}
             <span className="font-heading text-lg font-bold text-navy dark:text-ink-fg">{panel.brandName}</span>

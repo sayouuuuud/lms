@@ -350,7 +350,7 @@ export async function createBranch(input: BranchInput) {
         slug: slugify(input.title),
         title: input.title,
         description: input.description,
-        image: input.image || '/lectures/alg-identities.png',
+        image: input.image || '/lectures/chem-center.png',
         topics: input.topics,
         sort_order: sortOrder,
       }

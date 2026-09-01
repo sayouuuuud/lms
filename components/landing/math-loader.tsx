@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 export function MathLoader({ 
-  text = 'جاري تجهيز المنصة...',
-  equation = 'f(x) = ∫ e^x dx'
+  text = 'جاري تحضير المعمل والمنصة...',
+  equation = '2H₂ + O₂ ⟶ 2H₂O'
 }: { 
   text?: string
   equation?: string
@@ -33,15 +33,25 @@ export function MathLoader({
     const timer = setTimeout(() => {
       setLoading(false)
       sessionStorage.setItem('mathLoaded', 'true')
-    }, 1500)
+    }, 2200)
 
     return () => clearTimeout(timer)
   }, [isMarketing])
 
-  const parts = equation.split('=')
+  // Split on chemical arrow or equal sign
+  const delimiter = equation.includes('⟶')
+    ? '⟶'
+    : equation.includes('→')
+    ? '→'
+    : equation.includes('⇌')
+    ? '⇌'
+    : equation.includes('=')
+    ? '='
+    : ''
+  const parts = delimiter ? equation.split(delimiter) : [equation]
   const left = parts[0]?.trim() || ''
-  const right = parts.length > 1 ? parts.slice(1).join('=').trim() : ''
-  const hasEqual = parts.length > 1
+  const right = parts.length > 1 ? parts.slice(1).join(delimiter).trim() : ''
+  const hasDelimiter = parts.length > 1
 
   return (
     <AnimatePresence>
@@ -49,8 +59,8 @@ export function MathLoader({
         <motion.div
           key="loader"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }}
-          transition={{ duration: 0.8, ease: 'easeInOut' }}
+          exit={{ opacity: 0, scale: 1.05, filter: 'blur(8px)' }}
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-cream dark:bg-ink-base"
         >
           <div className="flex flex-col items-center" dir="ltr">
@@ -58,28 +68,28 @@ export function MathLoader({
               className="text-4xl md:text-6xl lg:text-7xl font-serif text-navy dark:text-teal-glow tracking-widest flex items-center gap-4"
             >
               <motion.span
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
                 className="font-bold italic"
               >
                 {left}
               </motion.span>
-              {hasEqual && (
+              {hasDelimiter && (
                 <motion.span
-                  initial={{ opacity: 0, scale: 0.5 }}
+                  initial={{ opacity: 0, scale: 0.6 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.8 }}
-                  className="text-emerald-deep dark:text-white/50"
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                  className="text-purple-deep dark:text-teal-glow px-1 font-mono font-bold"
                 >
-                  =
+                  {delimiter}
                 </motion.span>
               )}
               {right && (
                 <motion.span
                   initial={{ clipPath: 'inset(0 100% 0 0)' }}
                   animate={{ clipPath: 'inset(0 0% 0 0)' }}
-                  transition={{ duration: 1.2, ease: 'easeInOut', delay: 1.2 }}
+                  transition={{ duration: 0.6, ease: 'easeInOut', delay: 0.7 }}
                   className="inline-block italic text-gold-deep dark:text-gold"
                 >
                   {right}
@@ -88,9 +98,9 @@ export function MathLoader({
             </motion.div>
             
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2.2, duration: 0.5 }}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1, duration: 0.4 }}
               className="mt-8 font-mono text-sm md:text-base tracking-widest text-ink-muted dark:text-ink-dim"
               dir="rtl"
             >

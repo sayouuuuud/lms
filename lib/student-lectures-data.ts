@@ -39,11 +39,11 @@ function mapOneLesson(l: any): Lesson & { _videoId?: string; _youtubeUrl?: strin
     videoUrl: l.video_url || FALLBACK_VIDEO,
     description:
       l.description ||
-      'درس مشروح بالفيديو خطوة بخطوة مع أمثلة محلولة وتطبيقات على المسائل.',
+      'درس مشروح بالفيديو خطوة بخطوة مع تجارب معملية وتطبيقات على المعادلات والمسائل الكيميائية.',
     attachments: Array.isArray(l.attachments) ? (l.attachments as any[]).map((a) => ({
       name: a.name,
       url: a.url,
-      type: (['pdf','doc','image','other'] as const).includes(a.type as any)
+      type: (['pdf', 'doc', 'image', 'other'] as const).includes(a.type as any)
         ? (a.type as 'pdf' | 'doc' | 'image' | 'other')
         : 'other',
     })) : [],
@@ -170,23 +170,23 @@ function toCourseDetail(row: any, progress: Progress = EMPTY_PROGRESS): CourseDe
   return {
     id: row.slug,
     title: row.title,
-    instructor: row.instructor?.trim() || 'أ. محمد أحمد',
+    instructor: row.instructor?.trim() || 'أ. سليمان عارف',
     image: row.image || lectureImage(row.slug),
-    category: row.branches?.title ?? 'رياضيات',
+    category: row.branches?.title ?? 'كيمياء',
     completedLessons,
     totalLessons: lessons.length,
     nextLesson: lessons[0]?.title ?? '',
     description:
       row.description ??
-      'محاضرة متكاملة تشرح الموضوع من الأساس مع تمارين وحلول نموذجية.',
+      'محاضرة كيميائية متكاملة تشرح الموضوع مع تجارب معملية وتمارين وتطبيقات نموذجية.',
     rating: 4.9,
     studentsCount: row.studentsCount ?? 0,
     durationHours: durationFormatted,
     level: row.branches?.stages?.title ?? 'الثانوية العامة',
     lastUpdated: '',
     sections,
-    whatYouLearn: row.what_you_learn && (row.what_you_learn as string[]).length > 0 
-      ? (row.what_you_learn as string[]) 
+    whatYouLearn: row.what_you_learn && (row.what_you_learn as string[]).length > 0
+      ? (row.what_you_learn as string[])
       : [],
   }
 }
@@ -223,9 +223,9 @@ export async function getPurchasedLectureIds(userId: string): Promise<string[]> 
   const data = mode === 'subscriptions_only'
     ? []
     : await prisma.orders.findMany({
-    where: { student_id: userId, status: 'approved' },
-    select: { order_items: { select: { lecture_id: true, monthly_course_id: true, term_id: true, item_type: true } } }
-  })
+      where: { student_id: userId, status: 'approved' },
+      select: { order_items: { select: { lecture_id: true, monthly_course_id: true, term_id: true, item_type: true } } }
+    })
 
   const ids = new Set<string>()
   const courseIds = new Set<string>()
@@ -267,9 +267,9 @@ export async function getPurchasedCourseIds(userId: string): Promise<string[]> {
   const data = mode === 'subscriptions_only'
     ? []
     : await prisma.orders.findMany({
-    where: { student_id: userId, status: 'approved' },
-    select: { order_items: { select: { monthly_course_id: true, term_id: true, item_type: true } } }
-  })
+      where: { student_id: userId, status: 'approved' },
+      select: { order_items: { select: { monthly_course_id: true, term_id: true, item_type: true } } }
+    })
 
   const courseIds = new Set<string>()
   const termIds = new Set<string>()
@@ -354,12 +354,12 @@ export async function getEnrolledMonthlyCourses(): Promise<EnrolledMonthlyCourse
   const orderRows = mode === 'subscriptions_only'
     ? []
     : await prisma.orders.findMany({
-    where: { student_id: user.id, status: 'approved' },
-    select: {
-      created_at: true,
-      order_items: { select: { monthly_course_id: true, term_id: true, item_type: true } },
-    },
-  })
+      where: { student_id: user.id, status: 'approved' },
+      select: {
+        created_at: true,
+        order_items: { select: { monthly_course_id: true, term_id: true, item_type: true } },
+      },
+    })
 
   const termIds = new Set<string>()
   for (const order of orderRows) {
@@ -524,7 +524,7 @@ export async function getPurchasedAssignment(
   if (!user || !user.id) return undefined
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(assignmentId)
-  
+
   const a = await prisma.assignments.findFirst({
     where: isUuid ? { id: assignmentId } : { code: assignmentId },
     include: { assignment_questions: true }

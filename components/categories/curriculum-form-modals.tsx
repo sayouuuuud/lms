@@ -249,13 +249,11 @@ export function CurriculumFormModals() {
             <textarea
               value={rows}
               onChange={(e) => setRows(e.target.value)}
-              placeholder={'الجبر والمتطابقات\nح��اب المثلثات\nالهندسة التحليلية'}
+              placeholder={'الكيمياء مركز العلوم\nالكيمياء الكمية (المول والحساب الكيميائي)\nالمحاليل والأحماض والقواعد'}
               rows={3}
               className={textareaClass}
             />
           </Field>
-
-
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="سعر الترم كامل (ج.م)">
@@ -308,7 +306,7 @@ export function CurriculumFormModals() {
             <Input
               value={bTitle}
               onChange={(e) => setBTitle(e.target.value)}
-              placeholder="مثال: الجبر والمتطابقات"
+              placeholder="مثال: الكيمياء العضوية"
               autoFocus
             />
           </Field>
@@ -325,7 +323,7 @@ export function CurriculumFormModals() {
             <textarea
               value={bTopics}
               onChange={(e) => setBTopics(e.target.value)}
-              placeholder={'الأعداد المركّبة\nالمتطابقات الشهيرة\nالمعادلات والمتباينات'}
+              placeholder={'الهيدروكربونات والألكانات\nمشتقات الهيدروكربونات والكحولات\nتفاعلات البلمرة والأسترة'}
               rows={3}
               className={textareaClass}
             />

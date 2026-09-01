@@ -1,103 +1,119 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Menu, X, Moon, Sun } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useTheme } from '@/components/theme-provider'
-import { CartButton } from '@/components/cart/cart-button'
-import { useCart } from '@/components/cart/cart-provider'
-import type { NavbarContent } from '@/lib/site-content-defaults'
-import { DEFAULT_SITE_CONTENT } from '@/lib/site-content-defaults'
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Menu, X, Moon, Sun, FlaskConical } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
+import { CartButton } from "@/components/cart/cart-button";
+import { useCart } from "@/components/cart/cart-provider";
+import type { NavbarContent } from "@/lib/site-content-defaults";
+import { DEFAULT_SITE_CONTENT } from "@/lib/site-content-defaults";
 
-function ThemeToggle({ className }: { className?: string }) {
-  const { isDark, toggleTheme } = useTheme()
+export function ThemeToggle({ className }: { className?: string }) {
+  const { isDark, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label={isDark ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن'}
+      title={
+        isDark
+          ? "التبديل إلى الوضع الفاتح (معمل الزمرد)"
+          : "التبديل إلى الوضع الداكن (نيون الكيمياء)"
+      }
+      aria-label={
+        isDark ? "التبديل إلى الوضع الفاتح" : "التبديل إلى الوضع الداكن"
+      }
       className={cn(
-        'grid size-10 place-items-center rounded-full border border-navy/15 text-navy transition-colors hover:bg-navy/5',
-        'dark:border-white/10 dark:text-teal-glow dark:hover:bg-white/5',
+        "group relative grid size-10 place-items-center rounded-full transition-all duration-300",
+        "border border-navy/15 bg-white/70 text-navy hover:border-brand/40 hover:bg-purple-50 hover:text-brand shadow-sm",
+        "dark:border-white/15 dark:bg-white/5 dark:text-teal-glow dark:hover:border-brand/40 dark:hover:bg-white/10 dark:hover:text-brand dark:shadow-[0_0_15px_rgba(218, 173, 76,0.15)]",
         className,
       )}
     >
-      {isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
+      <div className="relative size-5">
+        <Sun
+          className={cn(
+            "absolute inset-0 size-5 transition-all duration-300",
+            mounted && isDark
+              ? "rotate-0 scale-100 opacity-100 text-brand"
+              : "-rotate-90 scale-0 opacity-0",
+          )}
+        />
+        <Moon
+          className={cn(
+            "absolute inset-0 size-5 transition-all duration-300",
+            mounted && isDark
+              ? "rotate-90 scale-0 opacity-0"
+              : "rotate-0 scale-100 opacity-100 text-navy group-hover:text-brand",
+          )}
+        />
+      </div>
     </button>
-  )
+  );
 }
 
 export function LandingNavbar({
   isLoggedIn = false,
   content = DEFAULT_SITE_CONTENT.navbar,
 }: {
-  isLoggedIn?: boolean
-  content?: NavbarContent
+  isLoggedIn?: boolean;
+  content?: NavbarContent;
 }) {
-  const [scrolled, setScrolled] = useState(false)
-  const [open, setOpen] = useState(false)
-  const { loggedIn: cartLoggedIn } = useCart()
+  const [open, setOpen] = useState(false);
+  const { loggedIn: cartLoggedIn } = useCart();
 
-  const isUserLoggedIn = isLoggedIn || cartLoggedIn
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  const isUserLoggedIn = isLoggedIn || cartLoggedIn;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-3 md:pt-4">
-      <nav
-        className={cn(
-          'mx-auto flex h-14 max-w-[88rem] items-center justify-between rounded-full px-3 pr-5 transition-all duration-300 md:h-16 md:pr-6',
-          'border border-navy/15 bg-cream/50 shadow-lg shadow-navy/5 ring-1 ring-cream/40 backdrop-blur-xl backdrop-saturate-150',
-          'dark:border-white/10 dark:bg-ink-raised/50 dark:shadow-black/30 dark:ring-white/5',
-          scrolled
-            ? 'bg-cream/70 shadow-xl shadow-navy/10 dark:bg-ink-raised/70 dark:shadow-black/40'
-            : 'bg-cream/40 dark:bg-ink-raised/40',
-        )}
-      >
+    <header className="absolute inset-x-0 top-0 z-50 w-full border-b border-navy/10 bg-[#fbfaf6]/90 backdrop-blur-md transition-colors dark:border-white/10 dark:bg-[#0a0f1a]/85">
+      <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 md:px-8">
         <Link href="/" className="flex items-center gap-2.5">
           {content.logoUrl ? (
             <Image
               src={content.logoUrl}
               alt={content.siteName}
-              width={36}
-              height={36}
-              className="size-9 rounded-md object-cover"
+              width={40}
+              height={40}
+              className="size-10 rounded-lg object-cover shadow-sm"
             />
           ) : (
-            <span className="grid size-9 place-items-center rounded-md bg-navy font-mono text-sm font-bold text-cream dark:bg-teal-glow dark:text-ink-base dark:shadow-[0_0_18px_oklch(0.84_0.13_184_/_0.5)]">
-              ƒ(x)
+            <span className="grid size-10 place-items-center rounded-lg bg-brand text-navy shadow-[0_0_15px_rgba(218, 173, 76,0.3)] transition-transform duration-300 hover:scale-105 dark:bg-brand dark:text-[#0a0f1a] dark:shadow-[0_0_15px_#daad4c88]">
+              <FlaskConical className="size-5" />
             </span>
           )}
-          <span className="font-heading text-xl font-bold text-navy dark:text-ink-fg">{content.siteName}</span>
+          <span className="font-heading text-xl font-bold text-navy dark:text-white">
+            {content.siteName}
+          </span>
         </Link>
 
-        <div className="hidden items-center gap-9 md:flex">
+        <div className="hidden items-center gap-8 md:flex">
           {content.links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="group relative text-sm font-semibold text-navy-soft transition-colors hover:text-navy dark:text-ink-dim dark:hover:text-ink-fg"
+              className="group relative text-sm font-semibold text-navy/80 transition-colors hover:text-brand dark:text-slate-300 dark:hover:text-brand"
             >
               {l.label}
-              <span className="absolute -bottom-1.5 right-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full dark:bg-teal-glow" />
+              <span className="absolute -bottom-1.5 right-0 h-0.5 w-0 bg-brand transition-all duration-300 group-hover:w-full dark:bg-brand" />
             </a>
           ))}
         </div>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <CartButton className="text-navy dark:text-ink-fg" />
+        <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle />
+          <CartButton className="text-navy hover:bg-navy/5 dark:text-white dark:hover:bg-white/10" />
           {isUserLoggedIn ? (
             <Link
               href="/auth"
-              className="inline-flex items-center rounded-full bg-navy px-6 py-2.5 text-sm font-bold text-cream transition-transform duration-200 hover:-translate-y-0.5 hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:hover:bg-violet-deep"
+              className="inline-flex items-center rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 bg-brand text-navy shadow-md hover:bg-brand shadow-brand/20 dark:bg-brand dark:text-[#0a0f1a] dark:shadow-[0_0_20px_#daad4c66]"
             >
               {content.ctaAccountText}
             </Link>
@@ -105,13 +121,13 @@ export function LandingNavbar({
             <>
               <Link
                 href="/auth"
-                className="rounded-full px-5 py-2.5 text-sm font-bold text-navy transition-colors hover:bg-navy/5 dark:text-ink-fg dark:hover:bg-white/5"
+                className="rounded-xl px-4 py-2 text-sm font-bold text-navy transition-colors hover:bg-navy/5 dark:text-white dark:hover:bg-white/10"
               >
                 {content.ctaLoginText}
               </Link>
               <Link
                 href="/auth?mode=register"
-                className="inline-flex items-center rounded-full bg-navy px-6 py-2.5 text-sm font-bold text-cream transition-transform duration-200 hover:-translate-y-0.5 hover:bg-navy-deep dark:bg-violet-glow dark:text-white dark:shadow-[0_0_22px_oklch(0.66_0.2_292_/_0.45)] dark:hover:bg-violet-deep"
+                className="inline-flex items-center rounded-xl px-5 py-2.5 text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 bg-brand text-navy shadow-md hover:bg-brand shadow-brand/20 dark:bg-brand dark:text-[#0a0f1a] dark:shadow-[0_0_20px_#daad4c66]"
               >
                 {content.ctaRegisterText}
               </Link>
@@ -119,14 +135,14 @@ export function LandingNavbar({
           )}
         </div>
 
-        <div className="flex items-center gap-1 md:hidden">
-          <CartButton className="text-navy dark:text-ink-fg" />
-          <ThemeToggle />
+        <div className="flex items-center gap-1.5 md:hidden">
+          <ThemeToggle className="size-9" />
+          <CartButton className="text-navy dark:text-white" />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-md text-navy dark:text-ink-fg"
-            aria-label={open ? 'إغلاق القائمة' : 'فتح القائمة'}
+            className="grid size-10 place-items-center rounded-lg text-navy transition-colors hover:bg-navy/5 dark:text-white dark:hover:bg-white/10"
+            aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}
           >
             {open ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
@@ -134,24 +150,24 @@ export function LandingNavbar({
       </nav>
 
       {open && (
-        <div className="mx-auto mt-3 max-w-6xl rounded-3xl border border-cream/40 bg-cream/80 px-5 py-4 shadow-xl shadow-navy/10 backdrop-blur-xl md:hidden dark:border-white/10 dark:bg-ink-raised/90 dark:shadow-black/40">
-          <div className="flex flex-col gap-1">
+        <div className="border-t border-navy/10 bg-[#fbfaf6]/95 px-5 py-5 shadow-xl backdrop-blur-2xl md:hidden dark:border-white/10 dark:bg-[#0a0f1a]/95">
+          <div className="flex flex-col gap-1.5">
             {content.links.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-3 text-base font-semibold text-navy-soft transition-colors hover:bg-navy/5 hover:text-navy dark:text-ink-dim dark:hover:bg-white/5 dark:hover:text-ink-fg"
+                className="rounded-lg px-4 py-2.5 text-base font-semibold text-navy/80 transition-colors hover:bg-brand/10 hover:text-brand dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-teal-glow"
               >
                 {l.label}
               </a>
             ))}
-            <div className="mt-2 flex gap-2">
+            <div className="mt-3 flex gap-2 border-t border-navy/10 pt-3 dark:border-white/10">
               {isUserLoggedIn ? (
                 <Link
                   href="/auth"
                   onClick={() => setOpen(false)}
-                  className="flex-1 rounded-full bg-navy px-6 py-3 text-center text-base font-bold text-cream dark:bg-violet-glow dark:text-white"
+                  className="flex-1 rounded-xl bg-brand px-6 py-2.5 text-center text-base font-bold text-navy shadow-md dark:bg-brand dark:text-[#0a0f1a]"
                 >
                   {content.ctaAccountText}
                 </Link>
@@ -160,14 +176,14 @@ export function LandingNavbar({
                   <Link
                     href="/auth"
                     onClick={() => setOpen(false)}
-                    className="flex-1 rounded-full border border-navy/15 px-6 py-3 text-center text-base font-bold text-navy dark:border-white/10 dark:text-ink-fg"
+                    className="flex-1 rounded-xl border border-navy/15 px-5 py-2.5 text-center text-base font-bold text-navy hover:bg-navy/5 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
                   >
                     {content.ctaLoginText}
                   </Link>
                   <Link
                     href="/auth?mode=register"
                     onClick={() => setOpen(false)}
-                    className="flex-1 rounded-full bg-navy px-6 py-3 text-center text-base font-bold text-cream dark:bg-violet-glow dark:text-white"
+                    className="flex-1 rounded-xl bg-brand px-5 py-2.5 text-center text-base font-bold text-navy shadow-md dark:bg-brand dark:text-[#0a0f1a]"
                   >
                     {content.ctaRegisterText}
                   </Link>
@@ -178,5 +194,5 @@ export function LandingNavbar({
         </div>
       )}
     </header>
-  )
+  );
 }

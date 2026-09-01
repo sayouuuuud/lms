@@ -1,7 +1,7 @@
-import { prisma } from '@/lib/prisma'
-import { getFreeLectureBySlug } from '@/lib/curriculum'
-import { logError } from '@/lib/logger'
-import type { Stage, Branch, MonthlyCourse } from '@/lib/landing-data'
+import { prisma } from './prisma.ts'
+import { getFreeLectureBySlug } from './curriculum.ts'
+import { logError } from './logger.ts'
+import type { Stage, Branch, MonthlyCourse } from './landing-data.ts'
 
 const FALLBACK_VIDEO =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'

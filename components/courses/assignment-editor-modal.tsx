@@ -201,7 +201,7 @@ export function AssignmentEditorModal({
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="مثال: واجب على الأعداد المركّبة"
+                placeholder="مثال: واجب على الكيمياء العضوية وتسمية الألكانات"
                 autoFocus
               />
             </Field>

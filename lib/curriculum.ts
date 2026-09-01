@@ -1,10 +1,23 @@
-import { logError, logDebug } from '@/lib/logger'
-import { prisma } from '@/lib/prisma'
-import type { Stage, Branch, Lecture, Lesson, MonthlyCourse, Term } from '@/lib/landing-data'
-import { getStaticStages } from '@/lib/landing-data'
-import { isPublicSyncWithDbEnabled } from '@/lib/platform-settings'
+import { cache } from 'react'
+import { logError, logDebug } from './logger.ts'
+import { prisma } from './prisma.ts'
+import type { Stage, Branch, Lecture, Lesson, MonthlyCourse, Term } from './landing-data.ts'
+import { getStaticStages } from './landing-data.ts'
+import { isPublicSyncWithDbEnabled } from './platform-settings.ts'
 
-export async function getCurriculum(includeUnpublished = false): Promise<Stage[]> {
+let cachedCurriculum: { value: Stage[]; timestamp: number; includeUnpublished: boolean } | null = null
+const CURRICULUM_CACHE_TTL_MS = 10_000 // 10 seconds cache
+
+export const getCurriculum = cache(async function getCurriculum(includeUnpublished = false): Promise<Stage[]> {
+  const now = Date.now()
+  if (
+    cachedCurriculum &&
+    cachedCurriculum.includeUnpublished === includeUnpublished &&
+    now - cachedCurriculum.timestamp < CURRICULUM_CACHE_TTL_MS
+  ) {
+    return cachedCurriculum.value
+  }
+
   try {
     const isSyncEnabled = await isPublicSyncWithDbEnabled()
     if (!isSyncEnabled) {
@@ -72,7 +85,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
     return getStaticStages()
   }
 
-  return stagesRes.map((stageRow) => {
+  const result: Stage[] = stagesRes.map((stageRow) => {
     const terms = stageRow.terms.map((termRow: { id: string; title: string | null; price: unknown; old_price: unknown }) => ({
       id: termRow.id,
       title: termRow.title ?? '',
@@ -97,7 +110,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
           price: Number(lectureRow.price ?? 0),
           oldPrice: lectureRow.old_price != null ? Number(lectureRow.old_price) : undefined,
           badge: lectureRow.badge ?? undefined,
-          image: lectureRow.image || (lectureRow.slug ? `/lectures/${lectureRow.slug}.png` : '/lectures/alg-identities.png'),
+          image: lectureRow.image || (lectureRow.slug ? `/lectures/${lectureRow.slug}.png` : '/lectures/chem-center.png'),
           lessons,
           sectionId: lectureRow.monthly_course_section_id ?? null,
           isFree: lectureRow.is_free ?? false,
@@ -137,7 +150,7 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
         id: branchRow.slug ?? '',
         title: branchRow.title ?? '',
         description: branchRow.description ?? '',
-        image: branchRow.image || (branchRow.slug ? `/lectures/${branchRow.slug}.png` : '/lectures/alg-identities.png'),
+        image: branchRow.image || (branchRow.slug ? `/lectures/${branchRow.slug}.png` : '/lectures/chem-center.png'),
         topics: (branchRow.topics as string[]) ?? [],
         lectures: branchLectures.map(({ courseSortOrder, monthlyCourseId, ...rest }: { courseSortOrder: number; monthlyCourseId: string | null; [key: string]: unknown }) => rest),
         monthlyCourses,
@@ -159,7 +172,10 @@ export async function getCurriculum(includeUnpublished = false): Promise<Stage[]
       branches,
     }
   })
-}
+
+  cachedCurriculum = { value: result, timestamp: now, includeUnpublished }
+  return result
+})
 
 export async function getStageBySlug(slug: string): Promise<Stage | undefined> {
   const all = await getCurriculum()

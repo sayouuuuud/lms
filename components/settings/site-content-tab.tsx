@@ -315,7 +315,7 @@ function HeroEditor({ value, onChange }: { value: HeroContent; onChange: (v: Her
         label="تسميات فقاعات المواد"
         items={value.pillLabels}
         onChange={(v) => set('pillLabels', v)}
-        placeholder="تكامل"
+        placeholder="كيمياء عضوية"
       />
       <ImageField
         label="صورة الأستاذ (الوضع الفاتح)"
@@ -761,7 +761,7 @@ function SeoEditor({ value, onChange }: { value: SeoContent; onChange: (v: SeoCo
           value={value.keywords || ''}
           onChange={(e) => set('keywords', e.target.value)}
           className="text-right"
-          placeholder="رياضيات ثانوي, شرح رياضيات, أولى ثانوي"
+          placeholder="كيمياء ثانوي, شرح كيمياء, أولى ثانوي, كيمياء عضوية"
         />
       </Field>
       <Field
@@ -777,11 +777,11 @@ function SeoEditor({ value, onChange }: { value: SeoContent; onChange: (v: SeoCo
         />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="نص شاشة التحميل (Loader Text)" hint="النص الذي يظهر أسفل المعادلة الرياضية">
-          <Input value={value.loaderText || ''} onChange={(e) => set('loaderText', e.target.value)} className="text-right" placeholder="جاري تجهيز المنصة..." />
+        <Field label="نص شاشة التحميل (Loader Text)" hint="النص الذي يظهر أسفل المعادلة الكيميائية">
+          <Input value={value.loaderText || ''} onChange={(e) => set('loaderText', e.target.value)} className="text-right" placeholder="جاري تحضير المعمل والمنصة..." />
         </Field>
-        <Field label="معادلة شاشة التحميل" hint="مثال: f(x) = ∫ e^x dx (سيتم قسمها عند علامة = إذا وُجدت)">
-          <Input value={value.loaderEquation || ''} onChange={(e) => set('loaderEquation', e.target.value)} dir="ltr" className="text-left font-mono" placeholder="f(x) = ∫ e^x dx" />
+        <Field label="معادلة شاشة التحميل" hint="مثال: 2H₂ + O₂ ⟶ 2H₂O (سيتم قسمها عند علامة ⟶ أو = إذا وُجدت)">
+          <Input value={value.loaderEquation || ''} onChange={(e) => set('loaderEquation', e.target.value)} dir="ltr" className="text-left font-mono" placeholder="2H₂ + O₂ ⟶ 2H₂O" />
         </Field>
       </div>
     </div>
@@ -797,7 +797,7 @@ function LoginPanelEditor({ value, onChange }: { value: LoginPanelContent; onCha
   return (
     <div className="space-y-4">
       <Field label="اسم المنصة / المدرس" hint="يظهر في صفحة تسجيل الدخول بدلاً من الاسم الثابت">
-        <Input value={value.brandName ?? ''} onChange={(e) => set('brandName', e.target.value)} className="text-right" placeholder="مثال: أكاديمية شفاء العليل" />
+        <Input value={value.brandName ?? ''} onChange={(e) => set('brandName', e.target.value)} className="text-right" placeholder="مثال: الأستاذ سليمان عارف" />
       </Field>
       <ImageField
         label="شعار المنصة (اختياري)"
@@ -806,7 +806,7 @@ function LoginPanelEditor({ value, onChange }: { value: LoginPanelContent; onCha
         onChange={(v) => set('logoUrl', v)}
       />
       <Separator />
-      <Field label="البادج (النص الصغير فوق العنوان)" hint="مثال: منصة اللغة العربية الأولى للثانوية العامة">
+      <Field label="البادج (النص الصغير فوق العنوان)" hint="مثال: مستر سليمان عارف ــــ أستاذ الكيمياء والعلوم المتكاملة ">
         <Input value={value.badge} onChange={(e) => set('badge', e.target.value)} className="text-right" />
       </Field>
       <Field label="العنوان الرئيسي" hint="العنوان الكبير في الجانب الأيسر">

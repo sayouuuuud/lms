@@ -67,13 +67,13 @@ function serveLocalFallback(key: string[]): Response | null {
   } else if (kind === 'lectures') {
     candidatePaths.push(
       path.join(publicDir, 'lectures', filename),
-      path.join(publicDir, 'lectures', 'alg-identities.png'),
+      path.join(publicDir, 'lectures', 'chem-center.png'),
       path.join(publicDir, 'placeholder.jpg')
     )
   } else if (kind === 'lessons') {
     candidatePaths.push(
       path.join(publicDir, 'lessons', filename),
-      path.join(publicDir, 'lessons', 'complex-numbers.png'),
+      path.join(publicDir, 'lessons', 'measurement.png'),
       path.join(publicDir, 'placeholder.jpg')
     )
   } else if (kind === 'logo' || kind === 'site' || kind === 'brand') {
